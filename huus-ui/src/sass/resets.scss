@@ -1,0 +1,42 @@
+// source1: https://github.com/jgthms/minireset.css/blob/master/minireset.sass
+// see: https://css-tricks.com/reboot-resets-reasoning/
+
+*,
+*::before,
+*::after {
+	margin: 0;
+	padding: 0;
+	box-sizing: border-box;
+	font-family: inherit;
+	font-size: inherit;
+	font-weight: inherit;
+}
+
+ul {
+	list-style: none;
+}
+
+img,
+video,
+svg {
+	display: block;
+	height: auto;
+	max-width: 100%;
+}
+
+iframe {
+	border: none;
+}
+
+table {
+	border-collapse: collapse;
+	border-spacing: 0;
+}
+
+button {
+	appearance: none;
+	border: none;
+	background: none;
+	border-radius: 0;
+	box-shadow: none;
+}

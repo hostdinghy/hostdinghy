@@ -1,0 +1,7 @@
+/node_modules
+/src/gen/*
+/dist
+/dist-pages
+/dist-server
+/dist-client
+.DS_Store

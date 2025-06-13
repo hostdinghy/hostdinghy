@@ -1,0 +1,38 @@
+[package]
+name = "huus"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+pg = { package = "chuchi-postgres", version = "0.2.0", features = [
+	"json",
+	"crypto-token",
+	"chuchi",
+] }
+clap = { version = "4.0", features = ["derive"] }
+chuchi = { version = "0.1.0", features = ["fs", "sentry", "api"] }
+tokio = { version = "1.45.1", features = [
+	"rt-multi-thread",
+	"fs",
+	"sync",
+	"macros",
+	"tracing",
+] }
+serde = { version = "1.0", features = ["derive"] }
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+toml = "0.8"
+async-trait = "0.1.81"
+crypto = { package = "chuchi-crypto", version = "0.1.0", features = [
+	"b64",
+	"serde",
+	"hash",
+	"postgres",
+] }
+thiserror = "2.0.12"
+simple-bytes = "0.2.14"
+bcrypt = "0.15.1"
+
+[dev-dependencies]
+chuchi = { version = "0.1.0", features = ["testing"] }
+tracing-test = { version = "0.2.4", features = ["no-env-filter"] }

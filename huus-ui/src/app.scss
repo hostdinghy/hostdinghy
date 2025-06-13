@@ -1,0 +1,26 @@
+@use './sass/resets.scss';
+@use './sass/form.scss';
+
+:root {
+	--dark-blue: #0b111b;
+	--label-blue: #476686;
+	--border-blue: #15212e;
+	--placeholder-blue: #324a62;
+	--blue: #52acf6;
+
+	--white: #ffffff;
+
+	--red: #ef3434;
+}
+
+html {
+	font-family: 'IBM Plex Mono', monospace;
+	-webkit-font-smoothing: antialiased;
+	-moz-osx-font-smoothing: grayscale;
+	font-smooth: always;
+}
+
+body {
+	background-color: var(--dark-blue);
+	color: var(--white);
+}

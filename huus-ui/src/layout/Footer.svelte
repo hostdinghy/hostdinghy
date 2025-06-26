@@ -1,4 +1,4 @@
-<footer>
+<footer class="wrap">
 	<nav class="footer">
 		<a href="https://github.com/chuchi-dev/chuchi-recipe" target="_blank">
 			Source

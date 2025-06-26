@@ -1,5 +1,6 @@
 #[macro_use]
 mod utils;
+mod apps;
 mod error;
 mod routes;
 mod users;

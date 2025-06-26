@@ -237,9 +237,9 @@ dependencies = [
 
 [[package]]
 name = "chuchi"
-version = "0.1.4"
+version = "0.1.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "cd97147703f8a8445d1fd46d4b9a54dcb05645a7faf7a0e84106a4890c2114ff"
+checksum = "9ae99bc9c8d10a2bf26f05ceb58cffcc46df93a740caee92f5f96af4e1869b76"
 dependencies = [
  "byte-parser",
  "bytes",

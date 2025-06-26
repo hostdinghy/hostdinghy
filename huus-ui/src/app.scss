@@ -1,5 +1,6 @@
 @use './sass/resets.scss';
 @use './sass/form.scss';
+@use './sass/typography.scss';
 
 :root {
 	--dark-blue: #0b111b;
@@ -11,6 +12,8 @@
 	--white: #ffffff;
 
 	--red: #ef3434;
+
+	--sx-body: 1rem;
 }
 
 html {
@@ -23,4 +26,13 @@ html {
 body {
 	background-color: var(--dark-blue);
 	color: var(--white);
+}
+
+.wrap {
+	width: 100%;
+	max-width: 64rem;
+	margin-left: auto;
+	margin-right: auto;
+	padding-left: var(--sx-body);
+	padding-right: var(--sx-body);
 }

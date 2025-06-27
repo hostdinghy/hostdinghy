@@ -708,6 +708,17 @@ checksum = "df3b46402a9d5adb4c86a0cf463f42e19994e3ee891101b1841f30a545cb49a9"
 name = "huus"
 version = "0.1.0"
 dependencies = [
+ "clap",
+ "thiserror 2.0.12",
+ "tokio",
+ "tracing",
+ "tracing-subscriber",
+]
+
+[[package]]
+name = "huus-web"
+version = "0.1.0"
+dependencies = [
  "async-trait",
  "bcrypt",
  "chuchi",
@@ -723,10 +734,6 @@ dependencies = [
  "tracing-subscriber",
  "tracing-test",
 ]
-
-[[package]]
-name = "huus-root"
-version = "0.1.0"
 
 [[package]]
 name = "hyper"
@@ -1474,6 +1481,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0fda2ff0d084019ba4d7c6f371c95d8fd75ce3524c3cb8fb653a3023f6323e64"
 
 [[package]]
+name = "signal-hook-registry"
+version = "1.4.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9203b8055f63a2a00e2f593bb0510367fe707d7ff1e5c872de2f537b339e5410"
+dependencies = [
+ "libc",
+]
+
+[[package]]
 name = "simple-bytes"
 version = "0.2.14"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1678,6 +1694,7 @@ dependencies = [
  "libc",
  "mio",
  "pin-project-lite",
+ "signal-hook-registry",
  "socket2",
  "tokio-macros",
  "tracing",

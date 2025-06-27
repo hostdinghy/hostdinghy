@@ -1,0 +1,18 @@
+[package]
+name = "huus"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+clap = { version = "4.0", features = ["derive"] }
+tokio = { version = "1.45.1", features = [
+	"rt-multi-thread",
+	"fs",
+	"sync",
+	"macros",
+	"tracing",
+	"process",
+] }
+thiserror = "2.0.12"

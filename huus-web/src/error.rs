@@ -1,14 +1,10 @@
-use std::error::Error as StdError;
 use std::fmt;
 
+use axum::Json;
+use axum::http::StatusCode;
+use axum::response::{IntoResponse, Response};
 use pg::database::DatabaseError;
 use serde::{Deserialize, Serialize};
-
-use chuchi::{
-	api::error::{self, Error as ApiError, StatusCode},
-	error::{ClientErrorKind, ErrorKind, ServerErrorKind},
-	extractor::ExtractorError,
-};
 
 pub type Result<T> = std::result::Result<T, Error>;
 
@@ -23,17 +19,8 @@ pub enum Error {
 	Request(String),
 }
 
-impl error::ApiError for Error {
-	fn from_error(e: ApiError) -> Self {
-		match e {
-			ApiError::HeadersMissing(_) | ApiError::Deserialize(_) => {
-				Self::Request(e.to_string())
-			}
-			e => Self::Internal(e.to_string()),
-		}
-	}
-
-	fn status_code(&self) -> StatusCode {
+impl Error {
+	pub fn status_code(&self) -> StatusCode {
 		match self {
 			Self::LoginIncorrect
 			| Self::MissingSessionToken
@@ -46,21 +33,10 @@ impl error::ApiError for Error {
 	}
 }
 
-impl ExtractorError for Error {
-	fn error_kind(&self) -> ErrorKind {
-		match self {
-			Self::LoginIncorrect
-			| Self::MissingSessionToken
-			| Self::InvalidSessionToken
-			| Self::InvalidUser => ClientErrorKind::Forbidden.into(),
-			Self::NotFound => ClientErrorKind::NotFound.into(),
-			Self::Internal(_) => ServerErrorKind::InternalServerError.into(),
-			Self::Request(_) => ClientErrorKind::BadRequest.into(),
-		}
-	}
-
-	fn into_std(self) -> Box<dyn StdError + Send + Sync> {
-		Box::new(self)
+impl IntoResponse for Error {
+	fn into_response(self) -> Response {
+		let status = self.status_code();
+		(status, Json(self)).into_response()
 	}
 }
 

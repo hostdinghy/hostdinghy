@@ -2,15 +2,21 @@
 mod utils;
 mod apps;
 mod error;
-mod routes;
+
 mod users;
 
-use std::{fs, path::Path};
+use std::{fs, sync::Arc};
 
-use chuchi::{Chuchi, Resource};
+use axum::Router;
+use axum::extract::FromRef;
+use axum::http::{Method, header};
 use clap::Parser;
 use pg::{Database, db::Db};
 use serde::Deserialize;
+use tokio::net::TcpListener;
+use tokio::signal;
+use tower_http::cors::{self, CorsLayer};
+use tower_http::trace::TraceLayer;
 
 #[derive(Debug, Parser)]
 #[command(version)]
@@ -32,7 +38,7 @@ enum SubCommand {
 	CreateUser(users::cli::CreateUser),
 }
 
-#[derive(Debug, Clone, Deserialize, Resource)]
+#[derive(Debug, Clone, Deserialize)]
 #[serde(rename_all = "kebab-case")]
 struct Config {
 	database: DbConf,
@@ -46,8 +52,50 @@ struct DbConf {
 	pub password: String,
 }
 
-fn init(server: &mut Chuchi) {
-	users::routes::routes(server);
+#[derive(Clone)]
+pub struct AppState {
+	users: users::Users,
+	db: Db,
+	cfg: Arc<Config>,
+}
+
+impl FromRef<AppState> for Db {
+	fn from_ref(state: &AppState) -> Self {
+		state.db.clone()
+	}
+}
+
+impl FromRef<AppState> for Arc<Config> {
+	fn from_ref(state: &AppState) -> Self {
+		state.cfg.clone()
+	}
+}
+
+fn create_app(state: AppState, enable_cors: bool) -> Router {
+	let mut app = Router::new()
+		.nest("/api/users", users::routes::routes())
+		.layer(TraceLayer::new_for_http());
+
+	if enable_cors {
+		app = app.layer(
+			CorsLayer::new()
+				.allow_origin(cors::Any)
+				.allow_methods([
+					Method::GET,
+					Method::POST,
+					Method::PUT,
+					Method::PATCH,
+					Method::DELETE,
+					Method::OPTIONS,
+				])
+				.allow_headers([
+					header::CONTENT_TYPE,
+					"session-token".parse().unwrap(),
+				]),
+		);
+	}
+
+	app.with_state(state)
 }
 
 #[tokio::main]
@@ -88,17 +136,46 @@ async fn main() {
 	// we don't need it anymore
 	drop(conn);
 
-	let mut server = chuchi::build("0.0.0.0:3030").await.unwrap();
+	let state = AppState {
+		users: Arc::new(Box::new(users)),
+		db,
+		cfg: Arc::new(cfg),
+	};
 
-	server.add_resource(cfg);
-	server.add_resource(db);
-	server.add_resource::<users::data::Users>(Box::new(users));
+	let app = create_app(state, args.enable_cors || cfg!(debug_assertions));
 
-	if args.enable_cors || cfg!(debug_assertions) {
-		server.add_catcher(routes::cors::CorsHeaders);
+	let listener = TcpListener::bind("0.0.0.0:3030")
+		.await
+		.expect("failed to bind to port 3030");
+
+	println!("Server starting on 0.0.0.0:3030");
+
+	axum::serve(listener, app)
+		.with_graceful_shutdown(shutdown_signal())
+		.await
+		.unwrap();
+}
+
+async fn shutdown_signal() {
+	let ctrl_c = async {
+		signal::ctrl_c()
+			.await
+			.expect("failed to install Ctrl+C handler");
+	};
+
+	#[cfg(unix)]
+	let terminate = async {
+		signal::unix::signal(signal::unix::SignalKind::terminate())
+			.expect("failed to install signal handler")
+			.recv()
+			.await;
+	};
+
+	#[cfg(not(unix))]
+	let terminate = std::future::pending::<()>();
+
+	tokio::select! {
+		_ = ctrl_c => {},
+		_ = terminate => {},
 	}
-
-	init(&mut server);
-
-	tokio::try_join!(server.run_task()).unwrap();
 }

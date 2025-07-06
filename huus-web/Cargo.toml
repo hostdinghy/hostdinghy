@@ -10,13 +10,19 @@ pg = { package = "chuchi-postgres", version = "0.2.0", features = [
 	"chuchi",
 ] }
 clap = { version = "4.0", features = ["derive"] }
-chuchi = { version = "0.1.5", features = ["fs", "sentry", "api"] }
+axum = { version = "0.8.4", features = ["macros"] }
+tower-http = { version = "0.6.6", features = ["cors", "fs", "trace"] }
+# tower = { version = "0.5", features = ["util"] }
+# serde_json = "1.0"
+# serde_urlencoded = "0.7"
+# http-body-util = "0.1"
 tokio = { version = "1.45.1", features = [
 	"rt-multi-thread",
 	"fs",
 	"sync",
 	"macros",
 	"tracing",
+	"signal",
 ] }
 serde = { version = "1.0", features = ["derive"] }
 tracing = "0.1"
@@ -30,9 +36,8 @@ crypto = { package = "chuchi-crypto", version = "0.1.0", features = [
 	"postgres",
 ] }
 thiserror = "2.0.12"
-simple-bytes = "0.2.14"
+# simple-bytes = "0.2.14"
 bcrypt = "0.15.1"
 
 [dev-dependencies]
-chuchi = { version = "0.1.0", features = ["testing"] }
 tracing-test = { version = "0.2.4", features = ["no-env-filter"] }

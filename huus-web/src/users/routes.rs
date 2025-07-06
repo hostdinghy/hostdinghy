@@ -1,21 +1,36 @@
-use chuchi::{Chuchi, api};
-use pg::db::ConnOwned;
+use axum::extract::State;
+use axum::routing::post;
+use axum::{Json, Router};
+use serde::{Deserialize, Serialize};
 
+use crate::AppState;
 use crate::error::{Error, Result};
-use crate::users::api::{Authenticated, LogoutReq, TokenAuthReq};
-use crate::users::{Users, api::LoginReq};
+use crate::users::Users;
+use crate::users::data::{Session, User};
+use crate::utils::ConnOwned;
 
 use super::utils::AuthedUser;
 
-// or #[api("/api/login")]
-// async fn login(req: LoginReq, auth_token: Header<String>)
-#[api(LoginReq)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct LoginReq {
+	pub username: String,
+	pub password: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct Authenticated {
+	pub session: Session,
+	pub user: User,
+}
+
 async fn login(
-	req: LoginReq,
-	users: &Users,
-	db: ConnOwned,
-) -> Result<Authenticated> {
-	let users = users.with_conn(db.conn());
+	State(users): State<Users>,
+	conn: ConnOwned,
+	Json(req): Json<LoginReq>,
+) -> Result<Json<Authenticated>> {
+	let users = users.with_conn(conn.conn());
 
 	let user = users.by_username(req.username.as_str()).await?;
 	let Some(user) = user else {
@@ -27,39 +42,37 @@ async fn login(
 	{
 		let session = users.new_session(&user.id).await?;
 
-		Ok(Authenticated {
+		Ok(Json(Authenticated {
 			user: user.into(),
 			session,
-		})
+		}))
 	} else {
 		Err(Error::LoginIncorrect)
 	}
 }
 
-#[api(TokenAuthReq)]
-async fn token_auth(user: AuthedUser) -> Result<Authenticated> {
-	Ok(Authenticated {
+async fn token_auth(user: AuthedUser) -> Result<Json<Authenticated>> {
+	Ok(Json(Authenticated {
 		user: user.user.into(),
 		session: user.session,
-	})
+	}))
 }
 
-#[api(LogoutReq)]
 async fn logout(
-	_req: LogoutReq,
+	State(users): State<Users>,
 	user: AuthedUser,
-	users: &Users,
-	db: ConnOwned,
+	conn: ConnOwned,
 ) -> Result<()> {
-	let users = users.with_conn(db.conn());
+	let users = users.with_conn(conn.conn());
 
 	users.delete_session(&user.session.token).await?;
 
 	Ok(())
 }
 
-pub fn routes(server: &mut Chuchi) {
-	server.add_route(login);
-	server.add_route(token_auth);
-	server.add_route(logout);
+pub fn routes() -> Router<AppState> {
+	Router::new()
+		.route("/login", post(login))
+		.route("/tokenauth", post(token_auth))
+		.route("/logout", post(logout))
 }

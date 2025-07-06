@@ -1,12 +1,15 @@
 use std::time::Duration;
 
-use chuchi::impl_res_extractor;
+use axum::extract::FromRef;
 use pg::{
 	Result, UniqueId,
 	db::Conn,
 	time::{DateTime, Timeout},
 };
 use serde::{Deserialize, Serialize};
+use std::sync::Arc;
+
+use crate::AppState;
 
 #[derive(Debug, Clone)]
 pub struct UnsafeUser {
@@ -90,10 +93,14 @@ impl Session {
 	}
 }
 
-pub type Users = Box<dyn UsersBuilderTrait + Send + Sync>;
+pub type Users = Arc<Box<dyn UsersBuilderTrait + Send + Sync>>;
 pub type UsersWithConn<'a> = Box<dyn UsersTrait + Send + Sync + 'a>;
 
-impl_res_extractor!(Users);
+impl FromRef<AppState> for Users {
+	fn from_ref(state: &AppState) -> Self {
+		state.users.clone()
+	}
+}
 
 pub trait UsersBuilderTrait {
 	fn with_conn<'a>(&'a self, conn: Conn<'a>) -> UsersWithConn<'a>;

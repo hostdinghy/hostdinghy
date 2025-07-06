@@ -4,10 +4,9 @@ use super::{
 };
 use crate::error::Error;
 
-use chuchi::{
-	extractor::Extractor, extractor_extract, extractor_prepare,
-	extractor_validate, header::RequestHeader,
-};
+use axum::extract::{FromRef, FromRequestParts};
+use axum::http::HeaderMap;
+use axum::http::request::Parts;
 use pg::db::Db;
 
 pub struct AuthedUser {
@@ -15,50 +14,47 @@ pub struct AuthedUser {
 	pub user: User,
 }
 
-impl<'a, R> Extractor<'a, R> for AuthedUser {
-	type Error = Error;
-	type Prepared = Self;
+impl<S> FromRequestParts<S> for AuthedUser
+where
+	S: Send + Sync,
+	Users: FromRef<S>,
+	Db: FromRef<S>,
+{
+	type Rejection = Error;
 
-	extractor_validate!(|validate| {
-		assert!(
-			validate.resources.exists::<Users>(),
-			"Users resource not found"
-		);
-		assert!(validate.resources.exists::<Db>(), "Db resource not found");
-	});
+	async fn from_request_parts(
+		parts: &mut Parts,
+		state: &S,
+	) -> Result<Self, Self::Rejection> {
+		let users = Users::from_ref(state);
+		let db = Db::from_ref(state);
 
-	extractor_prepare!(|prepare| {
-		let db = prepare.resources.get::<Db>().unwrap();
 		let conn = db.get().await?;
-		let users = prepare.resources.get::<Users>().unwrap();
 		let users = users.with_conn(conn.conn());
 
-		let session = session_from_req(prepare.header, &users).await?;
+		let session = session_from_headers(&parts.headers, &users).await?;
 
 		let user = authenticated_user(&session, &users).await?;
 
 		Ok(Self { session, user })
-	});
-
-	extractor_extract!(|extract| { Ok(extract.prepared) });
+	}
 }
 
-pub async fn session_from_req(
-	header: &RequestHeader,
+pub async fn session_from_headers(
+	headers: &HeaderMap,
 	users: &UsersWithConn<'_>,
 ) -> Result<Session, Error> {
-	let token: Token = header
-		.value("session-token")
+	let token: Token = headers
+		.get("session-token")
 		.ok_or(Error::MissingSessionToken)?
+		.to_str()
+		.map_err(|_| Error::MissingSessionToken)?
 		.parse()
 		.map_err(|_| Error::MissingSessionToken)?;
 
-	eprintln!("Session token: {}", token);
-
 	users
 		.session_by_token(&token)
-		.await
-		.map_err(|e| Error::Internal(e.to_string()))?
+		.await?
 		.ok_or(Error::InvalidSessionToken)
 }
 
@@ -66,11 +62,5 @@ pub async fn authenticated_user(
 	session: &Session,
 	users: &UsersWithConn<'_>,
 ) -> Result<User, Error> {
-	let user = users
-		.by_id(&session.user_id)
-		.await
-		.map_err(|e| Error::Internal(e.to_string()))?
-		.ok_or(Error::NotFound)?;
-
-	Ok(user)
+	users.by_id(&session.user_id).await?.ok_or(Error::NotFound)
 }

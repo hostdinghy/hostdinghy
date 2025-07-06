@@ -6,7 +6,9 @@ It can be used as cli and also runs a gprc server.
 How to install this
 */
 
+mod registry;
 mod setup;
+mod utils;
 
 use clap::Parser;
 
@@ -22,6 +24,7 @@ struct Args {
 #[derive(Debug, Parser)]
 enum SubCommand {
 	Setup(setup::Setup),
+	Registry(registry::Registry),
 }
 
 #[tokio::main]
@@ -35,6 +38,9 @@ async fn main() {
 	match args.subcmd {
 		SubCommand::Setup(setup) => {
 			setup::setup(setup).await;
+		}
+		SubCommand::Registry(registry) => {
+			registry::registry(registry).await;
 		}
 	}
 }

@@ -7,7 +7,7 @@ pub async fn up(file: impl AsRef<Path>) -> Result<(), CmdError> {
 		"docker",
 		"compose",
 		"-f",
-		&file.as_ref().display().to_string(),
+		&file.as_ref().to_string_lossy(),
 		"up",
 		"-d",
 		"--pull",
@@ -23,7 +23,7 @@ pub async fn restart(file: impl AsRef<Path>) -> Result<(), CmdError> {
 		"docker",
 		"compose",
 		"-f",
-		&file.as_ref().display().to_string(),
+		&file.as_ref().to_string_lossy(),
 		"restart",
 	])
 	.run()

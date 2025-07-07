@@ -2,7 +2,7 @@ use std::path::Path;
 
 use clap::Parser;
 use tokio::{fs, io::AsyncWriteExt as _};
-use tracing::info;
+use tracing::{error, info};
 
 use crate::utils::{
 	cli::{CliError, WithMessage as _},
@@ -27,7 +27,7 @@ pub async fn registry(registry: Registry) {
 	let res = inner_registry(registry).await;
 
 	if let Err(e) = res {
-		tracing::error!("Setup failed: {}", e);
+		error!("Setup failed: {}", e);
 	}
 }
 

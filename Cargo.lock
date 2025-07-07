@@ -852,6 +852,7 @@ dependencies = [
  "clap",
  "thiserror 2.0.12",
  "tokio",
+ "tokio-postgres",
  "tracing",
  "tracing-subscriber",
 ]

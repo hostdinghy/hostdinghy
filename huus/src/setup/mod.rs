@@ -1,3 +1,4 @@
+mod postgresql;
 mod registry;
 mod traefik;
 
@@ -31,6 +32,7 @@ enum SubCommand {
 	},
 	Traefik(traefik::Traefik),
 	Registry(registry::Registry),
+	Postgresql(postgresql::Postgresql),
 }
 
 pub async fn setup(setup: Setup) {
@@ -65,6 +67,11 @@ pub async fn inner_setup(setup: Setup) -> Result<(), CliError> {
 			registry::setup(registry).await?;
 
 			info!("Registry setup completed successfully.");
+		}
+		SubCommand::Postgresql(postgresql) => {
+			postgresql::setup(postgresql).await?;
+
+			info!("PostgreSQL setup completed successfully.");
 		}
 	}
 
@@ -101,7 +108,9 @@ async fn setup_dir(dir: String) -> Result<PathBuf, CliError> {
 	// check if HUUS_DIR env variable is already set
 	match huus_dir() {
 		Ok(dir) => {
-			return Err(CliError::HuusDirAlreadySet(dir.display().to_string()));
+			return Err(CliError::HuusDirAlreadySet(
+				dir.to_string_lossy().to_string(),
+			));
 		}
 		Err(CliError::HuusDirNotPresent) => {}
 		Err(e) => return Err(e),

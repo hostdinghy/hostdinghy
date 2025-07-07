@@ -19,3 +19,4 @@ tokio = { version = "1.45.1", features = [
 thiserror = "2.0.12"
 bollard = "0.19.1"
 bcrypt = "0.17.0"
+tokio-postgres = "0.7.13"

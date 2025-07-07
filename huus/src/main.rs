@@ -6,6 +6,7 @@ It can be used as cli and also runs a gprc server.
 How to install this
 */
 
+mod postgresql;
 mod registry;
 mod setup;
 mod utils;
@@ -25,6 +26,7 @@ struct Args {
 enum SubCommand {
 	Setup(setup::Setup),
 	Registry(registry::Registry),
+	PostgreSql(postgresql::Postgresql),
 }
 
 #[tokio::main]
@@ -41,6 +43,9 @@ async fn main() {
 		}
 		SubCommand::Registry(registry) => {
 			registry::registry(registry).await;
+		}
+		SubCommand::PostgreSql(postgresql) => {
+			postgresql::postgresql(postgresql).await;
 		}
 	}
 }

@@ -10,7 +10,7 @@ impl Client {
 		let mut config = Config::new();
 		config
 			.host("/var/run/postgresql")
-			.user("postgres")
+			.user("root")
 			.dbname("postgres");
 
 		let (client, connection) = config

@@ -26,7 +26,7 @@ struct Args {
 enum SubCommand {
 	Setup(setup::Setup),
 	Registry(registry::Registry),
-	PostgreSql(postgresql::Postgresql),
+	Postgresql(postgresql::Postgresql),
 }
 
 #[tokio::main]
@@ -44,7 +44,7 @@ async fn main() {
 		SubCommand::Registry(registry) => {
 			registry::registry(registry).await;
 		}
-		SubCommand::PostgreSql(postgresql) => {
+		SubCommand::Postgresql(postgresql) => {
 			postgresql::postgresql(postgresql).await;
 		}
 	}

@@ -7,7 +7,7 @@ use tokio::{
 	time::sleep,
 };
 
-use crate::postgresql::utils::start_postgresql;
+use crate::postgresql::utils::{cli_execute_sql, start_postgresql};
 use crate::{
 	postgresql::utils::stop_postgresql,
 	utils::{
@@ -25,6 +25,16 @@ pub struct Postgresql {
 
 pub async fn setup(_registry: Postgresql) -> Result<(), CliError> {
 	let huus_dir = huus_dir()?;
+	let postgresql_dir = huus_dir.join("postgresql");
+	let data_dir = postgresql_dir.join("data");
+
+	// todo update to async
+	if data_dir.is_dir() {
+		return Err(CliError::any(
+			"$HUUS_DIR/postgresql/data already exists",
+			"",
+		));
+	}
 
 	cmd(&["apt", "install", "postgresql", "-y"])
 		.as_root()
@@ -38,25 +48,9 @@ pub async fn setup(_registry: Postgresql) -> Result<(), CliError> {
 
 	sleep(Duration::from_secs(5)).await;
 
-	let postgresql_dir = huus_dir.join("postgresql");
 	fs::create_dir_all(&postgresql_dir)
 		.await
 		.with_message("Failed to create $HUUS_DIR/postgresql directory")?;
-
-	let data_dir = postgresql_dir.join("data");
-	fs::create_dir_all(&data_dir)
-		.await
-		.with_message("Failed to create $HUUS_DIR/postgresql/data directory")?;
-
-	// chown to postgres:postgres
-	cmd(&[
-		"chown",
-		"-R",
-		"postgres:postgres",
-		&data_dir.to_string_lossy(),
-	])
-	.run()
-	.await?;
 
 	// detect the latest postgresql version
 	let version = latest_postgresql_version().await?;
@@ -68,6 +62,16 @@ pub async fn setup(_registry: Postgresql) -> Result<(), CliError> {
 	cmd(&[
 		"mv",
 		&old_data_path.to_string_lossy(),
+		&data_dir.to_string_lossy(),
+	])
+	.run()
+	.await?;
+
+	// chown to postgres:postgres
+	cmd(&[
+		"chown",
+		"-R",
+		"postgres:postgres",
 		&data_dir.to_string_lossy(),
 	])
 	.run()
@@ -115,6 +119,16 @@ pub async fn setup(_registry: Postgresql) -> Result<(), CliError> {
 		.with_message("Failed to append to pg_hba.conf file")?;
 
 	start_postgresql().await?;
+
+	sleep(Duration::from_secs(5)).await;
+
+	// create a root user with we then can use to execute a query
+	cli_execute_sql(
+		"DO $$ BEGIN IF NOT EXISTS \
+		(SELECT FROM pg_catalog.pg_user WHERE usename = 'root') \
+		THEN CREATE USER root WITH SUPERUSER; END IF; END $$;",
+	)
+	.await?;
 
 	Ok(())
 }

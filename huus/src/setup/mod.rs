@@ -4,6 +4,7 @@ mod traefik;
 
 use std::path::PathBuf;
 
+use api::requests::ApiToken;
 use clap::Parser;
 use tokio::{
 	fs::{self, OpenOptions},
@@ -12,7 +13,7 @@ use tokio::{
 use tracing::info;
 
 use crate::{
-	server::{self, config::ApiToken},
+	server::{self},
 	utils::{
 		cli::{CliError, WithMessage as _},
 		cmd::cmd,

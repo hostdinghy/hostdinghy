@@ -2,7 +2,8 @@
 mod utils;
 mod apps;
 mod error;
-
+mod servers;
+mod teams;
 mod users;
 
 use std::{fs, sync::Arc};
@@ -11,6 +12,7 @@ use axum::Router;
 use axum::extract::FromRef;
 use axum::http::{Method, header};
 use clap::Parser;
+use internal_api::client::ApiClient;
 use pg::{Database, db::Db};
 use serde::Deserialize;
 use tokio::net::TcpListener;
@@ -54,9 +56,18 @@ struct DbConf {
 
 #[derive(Clone)]
 pub struct AppState {
+	teams: teams::Teams,
 	users: users::Users,
+	servers: servers::Servers,
+	api_client: ApiClient,
 	db: Db,
 	cfg: Arc<Config>,
+}
+
+impl FromRef<AppState> for ApiClient {
+	fn from_ref(state: &AppState) -> Self {
+		state.api_client.clone()
+	}
 }
 
 impl FromRef<AppState> for Db {
@@ -73,7 +84,9 @@ impl FromRef<AppState> for Arc<Config> {
 
 fn create_app(state: AppState, enable_cors: bool) -> Router {
 	let mut app = Router::new()
+		.nest("/api/teams", teams::routes::routes())
 		.nest("/api/users", users::routes::routes())
+		.nest("/api/servers", servers::routes::routes())
 		.layer(TraceLayer::new_for_http());
 
 	if enable_cors {
@@ -123,11 +136,13 @@ async fn main() {
 	let db = Db::from(database.clone());
 	let mut conn = db.get().await.unwrap();
 
+	let teams = teams::database::TeamsBuilder::new(&database).await;
 	let users = users::database::UsersBuilder::new(&database).await;
+	let servers = servers::database::ServersBuilder::new(&database).await;
 
 	match args.subcmd {
 		Some(SubCommand::CreateUser(c)) => {
-			users::cli::create_user(&mut conn, &users, c).await;
+			users::cli::create_user(&mut conn, &users, &teams, c).await;
 			return;
 		}
 		None => {}
@@ -137,7 +152,10 @@ async fn main() {
 	drop(conn);
 
 	let state = AppState {
+		teams: Arc::new(Box::new(teams)),
 		users: Arc::new(Box::new(users)),
+		servers: Arc::new(Box::new(servers)),
+		api_client: ApiClient::new(),
 		db,
 		cfg: Arc::new(cfg),
 	};

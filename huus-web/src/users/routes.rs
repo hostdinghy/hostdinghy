@@ -7,6 +7,7 @@ use crate::AppState;
 use crate::error::{Error, Result};
 use crate::users::Users;
 use crate::users::data::{Session, User};
+use crate::users::utils::RightsAny;
 use crate::utils::ConnOwned;
 
 use super::utils::AuthedUser;
@@ -51,7 +52,9 @@ async fn login(
 	}
 }
 
-async fn token_auth(user: AuthedUser) -> Result<Json<Authenticated>> {
+async fn token_auth(
+	user: AuthedUser<RightsAny>,
+) -> Result<Json<Authenticated>> {
 	Ok(Json(Authenticated {
 		user: user.user.into(),
 		session: user.session,
@@ -60,7 +63,7 @@ async fn token_auth(user: AuthedUser) -> Result<Json<Authenticated>> {
 
 async fn logout(
 	State(users): State<Users>,
-	user: AuthedUser,
+	user: AuthedUser<RightsAny>,
 	conn: ConnOwned,
 ) -> Result<()> {
 	let users = users.with_conn(conn.conn());

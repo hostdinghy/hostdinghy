@@ -1,6 +1,9 @@
 use std::sync::Arc;
 
-use api::{PingRes, VersionRes, error::Error};
+use api::{
+	error::Error,
+	requests::{PingRes, VersionRes},
+};
 use axum::{Json, Router, extract::FromRef, routing::get};
 use chuchi_postgres::time::DateTime;
 

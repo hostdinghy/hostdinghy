@@ -3,6 +3,7 @@ use std::fmt;
 use axum::Json;
 use axum::http::StatusCode;
 use axum::response::{IntoResponse, Response};
+use internal_api::error::Error as ApiError;
 use pg::database::DatabaseError;
 use serde::{Deserialize, Serialize};
 
@@ -14,6 +15,7 @@ pub enum Error {
 	MissingSessionToken,
 	InvalidSessionToken,
 	InvalidUser,
+	InsufficientRights,
 	NotFound,
 	Internal(String),
 	Request(String),
@@ -22,10 +24,13 @@ pub enum Error {
 impl Error {
 	pub fn status_code(&self) -> StatusCode {
 		match self {
-			Self::LoginIncorrect
-			| Self::MissingSessionToken
-			| Self::InvalidSessionToken
-			| Self::InvalidUser => StatusCode::FORBIDDEN,
+			Self::LoginIncorrect | Self::MissingSessionToken => {
+				StatusCode::UNAUTHORIZED
+			}
+			Self::InvalidSessionToken
+			| Self::InvalidUser
+			| Self::InsufficientRights => StatusCode::FORBIDDEN,
+
 			Self::NotFound => StatusCode::NOT_FOUND,
 			Self::Internal(_) => StatusCode::INTERNAL_SERVER_ERROR,
 			Self::Request(_) => StatusCode::BAD_REQUEST,
@@ -56,6 +61,13 @@ impl From<pg::Error> for Error {
 
 impl From<DatabaseError> for Error {
 	fn from(e: DatabaseError) -> Self {
+		Self::Internal(e.to_string())
+	}
+}
+
+impl From<ApiError> for Error {
+	fn from(e: ApiError) -> Self {
+		// todo do better conversion
 		Self::Internal(e.to_string())
 	}
 }

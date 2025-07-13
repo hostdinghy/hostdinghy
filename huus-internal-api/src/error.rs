@@ -11,6 +11,8 @@ pub enum Error {
 	MissingApiToken,
 	#[error("Invalid bearer token in request")]
 	InvalidApiToken,
+	#[error("Invalid certificate provided")]
+	InvalidCertificate,
 	#[error("Failed to run command: {command}, message: {message}")]
 	Command { command: String, message: String },
 	#[error("HUUS_DIR environment variable is not set")]
@@ -38,6 +40,7 @@ impl Error {
 		match self {
 			Self::MissingApiToken => StatusCode::UNAUTHORIZED,
 			Self::InvalidApiToken => StatusCode::FORBIDDEN,
+			Self::InvalidCertificate => StatusCode::BAD_REQUEST,
 			Self::Command { .. }
 			| Self::HuusDirNotPresent
 			| Self::Any { .. } => StatusCode::INTERNAL_SERVER_ERROR,

@@ -1,24 +1,28 @@
+use std::marker::PhantomData;
+
 use super::{
 	Users,
 	data::{Session, Token, User, UsersWithConn},
 };
-use crate::error::Error;
+use crate::{error::Error, users::data::Rights};
 
 use axum::extract::{FromRef, FromRequestParts};
 use axum::http::HeaderMap;
 use axum::http::request::Parts;
 use pg::db::Db;
 
-pub struct AuthedUser {
+pub struct AuthedUser<RightsCheck> {
 	pub session: Session,
 	pub user: User,
+	rights_check: PhantomData<RightsCheck>,
 }
 
-impl<S> FromRequestParts<S> for AuthedUser
+impl<S, RC> FromRequestParts<S> for AuthedUser<RC>
 where
 	S: Send + Sync,
 	Users: FromRef<S>,
 	Db: FromRef<S>,
+	RC: RightsCheck + Send + Sync + 'static,
 {
 	type Rejection = Error;
 
@@ -34,9 +38,41 @@ where
 
 		let session = session_from_headers(&parts.headers, &users).await?;
 
-		let user = authenticated_user(&session, &users).await?;
+		let user = authenticated_user(&session, &users, RC::check).await?;
 
-		Ok(Self { session, user })
+		Ok(Self {
+			session,
+			user,
+			rights_check: PhantomData,
+		})
+	}
+}
+
+pub trait RightsCheck {
+	fn check(rights: &Rights) -> bool;
+}
+
+pub struct RightsAny;
+
+impl RightsCheck for RightsAny {
+	fn check(_: &Rights) -> bool {
+		true
+	}
+}
+
+pub struct RightsAdmin;
+
+impl RightsCheck for RightsAdmin {
+	fn check(rights: &Rights) -> bool {
+		rights.admin || rights.root
+	}
+}
+
+pub struct RightsRoot;
+
+impl RightsCheck for RightsRoot {
+	fn check(rights: &Rights) -> bool {
+		rights.root
 	}
 }
 
@@ -58,9 +94,22 @@ pub async fn session_from_headers(
 		.ok_or(Error::InvalidSessionToken)
 }
 
-pub async fn authenticated_user(
+pub async fn authenticated_user<Rf>(
 	session: &Session,
 	users: &UsersWithConn<'_>,
-) -> Result<User, Error> {
-	users.by_id(&session.user_id).await?.ok_or(Error::NotFound)
+	rights_check: Rf,
+) -> Result<User, Error>
+where
+	Rf: FnOnce(&Rights) -> bool,
+{
+	let user = users
+		.by_id(&session.user_id)
+		.await?
+		.ok_or(Error::NotFound)?;
+
+	if !rights_check(&user.rights) {
+		return Err(Error::InsufficientRights);
+	}
+
+	Ok(user)
 }

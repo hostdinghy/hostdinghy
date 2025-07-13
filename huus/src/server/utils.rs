@@ -1,9 +1,9 @@
-use api::error::Error;
+use api::{error::Error, requests::ApiToken};
 use axum::{extract::FromRequestParts, http::request::Parts};
 use hyper::header::AUTHORIZATION;
 use subtle::ConstantTimeEq as _;
 
-use crate::server::{config::ApiToken, router::AppState};
+use crate::server::router::AppState;
 
 pub struct Authenticated {
 	// addr: SocketAddr,

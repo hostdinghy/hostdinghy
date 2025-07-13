@@ -14,10 +14,12 @@ use crate::AppState;
 #[derive(Debug, Clone)]
 pub struct UnsafeUser {
 	pub id: UniqueId,
+	pub team_id: UniqueId,
 	pub username: String,
 	pub name: String,
 	// password hashed with bcrypt
 	pub password: String,
+	pub rights: Rights,
 	pub created_on: DateTime,
 }
 
@@ -25,28 +27,48 @@ impl From<UnsafeUser> for User {
 	fn from(user: UnsafeUser) -> Self {
 		Self {
 			id: user.id,
+			team_id: user.team_id,
 			username: user.username,
 			name: user.name,
+			rights: user.rights,
 			created_on: user.created_on,
 		}
 	}
+}
+
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+#[serde(default)]
+pub struct Rights {
+	// admin means you can edit your team
+	pub admin: bool,
+	pub root: bool,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct User {
 	pub id: UniqueId,
+	pub team_id: UniqueId,
 	pub username: String,
 	pub name: String,
+	pub rights: Rights,
 	pub created_on: DateTime,
 }
 
 impl User {
-	pub fn new(username: String, name: String) -> Self {
+	pub fn new(
+		team_id: UniqueId,
+		username: String,
+		name: String,
+		rights: Rights,
+	) -> Self {
 		Self {
 			id: UniqueId::new(),
+			team_id,
 			username,
 			name,
+			rights,
 			created_on: DateTime::now(),
 		}
 	}

@@ -2,12 +2,14 @@ use pg::{
 	Connection, Database, FromRow, Result, ToRow, UniqueId,
 	db::Conn,
 	filter,
+	json::Json,
 	table::{Table, table::TableWithConn},
 	time::{DateTime, Timeout},
 	whr,
 };
+use serde::{Deserialize, Serialize};
 
-use crate::users::data::UnsafeUser;
+use crate::users::data::{Rights, UnsafeUser};
 
 use super::data::{self, Session, Token, User, UsersBuilderTrait, UsersTrait};
 
@@ -56,9 +58,11 @@ impl UsersBuilderTrait for UsersBuilder {
 #[derive(Debug, FromRow, ToRow)]
 struct UserRow {
 	id: UniqueId,
+	team_id: UniqueId,
 	username: String,
 	name: String,
 	password: String,
+	rights: Json<UserRights>,
 	created_on: DateTime,
 }
 
@@ -66,9 +70,11 @@ impl From<UserRow> for UnsafeUser {
 	fn from(row: UserRow) -> Self {
 		Self {
 			id: row.id,
+			team_id: row.team_id,
 			username: row.username,
 			name: row.name,
 			password: row.password,
+			rights: row.rights.0.into(),
 			created_on: row.created_on,
 		}
 	}
@@ -78,9 +84,36 @@ impl From<UserRow> for User {
 	fn from(row: UserRow) -> Self {
 		Self {
 			id: row.id,
+			team_id: row.team_id,
 			username: row.username,
 			name: row.name,
+			rights: row.rights.0.into(),
 			created_on: row.created_on,
+		}
+	}
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct UserRights {
+	pub admin: bool,
+	pub root: bool,
+}
+
+impl From<Rights> for UserRights {
+	fn from(rights: Rights) -> Self {
+		Self {
+			admin: rights.admin,
+			root: rights.root,
+		}
+	}
+}
+
+impl From<UserRights> for Rights {
+	fn from(rights: UserRights) -> Self {
+		Self {
+			admin: rights.admin,
+			root: rights.root,
 		}
 	}
 }
@@ -139,9 +172,11 @@ impl UsersTrait for Users<'_> {
 	async fn insert(&self, user: &UnsafeUser) -> Result<()> {
 		let row = UserRow {
 			id: user.id,
+			team_id: user.team_id,
 			username: user.username.clone(),
 			name: user.name.clone(),
 			password: user.password.clone(),
+			rights: Json(user.rights.clone().into()),
 			created_on: user.created_on,
 		};
 

@@ -1,11 +1,11 @@
 use std::{io::ErrorKind, path::Path};
 
-use api::error::{Error, WithMessage as _};
-use chuchi_crypto::token::Token;
+use api::{
+	error::{Error, WithMessage as _},
+	requests::ApiToken,
+};
 use serde::{Deserialize, Serialize};
 use tokio::fs;
-
-pub type ApiToken = Token<42>;
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "kebab-case")]

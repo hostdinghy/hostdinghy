@@ -11,10 +11,13 @@ use tokio::{
 };
 use tracing::info;
 
-use crate::utils::{
-	cli::{CliError, WithMessage as _},
-	cmd::cmd,
-	huus_dir, verify_root,
+use crate::{
+	server::{self, config::ApiToken},
+	utils::{
+		cli::{CliError, WithMessage as _},
+		cmd::cmd,
+		huus_dir, verify_root,
+	},
 };
 
 #[derive(Debug, Parser)]
@@ -33,6 +36,14 @@ enum SubCommand {
 	Traefik(traefik::Traefik),
 	Registry(registry::Registry),
 	Postgresql(postgresql::Postgresql),
+	Server {
+		/// This is the domain which resolves to this server.
+		/// No website needs to be hosted on this domain.
+		///
+		/// The self signed certificate for the internal api
+		/// will use this domain.
+		domain: String,
+	},
 }
 
 pub async fn setup(setup: Setup) {
@@ -77,6 +88,24 @@ pub async fn inner_setup(setup: Setup) -> Result<(), CliError> {
 			postgresql::setup(postgresql).await?;
 
 			info!("PostgreSQL setup completed successfully.");
+		}
+		SubCommand::Server { domain } => {
+			verify_root()?;
+			let huus_dir = huus_dir()?;
+			let mut cfg = server::Config::read(&huus_dir)
+				.await
+				.with_message("Failed to read server config")?;
+
+			cfg.domain = domain;
+			cfg.api_token = Some(ApiToken::new());
+			cfg.write(huus_dir)
+				.await
+				.with_message("Failed to write server config")?;
+
+			info!(
+				"Server setup completed successfully with domain: {}",
+				cfg.domain
+			);
 		}
 	}
 

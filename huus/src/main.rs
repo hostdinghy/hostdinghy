@@ -8,6 +8,7 @@ How to install this
 
 mod postgresql;
 mod registry;
+mod server;
 mod setup;
 mod utils;
 
@@ -27,6 +28,7 @@ enum SubCommand {
 	Setup(setup::Setup),
 	Registry(registry::Registry),
 	Postgresql(postgresql::Postgresql),
+	Serve,
 }
 
 #[tokio::main]
@@ -46,6 +48,9 @@ async fn main() {
 		}
 		SubCommand::Postgresql(postgresql) => {
 			postgresql::postgresql(postgresql).await;
+		}
+		SubCommand::Serve => {
+			server::serve().await;
 		}
 	}
 }

@@ -27,7 +27,7 @@ pub async fn postgresql(postgresql: Postgresql) {
 	let res = inner_postgresql(postgresql).await;
 
 	if let Err(e) = res {
-		tracing::error!("PostgreSQL command failed: {}", e);
+		tracing::error!("PostgreSQL command failed: {e}");
 	}
 }
 

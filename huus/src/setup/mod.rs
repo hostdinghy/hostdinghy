@@ -14,7 +14,7 @@ use tracing::info;
 use crate::utils::{
 	cli::{CliError, WithMessage as _},
 	cmd::cmd,
-	huus_dir,
+	huus_dir, verify_root,
 };
 
 #[derive(Debug, Parser)]
@@ -46,11 +46,13 @@ pub async fn setup(setup: Setup) {
 pub async fn inner_setup(setup: Setup) -> Result<(), CliError> {
 	match setup.cmd {
 		SubCommand::Docker => {
+			verify_root()?;
 			setup_docker().await?;
 
 			info!("Docker setup completed successfully.");
 		}
 		SubCommand::Dir { dir } => {
+			verify_root()?;
 			let new_dir = setup_dir(dir).await?;
 
 			info!(
@@ -59,16 +61,19 @@ pub async fn inner_setup(setup: Setup) -> Result<(), CliError> {
 			);
 		}
 		SubCommand::Traefik(traefik) => {
+			verify_root()?;
 			traefik::setup(traefik).await?;
 
 			info!("Traefik setup completed successfully.");
 		}
 		SubCommand::Registry(registry) => {
+			verify_root()?;
 			registry::setup(registry).await?;
 
 			info!("Registry setup completed successfully.");
 		}
 		SubCommand::Postgresql(postgresql) => {
+			verify_root()?;
 			postgresql::setup(postgresql).await?;
 
 			info!("PostgreSQL setup completed successfully.");

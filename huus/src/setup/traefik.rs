@@ -1,10 +1,11 @@
 use bollard::{Docker, secret::NetworkCreateRequest};
 use clap::Parser;
+use serde::{Deserialize, Serialize};
 use tokio::fs;
 
 use crate::utils::{
 	cli::{CliError, WithMessage as _},
-	compose,
+	compose, write_toml,
 };
 
 use super::huus_dir;
@@ -95,6 +96,13 @@ pub struct Traefik {
 	dashboard_domain: String,
 }
 
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "kebab-case")]
+pub struct TraefikConfig {
+	pub letsencrypt_email: String,
+	pub dashboard_domain: String,
+}
+
 pub async fn setup(traefik: Traefik) -> Result<(), CliError> {
 	let huus_dir = huus_dir()?;
 	let traefik_dir = huus_dir.join("traefik");
@@ -102,6 +110,16 @@ pub async fn setup(traefik: Traefik) -> Result<(), CliError> {
 	fs::create_dir_all(&traefik_dir)
 		.await
 		.with_message("Failed to create $HUUS_DIR/traefik")?;
+
+	write_toml(
+		&TraefikConfig {
+			letsencrypt_email: traefik.letsencrypt_email.clone(),
+			dashboard_domain: traefik.dashboard_domain.clone(),
+		},
+		traefik_dir.join("config.toml"),
+	)
+	.await
+	.with_message("Failed to write $HUUS_DIR/traefik/config.toml")?;
 
 	let compose_file = traefik_dir.join("compose.yml");
 	fs::write(&compose_file, COMPOSE_YML)

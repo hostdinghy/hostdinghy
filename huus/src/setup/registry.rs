@@ -1,9 +1,10 @@
 use clap::Parser;
+use serde::{Deserialize, Serialize};
 use tokio::fs;
 
 use crate::utils::{
 	cli::{CliError, WithMessage as _},
-	compose,
+	compose, write_toml,
 };
 
 use super::huus_dir;
@@ -61,6 +62,11 @@ pub struct Registry {
 	domain: String,
 }
 
+#[derive(Debug, Serialize, Deserialize)]
+pub struct RegistryConfig {
+	pub domain: String,
+}
+
 pub async fn setup(registry: Registry) -> Result<(), CliError> {
 	let huus_dir = huus_dir()?;
 	let registry_dir = huus_dir.join("registry");
@@ -68,6 +74,15 @@ pub async fn setup(registry: Registry) -> Result<(), CliError> {
 	fs::create_dir_all(&registry_dir)
 		.await
 		.with_message("Failed to create $HUUS_DIR/registry")?;
+
+	write_toml(
+		&RegistryConfig {
+			domain: registry.domain.clone(),
+		},
+		registry_dir.join("config.toml"),
+	)
+	.await
+	.with_message("Failed to write $HUUS_DIR/registry/config.toml")?;
 
 	let compose_file = registry_dir.join("compose.yml");
 	fs::write(

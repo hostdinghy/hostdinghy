@@ -12,6 +12,8 @@ pub enum CliError {
 		"HUUS_DIR environment variable is already set to {0}, cannot set it again"
 	)]
 	HuusDirAlreadySet(String),
+	#[error("This command must be run as root")]
+	NotRoot,
 	#[error("{message} - {error}")]
 	Any {
 		message: String,

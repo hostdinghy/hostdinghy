@@ -6,7 +6,7 @@ CREATE TABLE servers (
     api_token TEXT NOT NULL,
     tls_cert TEXT NOT NULL,
     created_on TIMESTAMP NOT NULL,
-    CONSTRAINT tls_cert_unique UNIQUE (tls_cert),
+    CONSTRAINT tls_cert_unique UNIQUE (tls_cert)
 );
 
 CREATE INDEX idx_servers_team_id ON servers(team_id);

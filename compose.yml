@@ -1,0 +1,15 @@
+services:
+  # Database service for huus-web
+  huus-web-db:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: huus
+      POSTGRES_PASSWORD: huus
+      POSTGRES_DB: huus
+    volumes:
+      - huus_web_db_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+volumes:
+  huus_web_db_data:

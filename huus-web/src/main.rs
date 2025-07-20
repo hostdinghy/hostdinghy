@@ -2,6 +2,7 @@
 mod utils;
 mod apps;
 mod error;
+mod internal;
 mod servers;
 mod teams;
 mod users;
@@ -12,13 +13,14 @@ use axum::Router;
 use axum::extract::FromRef;
 use axum::http::{Method, header};
 use clap::Parser;
-use internal_api::client::ApiClient;
 use pg::{Database, db::Db};
 use serde::Deserialize;
 use tokio::net::TcpListener;
 use tokio::signal;
 use tower_http::cors::{self, CorsLayer};
 use tower_http::trace::TraceLayer;
+
+use crate::internal::ApiClient;
 
 #[derive(Debug, Parser)]
 #[command(version)]
@@ -155,7 +157,7 @@ async fn main() {
 		teams: Arc::new(Box::new(teams)),
 		users: Arc::new(Box::new(users)),
 		servers: Arc::new(Box::new(servers)),
-		api_client: ApiClient::new(),
+		api_client: ApiClient::new(cfg!(debug_assertions)),
 		db,
 		cfg: Arc::new(cfg),
 	};

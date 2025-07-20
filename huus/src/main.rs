@@ -6,6 +6,7 @@ It can be used as cli and also runs a gprc server.
 How to install this
 */
 
+mod apps;
 mod postgresql;
 mod registry;
 mod server;

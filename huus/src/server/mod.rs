@@ -24,10 +24,11 @@ use crate::{
 mod cert;
 pub mod config;
 pub mod error;
-mod router;
+pub mod router;
 mod utils;
 
 pub use config::Config;
+pub use utils::Authenticated;
 
 pub async fn serve() {
 	let res = inner_serve().await;

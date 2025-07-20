@@ -4,7 +4,7 @@ use serde::de::DeserializeOwned;
 
 use crate::{
 	error::{Error, WithMessage},
-	requests::{ApiToken, PingRes, VersionRes},
+	requests::{ApiToken, AppInfoRes, PingRes, VersionRes},
 };
 
 pub type Result<T> = std::result::Result<T, Error>;
@@ -102,5 +102,9 @@ impl ApiServerClient {
 
 	pub async fn version(&self) -> Result<VersionRes> {
 		self.send(self.get("/version")).await
+	}
+
+	pub async fn app_info(&self, id: &str) -> Result<AppInfoRes> {
+		self.send(self.get(&format!("/apps/{id}"))).await
 	}
 }

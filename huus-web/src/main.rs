@@ -61,6 +61,7 @@ pub struct AppState {
 	teams: teams::Teams,
 	users: users::Users,
 	servers: servers::Servers,
+	apps: apps::Apps,
 	api_client: ApiClient,
 	db: Db,
 	cfg: Arc<Config>,
@@ -89,6 +90,7 @@ fn create_app(state: AppState, enable_cors: bool) -> Router {
 		.nest("/api/teams", teams::routes::routes())
 		.nest("/api/users", users::routes::routes())
 		.nest("/api/servers", servers::routes::routes())
+		.nest("/api/apps", apps::routes::routes())
 		.layer(TraceLayer::new_for_http());
 
 	if enable_cors {
@@ -141,6 +143,7 @@ async fn main() {
 	let teams = teams::database::TeamsBuilder::new(&database).await;
 	let users = users::database::UsersBuilder::new(&database).await;
 	let servers = servers::database::ServersBuilder::new(&database).await;
+	let apps = apps::database::AppsBuilder::new(&database).await;
 
 	match args.subcmd {
 		Some(SubCommand::CreateUser(c)) => {
@@ -157,6 +160,7 @@ async fn main() {
 		teams: Arc::new(Box::new(teams)),
 		users: Arc::new(Box::new(users)),
 		servers: Arc::new(Box::new(servers)),
+		apps: Arc::new(Box::new(apps)),
 		api_client: ApiClient::new(cfg!(debug_assertions)),
 		db,
 		cfg: Arc::new(cfg),

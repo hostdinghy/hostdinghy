@@ -1,11 +1,14 @@
-use bollard::{Docker, secret::NetworkCreateRequest};
+use bollard::secret::NetworkCreateRequest;
 use clap::Parser;
-use serde::{Deserialize, Serialize};
 use tokio::fs;
 
-use crate::utils::{
-	cli::{CliError, WithMessage as _},
-	compose, write_toml,
+use crate::{
+	docker::Docker,
+	traefik::{ApiToken, TraefikConfig},
+	utils::{
+		cli::{CliError, WithMessage as _},
+		compose, write_toml,
+	},
 };
 
 use super::huus_dir;
@@ -53,6 +56,9 @@ entryPoints:
   websecure:
     address: :443
 
+  weblocal:
+    address: "127.0.0.1:8080"
+
 api:
   dashboard: true
 
@@ -67,7 +73,8 @@ certificatesResolvers:
 
 providers:
   # Enable Docker configuration backend
-  docker: {}
+  docker:
+    exposedByDefault: false
   file:
     filename: /etc/traefik/dynamic.yml
 "#;
@@ -75,8 +82,18 @@ providers:
 const TRAEFIK_DYNAMIC_YML: &str = r#"
 http:
   routers:
+    apilocal:
+      rule: "PathPrefix(`/api`)"
+      entryPoints:
+        - weblocal
+      service: api@internal
+      middlewares:
+        - authlocal
+
     dashboard:
       rule: "Host(`{dashboard_domain}`)"
+      entryPoints:
+        - websecure
       service: api@internal
       tls:
         certResolver: letsencrypt
@@ -88,19 +105,17 @@ http:
       basicAuth:
         users:
           - "test:$2a$12$b5Od6Dmn1cWAw25kIvrcYuTY67RbF81Dpz5njSBZCtu.aHX/zSeUa"
+
+    authlocal:
+      basicAuth:
+        users:
+          - "huus:{api_token}"
 "#;
 
 #[derive(Debug, Parser)]
 pub struct Traefik {
 	letsencrypt_email: String,
 	dashboard_domain: String,
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-#[serde(rename_all = "kebab-case")]
-pub struct TraefikConfig {
-	pub letsencrypt_email: String,
-	pub dashboard_domain: String,
 }
 
 pub async fn setup(traefik: Traefik) -> Result<(), CliError> {
@@ -111,15 +126,15 @@ pub async fn setup(traefik: Traefik) -> Result<(), CliError> {
 		.await
 		.with_message("Failed to create $HUUS_DIR/traefik")?;
 
-	write_toml(
-		&TraefikConfig {
-			letsencrypt_email: traefik.letsencrypt_email.clone(),
-			dashboard_domain: traefik.dashboard_domain.clone(),
-		},
-		traefik_dir.join("config.toml"),
-	)
-	.await
-	.with_message("Failed to write $HUUS_DIR/traefik/config.toml")?;
+	let cfg = TraefikConfig {
+		letsencrypt_email: traefik.letsencrypt_email,
+		dashboard_domain: traefik.dashboard_domain,
+		api_token: ApiToken::new(),
+	};
+
+	write_toml(&cfg, traefik_dir.join("config.toml"))
+		.await
+		.with_message("Failed to write $HUUS_DIR/traefik/config.toml")?;
 
 	let compose_file = traefik_dir.join("compose.yml");
 	fs::write(&compose_file, COMPOSE_YML)
@@ -129,7 +144,7 @@ pub async fn setup(traefik: Traefik) -> Result<(), CliError> {
 	let traefik_yml = traefik_dir.join("traefik.yml");
 	fs::write(
 		traefik_yml,
-		TRAEFIK_YML.replace("{letsencrypt_email}", &traefik.letsencrypt_email),
+		TRAEFIK_YML.replace("{letsencrypt_email}", &cfg.letsencrypt_email),
 	)
 	.await
 	.with_message("Failed to write $HUUS_DIR/traefik/traefik.yml")?;
@@ -138,22 +153,21 @@ pub async fn setup(traefik: Traefik) -> Result<(), CliError> {
 	fs::write(
 		dynamic_yml,
 		TRAEFIK_DYNAMIC_YML
-			.replace("{dashboard_domain}", &traefik.dashboard_domain),
+			.replace("{dashboard_domain}", &cfg.dashboard_domain)
+			.replace("{api_token}", &bcrypt::hash(&cfg.api_token, 10).unwrap()),
 	)
 	.await
 	.with_message("Failed to write $HUUS_DIR/traefik/dynamic.yml")?;
 
 	{
-		let docker = Docker::connect_with_local_defaults()
-			.with_message("Failed to connect to Docker")?;
+		let docker = Docker::new()?;
 
 		docker
 			.create_network(NetworkCreateRequest {
 				name: "traefik".into(),
 				..Default::default()
 			})
-			.await
-			.with_message("Failed to create traefik network")?;
+			.await?;
 	}
 
 	compose::up(compose_file).await?;

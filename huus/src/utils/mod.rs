@@ -3,7 +3,7 @@ use std::{
 	path::{Path, PathBuf},
 };
 
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use tokio::fs;
 
 use crate::utils::cli::{CliError, WithMessage};
@@ -33,6 +33,16 @@ pub async fn write_toml<T: Serialize, P: AsRef<Path>>(
 	fs::write(path, s)
 		.await
 		.with_message("Failed to write TOML file")
+}
+
+pub async fn read_toml<T: for<'de> Deserialize<'de>, P: AsRef<Path>>(
+	path: P,
+) -> Result<T, CliError> {
+	let s = fs::read_to_string(path)
+		.await
+		.with_message("Failed to read TOML file")?;
+
+	toml::from_str(&s).with_message("Failed to deserialize TOML data")
 }
 
 #[cfg(target_os = "linux")]

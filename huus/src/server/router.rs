@@ -1,4 +1,4 @@
-use std::sync::Arc;
+use std::{path::Path, sync::Arc};
 
 use api::{
 	error::Error,
@@ -7,11 +7,30 @@ use api::{
 use axum::{Json, Router, extract::FromRef, routing::get};
 use chuchi_postgres::time::DateTime;
 
-use crate::server::{Config, utils::Authenticated};
+use crate::{
+	apps,
+	docker::Docker,
+	server::{Config, utils::Authenticated},
+	traefik::client::Traefik,
+};
 
 #[derive(Clone)]
 pub struct AppState {
+	pub docker: Docker,
+	pub traefik: Traefik,
 	pub cfg: Arc<Config>,
+}
+
+impl FromRef<AppState> for Docker {
+	fn from_ref(state: &AppState) -> Self {
+		state.docker.clone()
+	}
+}
+
+impl FromRef<AppState> for Traefik {
+	fn from_ref(state: &AppState) -> Self {
+		state.traefik.clone()
+	}
 }
 
 impl FromRef<AppState> for Arc<Config> {
@@ -20,12 +39,17 @@ impl FromRef<AppState> for Arc<Config> {
 	}
 }
 
-pub async fn app(cfg: Config) -> Result<Router<()>, Error> {
-	let state = AppState { cfg: Arc::new(cfg) };
+pub async fn app(huus_dir: &Path, cfg: Config) -> Result<Router<()>, Error> {
+	let state = AppState {
+		docker: Docker::new()?,
+		traefik: Traefik::new(huus_dir).await?,
+		cfg: Arc::new(cfg),
+	};
 
 	let router = Router::new()
 		.route("/ping", get(ping_req))
 		.route("/version", get(version_req))
+		.nest("/apps", apps::routes::routes())
 		.with_state(state);
 
 	Ok(router)

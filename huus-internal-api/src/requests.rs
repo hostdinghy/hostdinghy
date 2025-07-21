@@ -46,7 +46,6 @@ pub struct AppInfoReq;
 #[serde(rename_all = "camelCase")]
 pub struct AppInfoRes {
 	pub services: Vec<AppService>,
-	pub traefik: AppInfoTraefik,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -54,32 +53,30 @@ pub struct AppInfoRes {
 pub struct AppService {
 	pub name: String,
 	pub state: ServiceState,
-	pub started_at: DateTime,
-	pub finished_at: Option<DateTime>,
+	// human readable state
+	pub state_hr: String,
+	pub routes: Vec<ServiceRoute>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "UPPERCASE")]
 pub enum ServiceState {
-	Starting,
-	Running,
+	Empty,
+	Created,
 	/// if the healthcheck failed
 	Unhealthy,
-	Stopped,
-	Error,
+	Running,
+	Paused,
+	Restarting,
+	Exited,
+	Removing,
+	Dead,
 	Unknown,
 }
 
-// this should correspond to one traefik service
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-pub struct AppInfoTraefik {
-	routers: Vec<AppTraefikRouter>,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct AppTraefikRouter {
+pub struct ServiceRoute {
 	pub rule: String,
 	// a list of all domains aka Host(`example.com`) rules
 	// this needs to be a parsed manually, also all operands

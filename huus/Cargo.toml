@@ -29,8 +29,15 @@ rcgen = "0.14.2"
 tokio-rustls = "0.26.2"
 axum = { version = "0.8.4", features = ["http2"] }
 hyper = { version = "1.6.0", features = ["http1", "http2", "server"] }
-hyper-util = { version = "0.1.15", features = ["http1", "http2", "tokio", "service", "server"] }
+hyper-util = { version = "0.1.15", features = [
+	"http1",
+	"http2",
+	"tokio",
+	"service",
+	"server",
+] }
 tower = { version = "0.5.2", features = ["tracing", "tokio", "tokio-util"] }
 semver = { version = "1.0.26", features = ["serde"] }
 chuchi-crypto = { version = "0.2.0-pre.0", features = ["b64", "serde"] }
 subtle = "2.6.1"
+reqwest = { version = "0.12.22", features = ["json"] }

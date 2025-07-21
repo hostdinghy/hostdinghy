@@ -55,8 +55,9 @@ async fn inner_serve() -> Result<(), Error> {
 
 	// this is not really necessary since we don't do anything async but
 	// since everything else is async, might be good practice
+	let n_huus_dir = huus_dir.clone();
 	let rustls_config =
-		task::spawn_blocking(move || rustls_server_config(&huus_dir))
+		task::spawn_blocking(move || rustls_server_config(n_huus_dir))
 			.await
 			.unwrap()?;
 
@@ -65,7 +66,7 @@ async fn inner_serve() -> Result<(), Error> {
 		.await
 		.with_message("failed to bind to [::]:4242")?;
 
-	let app = router::app(cfg).await?;
+	let app = router::app(&huus_dir, cfg).await?;
 
 	loop {
 		let tower_service = app.clone();

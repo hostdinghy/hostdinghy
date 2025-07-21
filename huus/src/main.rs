@@ -7,12 +7,14 @@ How to install this
 */
 
 mod apps;
+mod docker;
 mod postgresql;
 mod registry;
 #[cfg(debug_assertions)]
 mod runtime_test;
 mod server;
 mod setup;
+mod traefik;
 mod utils;
 
 use clap::Parser;

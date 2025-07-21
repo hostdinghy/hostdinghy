@@ -30,10 +30,10 @@ services:
       - ./web/assets:/app/web/assets
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.craft.rule=Host(`staging.crelte-tut.b2.goodserver.ch`)"
-      - "traefik.http.routers.craft.entrypoints=websecure"
-      - "traefik.http.routers.craft.tls.certresolver=letsencrypt"
-      - "traefik.http.services.craft.loadbalancer.server.port=80"
+      - "traefik.http.routers.crelte-tut-craft.rule=Host(`staging.crelte-tut.b2.goodserver.ch`)"
+      - "traefik.http.routers.crelte-tut-craft.entrypoints=websecure"
+      - "traefik.http.routers.crelte-tut-craft.tls.certresolver=letsencrypt"
+      - "traefik.http.services.crelte-tut-craft.loadbalancer.server.port=80"
     networks:
       - traefik
 
@@ -48,10 +48,10 @@ services:
       - "./.env:/craft/.env:ro"
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.svelte.rule=Host(`crelte-tut.b2.goodserver.ch`)"
-      - "traefik.http.routers.svelte.entrypoints=websecure"
-      - "traefik.http.routers.svelte.tls.certresolver=letsencrypt"
-      - "traefik.http.services.svelte.loadbalancer.server.port=8080"
+      - "traefik.http.routers.crelte-tut-svelte.rule=Host(`crelte-tut.b2.goodserver.ch`)"
+      - "traefik.http.routers.crelte-tut-svelte.entrypoints=websecure"
+      - "traefik.http.routers.crelte-tut-svelte.tls.certresolver=letsencrypt"
+      - "traefik.http.services.crelte-tut-svelte.loadbalancer.server.port=8080"
     networks:
       - traefik
 

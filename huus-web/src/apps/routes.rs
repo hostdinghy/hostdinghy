@@ -69,5 +69,5 @@ async fn create(
 pub fn routes() -> Router<AppState> {
 	Router::new()
 		.route("/", get(all).post(create))
-		.route("/:id", get(by_id))
+		.route("/{id}", get(by_id))
 }

@@ -9,6 +9,8 @@ How to install this
 mod apps;
 mod postgresql;
 mod registry;
+#[cfg(debug_assertions)]
+mod runtime_test;
 mod server;
 mod setup;
 mod utils;
@@ -30,6 +32,8 @@ enum SubCommand {
 	Registry(registry::Registry),
 	Postgresql(postgresql::Postgresql),
 	Serve,
+	#[cfg(debug_assertions)]
+	Test(runtime_test::Test),
 }
 
 #[tokio::main]
@@ -52,6 +56,10 @@ async fn main() {
 		}
 		SubCommand::Serve => {
 			server::serve().await;
+		}
+		#[cfg(debug_assertions)]
+		SubCommand::Test(t) => {
+			runtime_test::test(t).await;
 		}
 	}
 }

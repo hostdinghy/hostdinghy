@@ -4,7 +4,7 @@ use api::{
 };
 use bollard::secret::ContainerSummaryStateEnum;
 
-use crate::traefik::api::TraefikRoute;
+use crate::traefik::{api::TraefikRoute, utils::parse_rule_to_domains};
 
 pub fn cont_sum_state_enum_to_service_state(
 	en: ContainerSummaryStateEnum,
@@ -40,8 +40,7 @@ pub fn traefik_route_to_service_route(
 	route: TraefikRoute,
 ) -> Result<ServiceRoute, Error> {
 	Ok(ServiceRoute {
+		domains: parse_rule_to_domains(&route.rule),
 		rule: route.rule,
-		// todo parse hosts
-		domains: vec![],
 	})
 }

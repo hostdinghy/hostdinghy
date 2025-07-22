@@ -1,5 +1,6 @@
 pub mod api;
 pub mod client;
+pub mod utils;
 
 use std::path::{Path, PathBuf};
 

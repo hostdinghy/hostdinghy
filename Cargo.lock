@@ -1054,6 +1054,7 @@ dependencies = [
  "hyper-util",
  "libc",
  "rcgen",
+ "regex",
  "reqwest",
  "semver",
  "serde",

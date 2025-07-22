@@ -41,3 +41,4 @@ semver = { version = "1.0.26", features = ["serde"] }
 chuchi-crypto = { version = "0.2.0-pre.0", features = ["b64", "serde"] }
 subtle = "2.6.1"
 reqwest = { version = "0.12.22", features = ["json"] }
+regex = "1.11.1"

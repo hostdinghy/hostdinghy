@@ -4,6 +4,13 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
+reqwest = { version = "0.12.22", features = [
+	"http2",
+	"charset",
+	"gzip",
+	"brotli",
+	"json",
+], default-features = false }
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 clap = { version = "4.0", features = ["derive"] }
@@ -40,5 +47,5 @@ tower = { version = "0.5.2", features = ["tracing", "tokio", "tokio-util"] }
 semver = { version = "1.0.26", features = ["serde"] }
 chuchi-crypto = { version = "0.2.0-pre.0", features = ["b64", "serde"] }
 subtle = "2.6.1"
-reqwest = { version = "0.12.22", features = ["json"] }
 regex = "1.11.1"
+dotenvy = "0.15.7"

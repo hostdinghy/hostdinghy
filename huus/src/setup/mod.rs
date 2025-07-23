@@ -13,7 +13,7 @@ use tokio::{
 use tracing::info;
 
 use crate::{
-	server::{self},
+	server::{self, maybe_create_cert, read_cert},
 	utils::{
 		cli::{CliError, WithMessage as _},
 		cmd::cmd,
@@ -58,13 +58,13 @@ pub async fn setup(setup: Setup) {
 pub async fn inner_setup(setup: Setup) -> Result<(), CliError> {
 	match setup.cmd {
 		SubCommand::Docker => {
-			verify_root()?;
+			verify_root().await?;
 			setup_docker().await?;
 
 			info!("Docker setup completed successfully.");
 		}
 		SubCommand::Dir { dir } => {
-			verify_root()?;
+			verify_root().await?;
 			let new_dir = setup_dir(dir).await?;
 
 			info!(
@@ -73,25 +73,25 @@ pub async fn inner_setup(setup: Setup) -> Result<(), CliError> {
 			);
 		}
 		SubCommand::Traefik(traefik) => {
-			verify_root()?;
+			verify_root().await?;
 			traefik::setup(traefik).await?;
 
 			info!("Traefik setup completed successfully.");
 		}
 		SubCommand::Registry(registry) => {
-			verify_root()?;
+			verify_root().await?;
 			registry::setup(registry).await?;
 
 			info!("Registry setup completed successfully.");
 		}
 		SubCommand::Postgresql(postgresql) => {
-			verify_root()?;
+			verify_root().await?;
 			postgresql::setup(postgresql).await?;
 
 			info!("PostgreSQL setup completed successfully.");
 		}
 		SubCommand::Server { domain } => {
-			verify_root()?;
+			verify_root().await?;
 			let huus_dir = huus_dir()?;
 			let mut cfg = server::Config::read(&huus_dir)
 				.await
@@ -99,14 +99,28 @@ pub async fn inner_setup(setup: Setup) -> Result<(), CliError> {
 
 			cfg.domain = domain;
 			cfg.api_token = Some(ApiToken::new());
-			cfg.write(huus_dir)
+			cfg.write(&huus_dir)
 				.await
 				.with_message("Failed to write server config")?;
+
+			maybe_create_cert(&cfg, &huus_dir)
+				.await
+				.with_message("Failed to create self-signed certificate")?;
+			let cert = read_cert(huus_dir)
+				.await
+				.with_message("Failed to read self-signed certificate")?;
 
 			info!(
 				"Server setup completed successfully with domain: {}",
 				cfg.domain
 			);
+
+			eprintln!(
+				"With the following information you can add the server \
+				to the huus ui:\n\n{}\n{}",
+				cfg.api_token.unwrap(),
+				cert
+			)
 		}
 	}
 

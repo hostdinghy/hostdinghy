@@ -26,7 +26,7 @@ impl Traefik {
 
 	fn request(&self, method: Method, uri: &str) -> RequestBuilder {
 		self.inner
-			.request(method, format!("127.0.0.1:8080{}", uri))
+			.request(method, format!("http://127.0.0.1:8080{}", uri))
 			.basic_auth("huus", Some(self.cfg.api_token.to_string()))
 	}
 

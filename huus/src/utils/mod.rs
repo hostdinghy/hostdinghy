@@ -1,5 +1,6 @@
 use std::{
 	env::{self, VarError},
+	io::{self, Cursor},
 	path::{Path, PathBuf},
 };
 
@@ -56,8 +57,26 @@ fn getuid() -> u32 {
 }
 
 // Check if this program is running as root
-pub fn verify_root() -> Result<(), CliError> {
+pub async fn verify_root() -> Result<(), CliError> {
 	let uid = getuid();
 
-	(uid == 0).then_some(()).ok_or_else(|| CliError::NotRoot)
+	if uid != 0 {
+		return Err(CliError::NotRoot);
+	}
+
+	// because we are running as root this might mean
+	// we are running from within sudo which could
+	// mean /etc/environment is not read
+	// so we read it manually
+	let etc_env = match fs::read_to_string("/etc/environment").await {
+		Ok(o) => o,
+		Err(e) if e.kind() == io::ErrorKind::NotFound => String::new(),
+		Err(e) => {
+			return Err(CliError::any("Failed to read /etc/environment", e));
+		}
+	};
+	dotenvy::from_read_override(Cursor::new(etc_env))
+		.with_message("Failed to read /etc/environment")?;
+
+	Ok(())
 }

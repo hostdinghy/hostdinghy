@@ -47,3 +47,11 @@ async fn create_cert(
 
 	Ok(())
 }
+
+pub async fn read_cert(huus_dir: impl AsRef<Path>) -> Result<String, Error> {
+	let cert_path = cert_path(&huus_dir);
+	let cert = fs::read_to_string(cert_path)
+		.await
+		.with_message("failed to read $HUUS_DIR/cert.pem")?;
+	Ok(cert)
+}

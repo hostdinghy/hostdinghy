@@ -16,10 +16,7 @@ use tokio_rustls::{
 use tower::Service as _;
 use tracing::{error, warn};
 
-use crate::{
-	server::cert::maybe_create_cert,
-	utils::{huus_dir, verify_root},
-};
+use crate::utils::{huus_dir, verify_root};
 
 mod cert;
 pub mod config;
@@ -27,6 +24,7 @@ pub mod error;
 pub mod router;
 mod utils;
 
+pub use cert::{maybe_create_cert, read_cert};
 pub use config::Config;
 pub use utils::Authenticated;
 
@@ -40,7 +38,7 @@ pub async fn serve() {
 
 // todo maybe this should return a cli error
 async fn inner_serve() -> Result<(), Error> {
-	verify_root()?;
+	verify_root().await?;
 	let huus_dir = huus_dir()?;
 	let mut cfg = Config::read(&huus_dir).await?;
 

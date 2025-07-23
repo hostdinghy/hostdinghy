@@ -7,7 +7,6 @@ edition = "2024"
 postgres = ["dep:postgres-types", "dep:bytes"]
 client = ["dep:reqwest"]
 bytes = ["dep:bytes"]
-chuchi-postgres = ["dep:chuchi-postgres"]
 
 [dependencies]
 tracing = "0.1"

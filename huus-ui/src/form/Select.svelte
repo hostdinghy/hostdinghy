@@ -14,7 +14,7 @@
 		name: string;
 		label: string;
 		value: string;
-		options: { text: string; [key: string]: any }[];
+		options: { value: string; [key: string]: any }[];
 		[rest: string]: any;
 	} = $props();
 </script>
@@ -23,7 +23,7 @@
 	<select {id} {name} bind:value {...rest}>
 		{#each options as option}
 			<option value={option}>
-				{option.text}
+				{option.value}
 			</option>
 		{/each}
 	</select>

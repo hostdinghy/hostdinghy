@@ -1,0 +1,15 @@
+{
+  "Servers": {
+    "1": {
+      "Name": "huus-web-db",
+      "Group": "Servers",
+      "Host": "huus-web-db",
+      "Port": 5432,
+      "MaintenanceDB": "huus",
+      "Username": "huus",
+      "Password": "huus",
+      "SSLMode": "prefer",
+      "ConnectNow": true
+    }
+  }
+}

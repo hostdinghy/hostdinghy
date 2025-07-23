@@ -33,10 +33,14 @@ table {
 	border-spacing: 0;
 }
 
-button {
+button,
+input {
 	appearance: none;
 	border: none;
 	background: none;
 	border-radius: 0;
 	box-shadow: none;
+	background: none;
+	border: none;
+	color: currentColor;
 }

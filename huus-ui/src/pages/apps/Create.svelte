@@ -66,7 +66,7 @@
 			<Select
 				bind:value={server}
 				label="server"
-				options={servers.map(s => ({ ...s, text: s.name }))}
+				options={servers.map(s => ({ ...s, value: s.name }))}
 			/>
 
 			{#if error}

@@ -1,5 +1,6 @@
 <script module>
 	import { all, App } from '@/api/apps';
+	import Button from '@/components/Button.svelte';
 
 	export async function loadProps() {
 		return {
@@ -9,6 +10,7 @@
 </script>
 
 <script lang="ts">
+	import Table from '@/components/Table.svelte';
 	let { apps }: { apps: App[] } = $props();
 </script>
 
@@ -16,14 +18,24 @@
 	<title>Huus</title>
 </svelte:head>
 
-<div class="wrap">
-	<ul>
-		{#each apps as app}
-			<li>
-				<a href="/apps/{app.id}">
-					{app.name}
-				</a>
-			</li>
-		{/each}
-	</ul>
+<div class="layout wrap">
+	<Table
+		headers={[
+			{ key: 'name', value: 'Name' },
+			{ key: 'protocol', value: 'Status' },
+			{ key: 'port', value: 'Uptime' },
+			{ key: 'rule', value: 'Actions' },
+		]}
+		rows={apps}
+	>
+		{#snippet toolbar()}
+			<Button href="/apps/create">add</Button>
+		{/snippet}
+	</Table>
 </div>
+
+<style>
+	.layout {
+		margin-top: 5rem;
+	}
+</style>

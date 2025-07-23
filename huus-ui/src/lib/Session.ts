@@ -34,6 +34,8 @@ export default class Session {
 			me.user = auth.user;
 		}
 
+		globalThis.SESSION = me;
+
 		return me;
 	}
 
@@ -69,5 +71,5 @@ async function authed(): Promise<Authenticated | null> {
 }
 
 export function getSession(): Session {
-	return getContext('session');
+	return globalThis.SESSION;
 }

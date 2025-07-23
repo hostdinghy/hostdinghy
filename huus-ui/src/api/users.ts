@@ -1,4 +1,6 @@
+import { getSession } from '@/lib/Session';
 import { newApi } from './utils';
+import { ApiError } from 'chuchi/api';
 
 const api = newApi('/users');
 
@@ -9,6 +11,10 @@ export class Session {
 	constructor(data: any) {
 		Object.assign(this, data);
 		this.timeout = new Date(data.timeout);
+	}
+
+	isValid() {
+		return this.timeout < Date.now();
 	}
 }
 
@@ -46,4 +52,16 @@ export async function tokenAuth(token: string): Promise<Authenticated> {
 	});
 
 	return new Authenticated(d);
+}
+
+export function getSessionHeaders() {
+	const session = getSession();
+
+	if (!session.inner?.isValid()) {
+		throw new ApiError('InvalidSessionToken', 'session-token invalid.');
+	}
+
+	return {
+		'session-token': session.inner.token,
+	};
 }

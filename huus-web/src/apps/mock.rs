@@ -3,6 +3,7 @@ use std::{
 	sync::{Arc, RwLock},
 };
 
+use internal_api::app_id::AppId;
 use pg::{Result, UniqueId, db::Conn};
 
 use super::data::{App, AppsBuilderTrait, AppsTrait, AppsWithConn};
@@ -26,7 +27,7 @@ impl AppsBuilderTrait for AppsBuilder {
 }
 
 pub struct Apps {
-	apps: RwLock<HashMap<String, App>>,
+	apps: RwLock<HashMap<AppId, App>>,
 }
 
 impl Apps {
@@ -55,7 +56,7 @@ impl AppsTrait for Arc<Apps> {
 		Ok(apps)
 	}
 
-	async fn by_id(&self, id: &str) -> Result<Option<App>> {
+	async fn by_id(&self, id: &AppId) -> Result<Option<App>> {
 		let inner = self.apps.read().unwrap();
 		Ok(inner.get(id).cloned())
 	}

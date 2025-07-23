@@ -1,4 +1,5 @@
 use api::{
+	app_id::AppId,
 	error::{Error, WithMessage},
 	requests::{AppInfoRes, AppService, ServiceState},
 };
@@ -22,12 +23,14 @@ async fn app_info(
 	_auth: Authenticated,
 	State(docker): State<Docker>,
 	State(traefik): State<Traefik>,
-	Path(id): Path<String>,
+	Path(id): Path<AppId>,
 ) -> Result<Json<AppInfoRes>, Error> {
+	// let's first check if the
+
 	// search for all containers and find the ones that are tagged
 	// with the given composer id
 	let services = docker
-		.containers_by_composer_project(&id)
+		.containers_by_composer_project(id.as_ref())
 		.await
 		.with_message("Failed to list Docker services")?;
 

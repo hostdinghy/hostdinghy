@@ -1,3 +1,4 @@
+use internal_api::app_id::AppId;
 use pg::{
 	Connection, Database, FromRow, Result, ToRow, UniqueId,
 	db::Conn,
@@ -49,7 +50,7 @@ impl AppsBuilderTrait for AppsBuilder {
 
 #[derive(Debug, FromRow, ToRow)]
 struct AppRow {
-	id: String,
+	id: AppId,
 	name: String,
 	team_id: UniqueId,
 	server_id: UniqueId,
@@ -88,9 +89,9 @@ impl AppsTrait for Apps<'_> {
 			.map(|r| r.into_iter().map(Into::into).collect())
 	}
 
-	async fn by_id(&self, id: &str) -> Result<Option<App>> {
+	async fn by_id(&self, id: &AppId) -> Result<Option<App>> {
 		self.apps
-			.select_opt::<AppRow>(filter!(&id))
+			.select_opt::<AppRow>(filter!(id))
 			.await
 			.map(|r| r.map(Into::into))
 	}

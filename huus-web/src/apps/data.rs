@@ -1,6 +1,7 @@
 use std::sync::Arc;
 
 use axum::extract::FromRef;
+use internal_api::app_id::AppId;
 use pg::{Result, UniqueId, db::Conn, time::DateTime};
 use serde::{Deserialize, Serialize};
 
@@ -9,10 +10,7 @@ use crate::AppState;
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct App {
-	// an ascii string without any spaces unique for every app
-	// it is also the folder where everything is stored
-	// in $HUUS_DIR
-	pub id: String,
+	pub id: AppId,
 	pub name: String,
 	pub team_id: UniqueId,
 	pub server_id: UniqueId,
@@ -53,7 +51,7 @@ pub trait AppsTrait {
 
 	async fn all_by_team(&self, team_id: &UniqueId) -> Result<Vec<App>>;
 
-	async fn by_id(&self, id: &str) -> Result<Option<App>>;
+	async fn by_id(&self, id: &AppId) -> Result<Option<App>>;
 
 	async fn insert(&self, app: &App) -> Result<()>;
 }

@@ -3,6 +3,7 @@ use reqwest::{Certificate, RequestBuilder};
 use serde::de::DeserializeOwned;
 
 use crate::{
+	app_id::AppId,
 	error::{Error, WithMessage},
 	requests::{ApiToken, AppInfoRes, PingRes, VersionRes},
 };
@@ -104,7 +105,7 @@ impl ApiServerClient {
 		self.send(self.get("/version")).await
 	}
 
-	pub async fn app_info(&self, id: &str) -> Result<AppInfoRes> {
+	pub async fn app_info(&self, id: &AppId) -> Result<AppInfoRes> {
 		self.send(self.get(&format!("/apps/{id}"))).await
 	}
 }

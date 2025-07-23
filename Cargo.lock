@@ -1074,9 +1074,11 @@ name = "huus-internal-api"
 version = "0.1.0"
 dependencies = [
  "axum",
+ "bytes",
  "chuchi-crypto 0.1.2",
  "chuchi-postgres",
  "http",
+ "postgres-types",
  "reqwest",
  "semver",
  "serde",

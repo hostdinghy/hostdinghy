@@ -1,6 +1,7 @@
 use axum::extract::{Path, State};
 use axum::routing::get;
 use axum::{Json, Router};
+use internal_api::app_id::AppId;
 use pg::UniqueId;
 use pg::time::DateTime;
 use serde::{Deserialize, Serialize};
@@ -30,7 +31,7 @@ async fn all(
 async fn by_id(
 	_user: AuthedUser<RightsAny>,
 	State(apps): State<Apps>,
-	Path(id): Path<String>,
+	Path(id): Path<AppId>,
 	conn: ConnOwned,
 ) -> Result<Json<Option<App>>> {
 	let apps = apps.with_conn(conn.conn());
@@ -40,7 +41,7 @@ async fn by_id(
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 struct CreateAppReq {
-	id: String,
+	id: AppId,
 	name: String,
 	server_id: UniqueId,
 }

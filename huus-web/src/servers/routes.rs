@@ -30,6 +30,7 @@ async fn all(
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 struct CreateServerReq {
 	name: String,
 	addr: String,

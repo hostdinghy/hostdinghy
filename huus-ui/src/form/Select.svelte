@@ -7,23 +7,30 @@
 		type,
 		label,
 		value = $bindable(),
+		options,
 		...rest
 	}: {
 		id: string;
 		name: string;
-		type: 'text' | 'email' | 'password';
 		label: string;
 		value: string;
+		options: { text: string; [key: string]: any }[];
 		[rest: string]: any;
 	} = $props();
 </script>
 
 <Field {id} {label}>
-	<input {type} {name} {id} bind:value {...rest} />
+	<select {id} {name} bind:value {...rest}>
+		{#each options as option}
+			<option value={option}>
+				{option.text}
+			</option>
+		{/each}
+	</select>
 </Field>
 
 <style lang="scss">
-	input {
+	select {
 		padding: 0.5rem 1.5rem;
 		background-color: transparent;
 		border: none;

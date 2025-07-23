@@ -40,6 +40,7 @@ struct Args {
 #[derive(Debug, Parser)]
 enum SubCommand {
 	CreateUser(users::cli::CreateUser),
+	CreateServer(servers::cli::CreateServer),
 }
 
 #[derive(Debug, Clone, Deserialize)]
@@ -148,6 +149,10 @@ async fn main() {
 	match args.subcmd {
 		Some(SubCommand::CreateUser(c)) => {
 			users::cli::create_user(&mut conn, &users, &teams, c).await;
+			return;
+		}
+		Some(SubCommand::CreateServer(c)) => {
+			servers::cli::create_server(&mut conn, &servers, c).await;
 			return;
 		}
 		None => {}

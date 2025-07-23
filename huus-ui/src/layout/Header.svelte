@@ -13,5 +13,8 @@
 </script>
 
 <header>
-	<!-- do i need a header -->
+	{#if $session.isLoggedIn()}
+		{$session.user?.name}
+		[{$session.user?.username}]
+	{/if}
 </header>

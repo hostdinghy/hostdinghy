@@ -38,6 +38,7 @@ async fn by_id(
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 struct CreateAppReq {
 	id: String,
 	name: String,

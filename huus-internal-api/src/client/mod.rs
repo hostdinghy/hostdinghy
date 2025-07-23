@@ -4,8 +4,9 @@ use serde::de::DeserializeOwned;
 
 use crate::{
 	app_id::AppId,
+	apps::AppInfoRes,
 	error::{Error, WithMessage},
-	requests::{ApiToken, AppInfoRes, PingRes, VersionRes},
+	requests::{ApiToken, PingRes, VersionRes},
 };
 
 pub type Result<T> = std::result::Result<T, Error>;

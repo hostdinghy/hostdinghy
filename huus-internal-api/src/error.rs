@@ -7,6 +7,8 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Debug, thiserror::Error, Serialize, Deserialize)]
 pub enum Error {
+	#[error("Could not find app folder")]
+	AppNotFound,
 	#[error("Missing bearer token in request")]
 	MissingApiToken,
 	#[error("Invalid bearer token in request")]
@@ -38,6 +40,7 @@ impl Error {
 
 	pub fn status_code(&self) -> StatusCode {
 		match self {
+			Self::AppNotFound => StatusCode::NOT_FOUND,
 			Self::MissingApiToken => StatusCode::UNAUTHORIZED,
 			Self::InvalidApiToken => StatusCode::FORBIDDEN,
 			Self::InvalidCertificate => StatusCode::BAD_REQUEST,

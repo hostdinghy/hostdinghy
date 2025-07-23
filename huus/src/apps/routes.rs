@@ -8,6 +8,7 @@ use axum::{
 	extract::{Path, State},
 	routing::get,
 };
+use tokio::fs;
 
 use crate::{
 	apps::utils::{
@@ -17,6 +18,7 @@ use crate::{
 	docker::Docker,
 	server::{Authenticated, router::AppState},
 	traefik::client::Traefik,
+	utils::huus_dir,
 };
 
 async fn app_info(
@@ -25,7 +27,12 @@ async fn app_info(
 	State(traefik): State<Traefik>,
 	Path(id): Path<AppId>,
 ) -> Result<Json<AppInfoRes>, Error> {
-	// let's first check if the
+	// let's first check if the id exists
+	// we do this by checking if the folder exists
+	let path = huus_dir()?.join(id.as_ref());
+	if fs::metadata(path).await.map_or(false, |m| m.is_dir()) {
+		return Err(Error::AppNotFound);
+	}
 
 	// search for all containers and find the ones that are tagged
 	// with the given composer id

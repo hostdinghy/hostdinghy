@@ -55,3 +55,44 @@ pub struct ServiceRoute {
 /// Method: `POST`
 /// Authentication: Yes
 pub struct CreateAppReq;
+
+/// URL: `/apps/:id/files/:path?dir=true`
+/// Method: `POST`
+/// Body: `Bytes`
+/// Authentication: Yes
+pub struct CreateFileDirReq;
+
+/// URL: `/apps/:id/files/:path`
+/// Method: `GET`
+/// ResponseBody: `Bytes`
+/// Authentication: Yes
+pub struct ReadFileReq;
+
+/// URL: `/apps/:id/files/:path`
+/// Method: `PUT`
+/// Body: `Bytes`
+/// Authentication: Yes
+pub struct WriteFileReq;
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Chown(u32, u32);
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Chmod(u32);
+
+/// URL: `/apps/:id/files/:path/change-permissions`
+/// Method: `PUT`
+/// Authentication: Yes
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ChangePermissionsReq {
+	chown: Option<Chown>,
+	chmod: Option<Chmod>,
+	#[serde(default)]
+	recursive: bool,
+}
+
+/// URL: `/apps/:id/files/:path?recursive=true`
+/// Method: `DELETE`
+/// Authentication: Yes
+pub struct DeleteFileDirReq;

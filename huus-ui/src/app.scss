@@ -6,11 +6,15 @@
 	/// colors
 	// atomic colors. descriptive naming
 	--dark-blue: #0b111b;
-	--blue: #52acf6;
+	--blue: #0794e0;
 
 	--white: #ffffff;
 
+	--green: #5dd150;
+	--yellow: #facc15;
+	--orange: #fb923c;
 	--red: #ef3434;
+	--purple: #a855f7;
 
 	// function colors. semantic naming
 	--c-accent: var(--blue);
@@ -25,6 +29,9 @@
 }
 
 .dark {
+	--blue: #52acf6;
+	--yellow: #fde047;
+
 	--c-bg: var(--dark-blue);
 	--c-text: var(--white);
 	--c-accent: var(--blue);

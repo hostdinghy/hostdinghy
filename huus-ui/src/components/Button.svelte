@@ -13,3 +13,12 @@
 		{@render children()}
 	{/if}
 </svelte:element>
+
+<style lang="scss">
+	.btn {
+		display: flex;
+		gap: 0.5rem;
+		align-items: center;
+		justify-content: center;
+	}
+</style>

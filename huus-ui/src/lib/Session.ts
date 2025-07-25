@@ -56,6 +56,13 @@ export default class Session {
 		localStorage.setItem('SESSION_TOKEN', this.inner.token);
 		this.listeners.trigger();
 	}
+
+	invalidate() {
+		this.inner = null;
+		this.user = null;
+		localStorage.removeItem('SESSION_TOKEN');
+		this.listeners.trigger();
+	}
 }
 
 async function authed(): Promise<Authenticated | null> {

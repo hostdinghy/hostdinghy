@@ -1,7 +1,7 @@
 <script>
 	import Button from './Button.svelte';
 
-	let { headers, rows, toolbar } = $props();
+	let { headers, rows, toolbar, ...customCells } = $props();
 </script>
 
 <div class="data-table">
@@ -23,7 +23,11 @@
 			{#each rows as row, i}
 				<tr>
 					{#each headers as header}
-						<td>{row[header.key] ?? '-'}</td>
+						{#if customCells[header.key]}
+							{@render customCells[header.key](row)}
+						{:else}
+							<td>{row[header.key] ?? '-'}</td>
+						{/if}
 					{/each}
 				</tr>
 			{/each}
@@ -45,9 +49,11 @@
 			}
 		}
 		tbody {
-			td {
-				border: var(--border);
-				padding: 1rem;
+			:global {
+				td {
+					border: var(--border);
+					padding: 1rem;
+				}
 			}
 		}
 	}

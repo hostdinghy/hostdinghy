@@ -31,6 +31,12 @@
 		{#snippet toolbar()}
 			<Button href="/apps/create">add</Button>
 		{/snippet}
+
+		{#snippet name(row)}
+			<td>
+				<a class="underline" href="/apps/{row.id}">{row.name}</a>
+			</td>
+		{/snippet}
 	</Table>
 </div>
 

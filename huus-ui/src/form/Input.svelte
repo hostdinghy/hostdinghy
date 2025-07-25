@@ -28,10 +28,10 @@
 		background-color: transparent;
 		border: none;
 		min-height: 100%;
-		color: var(--white);
+		color: var(--c-text);
 
 		&::placeholder {
-			color: var(--placeholder-blue);
+			color: var(--c-placeholder);
 		}
 	}
 </style>

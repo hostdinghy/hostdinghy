@@ -1,9 +1,10 @@
 .btn {
 	padding: 0.3rem 1rem;
-	border: 1px solid var(--blue);
-	color: var(--blue);
+	border: 1px solid var(--c-accent);
+	color: var(--c-accent);
 	cursor: pointer;
 	transition: opacity 0.2s ease;
+	text-decoration: none;
 
 	&:hover {
 		opacity: 0.7;

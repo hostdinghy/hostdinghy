@@ -3,17 +3,34 @@
 @use './sass/typography.scss';
 
 :root {
+	/// colors
+	// atomic colors. descriptive naming
 	--dark-blue: #0b111b;
-	--label-blue: #476686;
-	--border-blue: #1d2d40;
-	--placeholder-blue: #324a62;
 	--blue: #52acf6;
 
 	--white: #ffffff;
 
 	--red: #ef3434;
 
+	// function colors. semantic naming
+	--c-accent: var(--blue);
+	--c-bg: #fff;
+	--c-text: hsl(from var(--c-accent) h calc(s * 0.2) 5%);
+	--c-label: hsl(from var(--c-accent) h calc(s * 0.8) 60%);
+	--c-border: hsl(from var(--c-accent) h calc(s * 0.1) 85%);
+	--c-placeholder: hsl(from var(--c-accent) h (s * 0.4) 80%);
+
+	// spacing
 	--sx-body: 1rem;
+}
+
+.dark {
+	--c-bg: var(--dark-blue);
+	--c-text: var(--white);
+	--c-accent: var(--blue);
+	--c-label: #476686;
+	--c-border: #1d2d40;
+	--c-placeholder: #324a62;
 }
 
 html {
@@ -24,8 +41,8 @@ html {
 }
 
 body {
-	background-color: var(--dark-blue);
-	color: var(--white);
+	background-color: var(--c-bg);
+	color: var(--c-text);
 }
 
 .wrap {

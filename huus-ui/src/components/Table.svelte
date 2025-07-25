@@ -33,7 +33,7 @@
 
 <style lang="scss">
 	.data-table {
-		--border: 1px solid var(--border-blue);
+		--border: 1px solid var(--c-border);
 	}
 	table {
 		width: 100%;
@@ -53,7 +53,7 @@
 	}
 
 	input::placeholder {
-		color: var(--blue);
+		color: var(--c-accent);
 	}
 
 	.pre-header {

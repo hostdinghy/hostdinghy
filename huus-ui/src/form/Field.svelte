@@ -20,7 +20,7 @@
 	.field {
 		display: flex;
 		min-height: 2.6rem;
-		border: 1px solid var(--border-blue);
+		border: 1px solid var(--c-border);
 	}
 
 	.field :global(+ .field) {
@@ -32,7 +32,7 @@
 		width: 10rem;
 		padding: 0.1rem 0.8rem;
 		align-items: center;
-		color: var(--label-blue);
-		border-right: 1px solid var(--border-blue);
+		color: var(--c-label);
+		border-right: 1px solid var(--c-border);
 	}
 </style>

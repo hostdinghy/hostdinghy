@@ -21,7 +21,7 @@
 </script>
 
 <header class="wrap">
-	hostium
+	<a href="/">hostDinghy</a>
 	{#if $session.isLoggedIn()}
 		<div class="user-group group">
 			{$session.user?.name}

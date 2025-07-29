@@ -45,7 +45,7 @@ hyper-util = { version = "0.1.15", features = [
 ] }
 tower = { version = "0.5.2", features = ["tracing", "tokio", "tokio-util"] }
 semver = { version = "1.0.26", features = ["serde"] }
-chuchi-crypto = { version = "0.2.0-pre.0", features = ["b64", "serde"] }
+chuchi-crypto = { version = "0.2.0-pre.0", features = ["b64", "serde", "hash"] }
 subtle = "2.6.1"
 regex = "1.11.1"
 dotenvy = "0.15.7"

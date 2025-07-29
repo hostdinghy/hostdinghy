@@ -4,14 +4,31 @@ use api::{
 	error::{Error, WithMessage as _},
 	requests::ApiToken,
 };
+use chuchi_crypto::token::Token;
 use serde::{Deserialize, Serialize};
 use tokio::fs;
 
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+pub type SecretToken = Token<32>;
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "kebab-case")]
 pub struct Config {
 	pub domain: String,
+	/// Only use this token in combination with something else
+	/// plus a hash
+	#[serde(default = "SecretToken::new")]
+	pub secret: SecretToken,
 	pub api_token: Option<ApiToken>,
+}
+
+impl Default for Config {
+	fn default() -> Self {
+		Self {
+			domain: String::new(),
+			secret: SecretToken::new(),
+			api_token: None,
+		}
+	}
 }
 
 impl Config {

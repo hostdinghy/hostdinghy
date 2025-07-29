@@ -46,6 +46,14 @@ pub async fn read_toml<T: for<'de> Deserialize<'de>, P: AsRef<Path>>(
 	toml::from_str(&s).with_message("Failed to deserialize TOML data")
 }
 
+pub async fn is_dir(path: impl AsRef<Path>) -> bool {
+	fs::metadata(path).await.map_or(false, |m| m.is_dir())
+}
+
+pub async fn is_file(path: impl AsRef<Path>) -> bool {
+	fs::metadata(path).await.map_or(false, |m| m.is_file())
+}
+
 #[cfg(target_os = "linux")]
 fn getuid() -> u32 {
 	unsafe { libc::getuid() }

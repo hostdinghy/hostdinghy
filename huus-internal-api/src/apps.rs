@@ -49,9 +49,76 @@ pub struct ServiceRoute {
 	pub domains: Vec<String>,
 }
 
-/// A request to create a new application.
+/// Get the compose.yml content.
 ///
-/// URL: `/apps/:id`
+/// URL: `/apps/:id/compose`
+/// Method: `GET`
+/// Authentication: Yes
+///
+/// Returns 404 if no compose file was found
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct GetComposeReq;
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct GetComposeRes {
+	pub compose: String,
+	/// Returns true if a database was created once
+	pub database: bool,
+}
+
+/// Save compose.yml
+///
+/// URL: `/apps/:id/compose`
 /// Method: `POST`
 /// Authentication: Yes
-pub struct CreateAppReq;
+///
+/// If `database` is true the {DB_PASSWORD} will be replaced
+/// with the database password
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SaveComposeReq {
+	pub compose: String,
+	/// Setting this to false will not delete the database
+	/// it is only possible to delete the database
+	/// when deleteing the app
+	pub create_database: bool,
+}
+
+/// A request to execute a composer command.
+///
+/// URL: `/apps/:id/action/:command`
+/// Method: `POST`
+/// Authentication: Yes
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "kebab-case")]
+pub enum ComposeCommand {
+	/// only call this if you just called stop before
+	/// this will not rebuild the containers if for example
+	/// the compose file changed
+	Start,
+	Up,
+	Restart,
+	Stop,
+}
+
+/// A request to get the logs of a compose.
+///
+/// URL: `/apps/:id/logs?lines=<lines>`
+/// Method: `GET`
+/// Return Body: `text/plain`
+/// Authentication: Yes
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct AppLogsReq;
+
+// /// A request to delete an application.
+// ///
+// /// This will remove the application and all of its data.
+// ///
+// /// URL: `/apps/:id`
+// /// Method: `DELETE`
+// /// Authentication: Yes
+// #[derive(Debug, Clone, Serialize, Deserialize)]
+// #[serde(rename_all = "camelCase")]
+// pub struct DeleteAppReq;

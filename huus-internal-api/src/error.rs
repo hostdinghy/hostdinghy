@@ -7,6 +7,7 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Debug, thiserror::Error, Serialize, Deserialize)]
 pub enum Error {
+	/// Gets returned if the app folder or the compose file (if required) could not be found
 	#[error("Could not find app folder")]
 	AppNotFound,
 	#[error("Missing bearer token in request")]

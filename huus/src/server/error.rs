@@ -1,6 +1,6 @@
 use api::error::Error;
 
-use crate::utils::cli::CliError;
+use crate::utils::{cli::CliError, cmd::CmdError};
 
 impl From<CliError> for Error {
 	fn from(e: CliError) -> Self {
@@ -17,6 +17,16 @@ impl From<CliError> for Error {
 				message: "Other CliError".into(),
 				error: e.to_string(),
 			},
+		}
+	}
+}
+
+impl From<CmdError> for Error {
+	fn from(e: CmdError) -> Self {
+		match e {
+			CmdError::Command { command, message } => {
+				Error::Command { command, message }
+			}
 		}
 	}
 }

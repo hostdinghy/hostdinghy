@@ -61,7 +61,7 @@ impl Client {
 		self.client
 			.execute(&sql, &[])
 			.await
-			.with_message("Failed to create user")?;
+			.with_message(format!("Failed to create user {name}"))?;
 
 		Ok(())
 	}
@@ -91,7 +91,7 @@ impl Client {
 		self.client
 			.execute(&sql, &[])
 			.await
-			.with_message("Failed to create database")?;
+			.with_message(format!("Failed to create database {name}"))?;
 
 		Ok(())
 	}
@@ -111,6 +111,16 @@ impl Client {
 			.collect();
 
 		Ok(databases)
+	}
+
+	pub async fn database_exists(&self, name: &str) -> Result<bool, CliError> {
+		let sql = "SELECT EXISTS(SELECT 1 FROM pg_database WHERE datname = $1)";
+
+		let row = self.client.query_one(sql, &[&name]).await.with_message(
+			format!("Failed to check if database {name} exists"),
+		)?;
+
+		Ok(row.get::<_, bool>(0))
 	}
 
 	pub async fn drop_database(&self, name: &str) -> Result<(), CliError> {

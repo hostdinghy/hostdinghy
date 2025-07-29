@@ -5,7 +5,7 @@ use clap::Parser;
 use tracing::info;
 
 use crate::utils::cli::CliError;
-use client::Client;
+pub use client::Client;
 
 #[derive(Debug, Parser)]
 pub struct Postgresql {

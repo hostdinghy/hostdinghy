@@ -19,7 +19,7 @@ export function getRequest(): Writable<Request> {
 }
 
 export type RoutePage = {
-	layout: 'main' | 'empty';
+	layout: any;
 	component: any;
 	props: Record<string, any>;
 };
@@ -33,7 +33,7 @@ export type RouteResponse = {
 const ERROR_404: RouteResponse = {
 	status: 404,
 	page: {
-		layout: 'empty',
+		layout: null,
 		component: routes.NotFound,
 		props: {},
 	},
@@ -85,7 +85,7 @@ export async function handleRoute(
 		return {
 			status: 500,
 			page: {
-				layout: 'empty',
+				layout: null,
 				component: routes.NotFound,
 				props: {},
 			},
@@ -95,7 +95,7 @@ export async function handleRoute(
 	return {
 		status: 200,
 		page: {
-			layout: comp?.layout ?? 'main',
+			layout: comp?.layout ?? null,
 			component: comp.default,
 			props: pageProps,
 		},

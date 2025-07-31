@@ -3,20 +3,20 @@
 	import './app.scss';
 	import Toasts from './layout/Toasts.svelte';
 	import type { RoutePage } from './main';
-	import MainLayout from './layout/MainLayout.svelte';
 
 	const { page }: { page: Writable<RoutePage> } = $props();
 
+	const LayoutComponent = $derived($page.layout);
 	const Component = $derived($page.component);
 </script>
 
 <Toasts />
 
 <div id="app">
-	{#if $page.layout === 'main'}
-		<MainLayout>
+	{#if LayoutComponent}
+		<LayoutComponent {...$page.props}>
 			<Component {...$page.props} />
-		</MainLayout>
+		</LayoutComponent>
 	{:else}
 		<Component {...$page.props} />
 	{/if}

@@ -21,7 +21,7 @@
 </script>
 
 <header class="wrap">
-	<a href="/">hostDinghy</a>
+	<a href="/">🛶 HostDinghy</a>
 	{#if $session.isLoggedIn()}
 		<div class="user-group group">
 			{$session.user?.name}

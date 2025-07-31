@@ -1,6 +1,7 @@
 import type { Route, Router, Request } from 'chuchi';
 import type { SsrCache } from 'chuchi/ssr';
 import type Session from './Session';
+import type { Snippet } from 'svelte';
 
 export default class LoadProps {
 	router: Router;
@@ -34,3 +35,12 @@ export type LoadPropsFn = (
 	props: Record<string, any>,
 	lp: LoadProps,
 ) => Promise<Record<string, any> | null | void> | void;
+
+export type ResolvedProps<T extends (...args: any[]) => Promise<any>> = Awaited<
+	ReturnType<T>
+>;
+
+export type LayoutProps<T extends (...args: any[]) => Promise<any>> =
+	ResolvedProps<T> & {
+		children: Snippet;
+	};

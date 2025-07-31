@@ -1,6 +1,5 @@
 <script module lang="ts">
 	export const requiresRights = [];
-	export const layout = 'empty';
 
 	export const loadProps: LoadPropsFn = (_props, lp) => {
 		if (lp.session.isLoggedIn()) {

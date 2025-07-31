@@ -1,6 +1,5 @@
 <script module>
 	import { all } from '@/api/servers';
-	export const layout = 'empty';
 
 	export async function loadProps() {
 		return {

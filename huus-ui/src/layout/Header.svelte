@@ -7,6 +7,8 @@
 	const router = getRouter();
 	const req = getRouter().currentRequest;
 
+	let { breadcrumbs = [{ label: '🛶 HostDinghy', url: '/' }] } = $props();
+
 	let open = $state(false);
 
 	$effect(() => {
@@ -21,7 +23,15 @@
 </script>
 
 <header class="wrap">
-	<a href="/">🛶 HostDinghy</a>
+	<div class="crumbs">
+		{#each breadcrumbs as breadcrumb}
+			<a href={breadcrumb.url}>
+				<span class="hover:underline">
+					{breadcrumb.label}
+				</span>
+			</a>
+		{/each}
+	</div>
 	{#if $session.isLoggedIn()}
 		<div class="user-group group">
 			{$session.user?.name}
@@ -49,5 +59,15 @@
 		display: flex;
 		gap: 0.5rem;
 		align-items: center;
+	}
+
+	.crumbs {
+		display: flex;
+		a + a:before {
+			content: '/';
+			padding-left: 0.5rem;
+			padding-right: 0.5rem;
+			opacity: 0.4;
+		}
 	}
 </style>

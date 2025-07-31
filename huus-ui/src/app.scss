@@ -60,14 +60,24 @@ body {
 	padding-left: var(--sx-body);
 	padding-right: var(--sx-body);
 }
-.underline {
+
+.underline,
+.hover\:underline {
 	text-decoration: underline;
-	text-decoration-thickness: 0.06em;
 	text-underline-offset: 0.12em;
-	text-decoration-color: var(--c-border);
 	transition: all 250ms ease;
-	&:hover {
-		color: var(--c-accent);
-		text-decoration-color: currentColor;
-	}
+}
+
+.hover\:underline {
+	text-decoration-color: transparent;
+}
+
+.underline {
+	text-decoration-color: var(--c-border);
+}
+
+.underline:hover,
+.hover\:underline:hover {
+	color: var(--c-accent);
+	text-decoration-color: currentColor;
 }

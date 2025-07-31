@@ -20,7 +20,18 @@
 </script>
 
 <div class="main">
-	<Header />
+	<Header
+		breadcrumbs={[
+			{
+				label: '🛶 HostDinghy',
+				url: '/',
+			},
+			{
+				label: app.name,
+				url: `/apps/${app.id}`,
+			},
+		]}
+	/>
 
 	<div class="wrap">
 		<TabLayout

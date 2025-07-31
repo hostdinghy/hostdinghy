@@ -1,4 +1,5 @@
 <script lang="ts">
+	import Editor from '@/components/Editor.svelte';
 	import type { loadProps } from '@/layout/AppLayout.svelte';
 	import type { ResolvedProps } from '@/lib/LoadProps';
 
@@ -9,6 +10,12 @@
 	<title>Huus</title>
 </svelte:head>
 
-settings for {app.name}
+<div class="settings">
+	<Editor />
+</div>
 
-<style></style>
+<style>
+	.settings {
+		flex: 1;
+	}
+</style>

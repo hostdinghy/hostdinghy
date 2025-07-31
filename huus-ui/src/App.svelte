@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { Writable } from 'chuchi/stores';
 	import './app.scss';
+	import './lib/Editor'; // todo: we should probably only load this if a page uses the editor
 	import Toasts from './layout/Toasts.svelte';
 	import type { RoutePage } from './main';
 

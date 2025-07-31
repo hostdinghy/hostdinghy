@@ -38,7 +38,6 @@
 	.tabs {
 		display: flex;
 		flex: 1;
-		gap: 2rem;
 		border: 1px solid var(--c-border);
 	}
 	nav {
@@ -57,13 +56,15 @@
 			display: block;
 			border: 1px solid transparent;
 			&.active {
-				border-color: var(--c-border);
+				border-color: hsl(from var(--c-border) h 70% l);
 				color: var(--c-accent);
 				background: hsl(from var(--c-accent) h s l / 5%);
 			}
 		}
 	}
 	.content {
-		padding-top: 2rem;
+		display: flex;
+		flex-direction: column;
+		flex: 1;
 	}
 </style>

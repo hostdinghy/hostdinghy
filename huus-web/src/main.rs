@@ -145,14 +145,28 @@ async fn main() {
 	let users = users::database::UsersBuilder::new(&database).await;
 	let servers = servers::database::ServersBuilder::new(&database).await;
 	let apps = apps::database::AppsBuilder::new(&database).await;
+	let mock_api_client = cfg!(debug_assertions);
+	let api_client = ApiClient::new(mock_api_client);
+
+	let state = AppState {
+		teams: Arc::new(Box::new(teams)),
+		users: Arc::new(Box::new(users)),
+		servers: Arc::new(Box::new(servers)),
+		apps: Arc::new(Box::new(apps)),
+		api_client: api_client.clone(),
+		db,
+		cfg: Arc::new(cfg),
+	};
+
+	api_client.populate_mock_data(&mut conn, &state).await;
 
 	match args.subcmd {
 		Some(SubCommand::CreateUser(c)) => {
-			users::cli::create_user(&mut conn, &users, &teams, c).await;
+			users::cli::create_user(&mut conn, &state, c).await;
 			return;
 		}
 		Some(SubCommand::CreateServer(c)) => {
-			servers::cli::create_server(&mut conn, &servers, c).await;
+			servers::cli::create_server(&mut conn, &state, c).await;
 			return;
 		}
 		None => {}
@@ -160,16 +174,6 @@ async fn main() {
 
 	// we don't need it anymore
 	drop(conn);
-
-	let state = AppState {
-		teams: Arc::new(Box::new(teams)),
-		users: Arc::new(Box::new(users)),
-		servers: Arc::new(Box::new(servers)),
-		apps: Arc::new(Box::new(apps)),
-		api_client: ApiClient::new(cfg!(debug_assertions)),
-		db,
-		cfg: Arc::new(cfg),
-	};
 
 	let app = create_app(state, args.enable_cors || cfg!(debug_assertions));
 

@@ -2,14 +2,9 @@ use clap::Parser;
 use pg::{UniqueId, db::ConnOwned, time::DateTime};
 
 use crate::{
-	teams::{
-		data::{Team, TeamsBuilderTrait},
-		database::TeamsBuilder,
-	},
-	users::{
-		data::{Rights, UnsafeUser, UsersBuilderTrait},
-		database::UsersBuilder,
-	},
+	AppState,
+	teams::data::Team,
+	users::data::{Rights, UnsafeUser},
 };
 
 /// Will always create a root user
@@ -21,12 +16,11 @@ pub struct CreateUser {
 
 pub async fn create_user(
 	conn: &mut ConnOwned,
-	users: &UsersBuilder,
-	teams: &TeamsBuilder,
+	state: &AppState,
 	cu: CreateUser,
 ) {
-	let users = users.with_conn(conn.conn());
-	let teams = teams.with_conn(conn.conn());
+	let users = state.users.with_conn(conn.conn());
+	let teams = state.teams.with_conn(conn.conn());
 
 	let team = Team {
 		id: UniqueId::new(),

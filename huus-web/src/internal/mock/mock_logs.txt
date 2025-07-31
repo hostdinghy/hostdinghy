@@ -1,0 +1,29 @@
+pgadmin4  | postfix/postlog: starting the Postfix mail system
+pgadmin4  | /venv/lib/python3.12/site-packages/passlib/pwd.py:16: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+pgadmin4  |   import pkg_resources
+pgadmin4  | /venv/lib/python3.12/site-packages/passlib/pwd.py:16: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+pgadmin4  |   import pkg_resources
+pgadmin4  | [2025-07-31 06:30:55 +0000] [1] [INFO] Starting gunicorn 23.0.0
+craft-1   | 172.21.0.1 - - [31/Jul/2025:21:22:04 +0000] "POST /api HTTP/1.0" 200 3162 "-" "node"
+craft-1   | 172.21.0.1 - - [31/Jul/2025:21:22:04 +0000] "POST /api HTTP/1.0" 200 7776 "-" "node"
+craft-1   | 172.21.0.1 - - [31/Jul/2025:21:22:04 +0000] "POST /api HTTP/1.0" 200 1952 "-" "node"
+craft-1   | 172.21.0.1 - - [31/Jul/2025:21:22:04 +0000] "POST /api HTTP/1.0" 200 1401 "-" "node"
+craft-1   | 172.21.0.1 - - [31/Jul/2025:21:22:04 +0000] "GET /robots.txt HTTP/1.0" 200 664 "-" "node"
+craft-1   | 172.21.0.1 - - [31/Jul/2025:21:22:04 +0000] "GET /robots.txt HTTP/1.0" 200 664 "-" "node"
+craft-1   | 172.21.0.1 - - [31/Jul/2025:21:25:08 +0000] "POST /api HTTP/1.0" 200 23 "-" "node"
+craft-1   | 172.21.0.1 - - [31/Jul/2025:21:25:08 +0000] "POST /api HTTP/1.0" 200 3162 "-" "node"
+craft-1   | 172.21.0.1 - - [31/Jul/2025:21:25:09 +0000] "POST /api HTTP/1.0" 200 3162 "-" "node"
+craft-1   | 172.21.0.1 - - [31/Jul/2025:21:25:09 +0000] "POST /api HTTP/1.0" 200 7776 "-" "node"
+craft-1   | 172.21.0.1 - - [31/Jul/2025:21:25:09 +0000] "POST /api HTTP/1.0" 200 1952 "-" "node"
+craft-1   | 172.21.0.1 - - [31/Jul/2025:21:25:09 +0000] "POST /api HTTP/1.0" 200 1401 "-" "node"
+craft-1   | 172.21.0.1 - - [31/Jul/2025:21:27:31 +0000] "POST /api HTTP/1.0" 200 3162 "-" "node"
+craft-1   | 172.21.0.1 - - [31/Jul/2025:21:27:31 +0000] "POST /api HTTP/1.0" 200 23 "-" "node"
+craft-1   | 172.21.0.1 - - [31/Jul/2025:20:16:23 +0000] "GET /robots.txt HTTP/1.0" 200 664 "-" "node"
+craft-1   | 172.21.0.1 - - [31/Jul/2025:20:16:23 +0000] "POST /api HTTP/1.0" 200 3162 "-" "node"
+craft-1   | 172.21.0.1 - - [31/Jul/2025:20:16:23 +0000] "POST /api HTTP/1.0" 200 7776 "-" "node"
+craft-1   | 172.21.0.1 - - [31/Jul/2025:20:16:23 +0000] "POST /api HTTP/1.0" 200 1401 "-" "node"
+craft-1   | 172.21.0.1 - - [31/Jul/2025:20:16:23 +0000] "POST /api HTTP/1.0" 200 1952 "-" "node"
+craft-1   | 172.21.0.1 - - [31/Jul/2025:20:16:37 +0000] "POST /api HTTP/1.0" 200 3162 "-" "node"
+craft-1   | 172.21.0.1 - - [31/Jul/2025:20:16:37 +0000] "POST /api HTTP/1.0" 200 12229 "-" "node"
+craft-1   | 172.21.0.1 - - [31/Jul/2025:20:20:11 +0000] "GET /robots.txt HTTP/1.0" 200 664 "-" "node"
+craft-1   | 172.21.0.1 - - [31/Jul/2025:20:23:43 +0000] "POST /api HTTP/1.0" 200 3162 "-" "node"

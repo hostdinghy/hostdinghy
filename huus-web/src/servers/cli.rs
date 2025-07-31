@@ -2,11 +2,8 @@ use clap::Parser;
 use internal_api::requests::ApiToken;
 use pg::{UniqueId, db::ConnOwned, time::DateTime};
 
-use crate::servers::data::{Server, ServersBuilderTrait};
+use crate::{AppState, servers::data::Server};
 
-use super::database::ServersBuilder;
-
-/// Will always create a root user
 #[derive(Debug, Parser)]
 pub struct CreateServer {
 	name: String,
@@ -17,10 +14,10 @@ pub struct CreateServer {
 
 pub async fn create_server(
 	conn: &mut ConnOwned,
-	servers: &ServersBuilder,
+	state: &AppState,
 	cu: CreateServer,
 ) {
-	let servers = servers.with_conn(conn.conn());
+	let servers = state.servers.with_conn(conn.conn());
 
 	let server = Server {
 		id: UniqueId::new(),

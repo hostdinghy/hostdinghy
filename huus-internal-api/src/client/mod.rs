@@ -1,10 +1,10 @@
 use http::Method;
-use reqwest::{Certificate, RequestBuilder};
+use reqwest::{Certificate, RequestBuilder, Response};
 use serde::de::DeserializeOwned;
 
 use crate::{
 	app_id::AppId,
-	apps::AppInfoRes,
+	apps::{AppInfoRes, GetComposeRes, SaveComposeReq},
 	error::{Error, WithMessage},
 	requests::{ApiToken, PingRes, VersionRes},
 };
@@ -78,18 +78,12 @@ impl ApiServerClient {
 	}
 
 	// todo should probably improve the errors
-	async fn send<Res>(&self, req: RequestBuilder) -> Result<Res>
-	where
-		Res: DeserializeOwned,
-	{
+	async fn send(&self, req: RequestBuilder) -> Result<Response> {
 		let response =
 			req.send().await.with_message("failed to send request")?;
 
 		if response.status().is_success() {
-			response
-				.json()
-				.await
-				.with_message("failed to parse response")
+			Ok(response)
 		} else {
 			Err(response
 				.json()
@@ -98,15 +92,61 @@ impl ApiServerClient {
 		}
 	}
 
+	// todo should probably improve the errors
+	async fn send_json<Res>(&self, req: RequestBuilder) -> Result<Res>
+	where
+		Res: DeserializeOwned,
+	{
+		let response = self.send(req).await?;
+
+		response
+			.json()
+			.await
+			.with_message("failed to parse response")
+	}
+
 	pub async fn ping(&self) -> Result<PingRes> {
-		self.send(self.get("/ping")).await
+		self.send_json(self.get("/ping")).await
 	}
 
 	pub async fn version(&self) -> Result<VersionRes> {
-		self.send(self.get("/version")).await
+		self.send_json(self.get("/version")).await
 	}
 
 	pub async fn app_info(&self, id: &AppId) -> Result<AppInfoRes> {
-		self.send(self.get(&format!("/apps/{id}"))).await
+		self.send_json(self.get(&format!("/apps/{id}"))).await
+	}
+
+	pub async fn app_get_compose(&self, id: &AppId) -> Result<GetComposeRes> {
+		self.send_json(self.get(&format!("/apps/{id}/compose")))
+			.await
+	}
+
+	pub async fn app_set_compose(
+		&self,
+		id: &AppId,
+		req: &SaveComposeReq,
+	) -> Result<()> {
+		self.send_json(self.post(&format!("/apps/{id}/compose")).json(req))
+			.await
+	}
+
+	pub async fn app_logs(
+		&self,
+		id: &AppId,
+		lines: Option<u32>,
+	) -> Result<String> {
+		let mut uri = format!("/apps/{id}/logs");
+		if let Some(lines) = lines {
+			// todo could this be a query type?
+			uri.push_str(&format!("?lines={lines}"));
+		}
+
+		let response = self.send(self.get(&uri)).await?;
+
+		response
+			.text()
+			.await
+			.with_message("failed to parse logs response")
 	}
 }

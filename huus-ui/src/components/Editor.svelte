@@ -1,6 +1,8 @@
 <script lang="ts">
+	import { derivedMode } from '@/lib/theme/themeMode.svelte';
 	import * as monaco from 'monaco-editor/esm/vs/editor/editor.api';
 	import { onDestroy, onMount } from 'svelte';
+	import { get } from 'svelte/store';
 
 	let monacoEl: HTMLDivElement;
 	let editor: monaco.editor.IStandaloneCodeEditor;
@@ -25,12 +27,17 @@
       - "traefik.http.services.go.loadbalancer.server.port=80"
 `;
 
+	const themes = {
+		light: 'dinghy-light',
+		dark: 'dinghy-dark',
+	};
+
 	onMount(() => {
 		monaco.languages.register({ id: 'yaml' });
 		editor = monaco.editor.create(monacoEl, {
 			value: configFromServer,
 			language: 'yaml',
-			theme: 'vs',
+			theme: themes[get(derivedMode)],
 		});
 	});
 

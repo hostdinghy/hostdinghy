@@ -1,4 +1,4 @@
-<script module>
+<script module lang="ts">
 	import { all } from '@/api/servers';
 
 	export async function loadProps() {
@@ -6,6 +6,8 @@
 			servers: await all(),
 		};
 	}
+
+	export type Props = ResolvedProps<typeof loadProps>;
 </script>
 
 <script>
@@ -13,12 +15,13 @@
 	import Input from '@/form/Input.svelte';
 	import Select from '@/form/Select.svelte';
 	import { getRouter } from '@/main';
+	import type { ResolvedProps } from '@/lib/LoadProps';
 
 	let name = $state();
 	let id = $state();
-	let server = $state();
+	let serverId = $state();
 	let error = $state();
-	let { servers } = $props();
+	let { servers }: Props = $props();
 
 	const router = getRouter();
 
@@ -28,7 +31,7 @@
 		const app = await create({
 			id,
 			name,
-			serverId: server.id,
+			serverId,
 		});
 		router.open(`/apps/${app.id}`);
 	}
@@ -63,9 +66,9 @@
 			/>
 
 			<Select
-				bind:value={server}
+				bind:value={serverId}
 				label="server"
-				options={servers.map(s => ({ ...s, value: s.name }))}
+				options={servers.map(s => ({ value: s.name, key: s.id }))}
 			/>
 
 			{#if error}

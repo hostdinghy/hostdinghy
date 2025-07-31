@@ -1,4 +1,6 @@
 import * as monaco from 'monaco-editor';
+import * as editorDark from './theme/editor-dark.json';
+import * as editorLight from './theme/editor-light.json';
 
 // @ts-ignore
 self.MonacoEnvironment = {
@@ -26,3 +28,5 @@ self.MonacoEnvironment = {
 };
 
 // monaco.languages.typescript.typescriptDefaults.setEagerModelSync(true);
+monaco.editor.defineTheme('dinghy-light', editorLight);
+monaco.editor.defineTheme('dinghy-dark', editorDark);

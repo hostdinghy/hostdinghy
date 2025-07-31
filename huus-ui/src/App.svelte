@@ -4,6 +4,7 @@
 	import './lib/Editor'; // todo: we should probably only load this if a page uses the editor
 	import Toasts from './layout/Toasts.svelte';
 	import type { RoutePage } from './main';
+	import ModeWatcher from './components/ModeWatcher.svelte';
 
 	const { page }: { page: Writable<RoutePage> } = $props();
 
@@ -12,6 +13,7 @@
 </script>
 
 <Toasts />
+<ModeWatcher />
 
 <div id="app">
 	{#if LayoutComponent}

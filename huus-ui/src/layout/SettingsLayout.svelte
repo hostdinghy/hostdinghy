@@ -1,11 +1,9 @@
 <script module lang="ts">
 	import { App, byId } from '@/api/apps';
 
-	export const layout = 'app';
-
 	export async function loadProps({ id }) {
 		return {
-			app: await byId(id),
+			// app: await byId(id),
 		};
 	}
 </script>
@@ -16,7 +14,7 @@
 	import TabLayout from './TabLayout.svelte';
 	import type { LayoutProps } from '@/lib/LoadProps';
 
-	let { children, app }: LayoutProps<typeof loadProps> = $props();
+	let { children }: LayoutProps<typeof loadProps> = $props();
 </script>
 
 <div class="main">
@@ -27,8 +25,8 @@
 				url: '/',
 			},
 			{
-				label: app.name,
-				url: `/apps/${app.id}`,
+				label: 'Settings',
+				url: `/settings/account/`,
 			},
 		]}
 	/>
@@ -37,14 +35,13 @@
 		<TabLayout
 			sidebar={[
 				{
-					label: 'Overview',
-					url: `/apps/${app.id}/`,
+					label: 'Account',
+					url: `/settings/account/`,
 				},
 				{
-					label: 'Settings',
-					url: `/apps/${app.id}/settings`,
+					label: 'Appearance',
+					url: `/settings/appearance/`,
 				},
-				{ label: 'Logs', url: `/apps/${app.id}/logs` },
 			]}
 		>
 			{@render children()}

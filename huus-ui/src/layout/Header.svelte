@@ -34,10 +34,12 @@
 	</div>
 	{#if $session.isLoggedIn()}
 		<div class="user-group group">
-			{$session.user?.name}
-			<span class="text-label">
-				[{$session.user?.username}]
-			</span>
+			<a href="/settings/account" class="hover:underline">
+				{$session.user?.name}
+				<span class="text-label">
+					[{$session.user?.username}]
+				</span>
+			</a>
 			<Button onclick={signout}>logout</Button>
 		</div>
 	{/if}

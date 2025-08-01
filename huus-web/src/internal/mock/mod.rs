@@ -13,7 +13,7 @@ use crate::{
 
 use internal_api::{
 	app_id::AppId,
-	apps::{AppInfoRes, GetComposeRes, SaveComposeReq},
+	apps::{AppInfoRes, ComposeCommand, GetComposeRes, SaveComposeReq},
 	client::Result,
 	error::Error,
 	requests::{PingRes, VersionRes},
@@ -98,6 +98,15 @@ impl ApiServerClientTrait for ApiServerClient {
 	) -> Result<()> {
 		let mut server = self.server.lock().unwrap();
 		server.app_set_compose(id, req)
+	}
+
+	async fn app_compose_command(
+		&self,
+		id: &AppId,
+		cmd: &ComposeCommand,
+	) -> Result<()> {
+		let mut server = self.server.lock().unwrap();
+		server.app_compose_command(id, cmd)
 	}
 
 	async fn app_logs(&self, id: &AppId, lines: Option<u32>) -> Result<String> {

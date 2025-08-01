@@ -6,8 +6,8 @@ use std::{
 use internal_api::{
 	app_id::AppId,
 	apps::{
-		AppInfoRes, AppService, GetComposeRes, SaveComposeReq, ServiceRoute,
-		ServiceState,
+		AppInfoRes, AppService, ComposeCommand, GetComposeRes, SaveComposeReq,
+		ServiceRoute, ServiceState,
 	},
 	client::Result,
 	error::Error,
@@ -98,6 +98,15 @@ impl ServerMock {
 		app.app_set_compose(req)
 	}
 
+	pub fn app_compose_command(
+		&mut self,
+		id: &AppId,
+		cmd: &ComposeCommand,
+	) -> Result<()> {
+		let app = self.apps.get_mut(id).ok_or(Error::AppNotFound)?;
+		app.app_compose_command(cmd)
+	}
+
 	pub fn app_logs(&self, id: &AppId, lines: Option<u32>) -> Result<String> {
 		let app = self.apps.get(id).ok_or(Error::AppNotFound)?;
 		app.app_logs(lines)
@@ -111,6 +120,7 @@ const MOCK_LOGS: &str = include_str!("./mock_logs.txt");
 pub struct AppMock {
 	id: AppId,
 	compose: Option<String>,
+	started: Option<bool>,
 	database: bool,
 }
 
@@ -121,6 +131,7 @@ impl AppMock {
 		Self {
 			id: app.id,
 			compose: rng.random_bool(0.5).then(|| MOCK_COMPOSE.to_string()),
+			started: None,
 			database: rng.random_bool(0.5),
 		}
 	}
@@ -132,7 +143,7 @@ impl AppMock {
 		let mut services = vec![];
 
 		if rng.random_bool(0.5) {
-			let state = random_service_state();
+			let state = random_service_state(self.started);
 			services.push(AppService {
 				name: "craft".to_string(),
 				state_hr: service_state_to_str(&state).to_string(),
@@ -145,7 +156,7 @@ impl AppMock {
 		}
 
 		if rng.random_bool(0.5) {
-			let state = random_service_state();
+			let state = random_service_state(self.started);
 			services.push(AppService {
 				name: "svelte".to_string(),
 				state_hr: service_state_to_str(&state).to_string(),
@@ -179,6 +190,21 @@ impl AppMock {
 		Ok(())
 	}
 
+	pub fn app_compose_command(&mut self, cmd: &ComposeCommand) -> Result<()> {
+		match cmd {
+			ComposeCommand::Start
+			| ComposeCommand::Up
+			| ComposeCommand::Restart => {
+				self.started = Some(true);
+			}
+			ComposeCommand::Stop => {
+				self.started = Some(false);
+			}
+		}
+
+		Ok(())
+	}
+
 	pub fn app_logs(&self, lines: Option<u32>) -> Result<String> {
 		let _compose = self.compose.as_ref().ok_or(Error::AppNotFound)?;
 
@@ -206,8 +232,13 @@ const STATES: &[ServiceState] = &[
 	ServiceState::Unknown,
 ];
 
-fn random_service_state() -> ServiceState {
+fn random_service_state(started: Option<bool>) -> ServiceState {
 	let mut rng = rand::rng();
+
+	// if the state was selected to be started
+	if matches!(started, Some(false)) {
+		return ServiceState::Exited;
+	}
 
 	// the most likely state is running so it should be the case 70 percent
 	// of the time

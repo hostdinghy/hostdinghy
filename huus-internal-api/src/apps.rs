@@ -1,4 +1,7 @@
+use std::fmt;
+
 use serde::{Deserialize, Serialize};
+use serde_plain::derive_display_from_serialize;
 
 /// A request to get information about the application.
 ///
@@ -102,6 +105,8 @@ pub enum ComposeCommand {
 	Restart,
 	Stop,
 }
+
+derive_display_from_serialize!(ComposeCommand);
 
 /// A request to get the logs of a compose.
 ///

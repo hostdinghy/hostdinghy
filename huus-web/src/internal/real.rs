@@ -1,6 +1,6 @@
 use internal_api::{
 	app_id::AppId,
-	apps::{AppInfoRes, GetComposeRes, SaveComposeReq},
+	apps::{AppInfoRes, ComposeCommand, GetComposeRes, SaveComposeReq},
 	client::{self as int, Result},
 	requests::{PingRes, VersionRes},
 };
@@ -43,6 +43,14 @@ impl ApiServerClientTrait for ApiServerClient {
 		req: &SaveComposeReq,
 	) -> Result<()> {
 		self.inner.app_set_compose(id, req).await
+	}
+
+	async fn app_compose_command(
+		&self,
+		id: &AppId,
+		cmd: &ComposeCommand,
+	) -> Result<()> {
+		self.inner.app_compose_command(id, cmd).await
 	}
 
 	async fn app_logs(&self, id: &AppId, lines: Option<u32>) -> Result<String> {

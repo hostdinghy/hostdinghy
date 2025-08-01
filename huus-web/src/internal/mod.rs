@@ -9,7 +9,7 @@ use std::{
 
 use internal_api::{
 	app_id::AppId,
-	apps::{AppInfoRes, GetComposeRes, SaveComposeReq},
+	apps::{AppInfoRes, ComposeCommand, GetComposeRes, SaveComposeReq},
 	client::{self as int, Result},
 	requests::{PingRes, VersionRes},
 };
@@ -110,6 +110,12 @@ pub trait ApiServerClientTrait {
 		&self,
 		id: &AppId,
 		req: &SaveComposeReq,
+	) -> Result<()>;
+
+	async fn app_compose_command(
+		&self,
+		id: &AppId,
+		cmd: &ComposeCommand,
 	) -> Result<()>;
 
 	/// How many lines to return, if None all lines are returned

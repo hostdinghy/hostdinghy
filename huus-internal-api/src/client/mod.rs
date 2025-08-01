@@ -4,7 +4,7 @@ use serde::de::DeserializeOwned;
 
 use crate::{
 	app_id::AppId,
-	apps::{AppInfoRes, GetComposeRes, SaveComposeReq},
+	apps::{AppInfoRes, ComposeCommand, GetComposeRes, SaveComposeReq},
 	error::{Error, WithMessage},
 	requests::{ApiToken, PingRes, VersionRes},
 };
@@ -127,8 +127,19 @@ impl ApiServerClient {
 		id: &AppId,
 		req: &SaveComposeReq,
 	) -> Result<()> {
-		self.send_json(self.post(&format!("/apps/{id}/compose")).json(req))
+		self.send(self.post(&format!("/apps/{id}/compose")).json(req))
 			.await
+			.map(|_| ())
+	}
+
+	pub async fn app_compose_command(
+		&self,
+		id: &AppId,
+		cmd: &ComposeCommand,
+	) -> Result<()> {
+		self.send(self.post(&format!("/apps/{id}/action/{cmd}")))
+			.await
+			.map(|_| ())
 	}
 
 	pub async fn app_logs(

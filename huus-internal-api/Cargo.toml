@@ -22,3 +22,4 @@ chuchi-crypto = { version = "0.1.2", features = ["b64", "serde"] }
 reqwest = { version = "0.12.22", optional = true, features = ["json"] }
 postgres-types = { version = "0.2.9", optional = true }
 bytes = { version = "1.10.1", optional = true }
+serde_plain = "1.0.2"

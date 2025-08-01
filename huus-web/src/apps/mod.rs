@@ -1,7 +1,7 @@
 pub mod data;
-pub mod database;
-#[cfg(test)]
-pub mod mock;
 pub mod routes;
 
 pub use data::Apps;
+pub use data::database;
+#[cfg(test)]
+pub use data::mock;

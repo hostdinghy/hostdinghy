@@ -34,11 +34,13 @@ pub trait ServersBuilderTrait {
 
 #[async_trait::async_trait]
 pub trait ServersTrait {
-	async fn all(&self) -> Result<Vec<Server>>;
+	async fn all(&self, team_id: &Option<UniqueId>) -> Result<Vec<Server>>;
 
-	async fn all_by_team(&self, team_id: &UniqueId) -> Result<Vec<Server>>;
-
-	async fn by_id(&self, id: &UniqueId) -> Result<Option<Server>>;
+	async fn by_id(
+		&self,
+		id: &UniqueId,
+		team_id: &Option<UniqueId>,
+	) -> Result<Option<Server>>;
 
 	async fn insert(&self, server: &Server) -> Result<()>;
 }

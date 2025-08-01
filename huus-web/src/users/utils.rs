@@ -9,12 +9,26 @@ use crate::{error::Error, users::data::Rights};
 use axum::extract::{FromRef, FromRequestParts};
 use axum::http::HeaderMap;
 use axum::http::request::Parts;
-use pg::db::Db;
+use pg::{UniqueId, db::Db};
 
 pub struct AuthedUser<RightsCheck> {
 	pub session: Session,
 	pub user: User,
 	rights_check: PhantomData<RightsCheck>,
+}
+
+impl<RightsCheck> AuthedUser<RightsCheck> {
+	pub fn team_for_filter(&self) -> Option<UniqueId> {
+		if self.user.rights.root {
+			None
+		} else {
+			Some(self.user.team_id)
+		}
+	}
+
+	// pub fn can_access_team(&self, team_id: &UniqueId) -> bool {
+	// 	self.user.rights.root || self.user.team_id == *team_id
+	// }
 }
 
 impl<S, RC> FromRequestParts<S> for AuthedUser<RC>

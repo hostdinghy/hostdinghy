@@ -1,7 +1,11 @@
 mod mock;
 mod real;
 
-use std::sync::Arc;
+use std::{
+	collections::HashMap,
+	fmt,
+	sync::{Arc, RwLock},
+};
 
 use internal_api::{
 	app_id::AppId,
@@ -9,22 +13,33 @@ use internal_api::{
 	client::{self as int, Result},
 	requests::{PingRes, VersionRes},
 };
-use pg::db::ConnOwned;
+use pg::{UniqueId, db::ConnOwned};
 
 use crate::{AppState, servers::data::Server};
 
+// todo should this be wrappen in a arc?
+// a clone here contains at least two arcs
+#[derive(Clone)]
+pub struct ApiClient {
+	inner: Inner,
+	servers: Arc<RwLock<HashMap<UniqueId, ApiServerClient>>>,
+}
+
 #[derive(Debug, Clone)]
-pub enum ApiClient {
+enum Inner {
 	Real(int::ApiClient),
 	Mock(mock::ApiClient),
 }
 
 impl ApiClient {
 	pub fn new(mock: bool) -> Self {
-		if mock {
-			Self::Mock(mock::ApiClient::new())
-		} else {
-			Self::Real(int::ApiClient::new())
+		Self {
+			inner: if mock {
+				Inner::Mock(mock::ApiClient::new())
+			} else {
+				Inner::Real(int::ApiClient::new())
+			},
+			servers: Arc::new(RwLock::new(HashMap::new())),
 		}
 	}
 
@@ -33,20 +48,48 @@ impl ApiClient {
 		conn: &mut ConnOwned,
 		state: &AppState,
 	) {
-		if let Self::Mock(mock) = self {
+		if let Inner::Mock(mock) = &self.inner {
 			mock.populate_mock_data(conn, state).await
 		}
 	}
 
+	/// This will resuse connections if one exists
 	pub fn connect(&self, server: &Server) -> Result<ApiServerClient> {
-		Ok(match self {
-			Self::Real(real) => {
+		// let's check if we already have a connection for this server
+		{
+			let servers = self.servers.read().unwrap();
+			if let Some(client) = servers.get(&server.id) {
+				return Ok(client.clone());
+			}
+		}
+
+		let mut servers = self.servers.write().unwrap();
+		// since we unlocked let's check again if we already have a connection
+		if let Some(client) = servers.get(&server.id) {
+			return Ok(client.clone());
+		}
+
+		let api_server_client: ApiServerClient = match &self.inner {
+			Inner::Real(real) => {
 				Arc::new(Box::new(real::ApiServerClient::new(real, server)?))
 			}
-			Self::Mock(mock) => {
+			Inner::Mock(mock) => {
 				Arc::new(Box::new(mock::ApiServerClient::new(mock, server)?))
 			}
-		})
+		};
+
+		servers.insert(server.id, api_server_client.clone());
+
+		Ok(api_server_client)
+	}
+}
+
+impl fmt::Debug for ApiClient {
+	fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+		match &self.inner {
+			Inner::Real(_) => write!(f, "ApiClient(Real)"),
+			Inner::Mock(_) => write!(f, "ApiClient(Mock)"),
+		}
 	}
 }
 

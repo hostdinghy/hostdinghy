@@ -1,3 +1,7 @@
+pub mod database;
+#[cfg(test)]
+pub mod mock;
+
 use std::sync::Arc;
 
 use axum::extract::FromRef;
@@ -15,22 +19,7 @@ pub struct App {
 	pub team_id: UniqueId,
 	pub server_id: UniqueId,
 	pub created_on: DateTime,
-	// pub services: AppServices,
 }
-
-// #[derive(Debug, Clone)]
-// pub struct AppServices {
-// 	inner: Vec<AppService>,
-// }
-
-// /// An docker app service
-// #[derive(Debug, Clone)]
-// pub struct AppService {
-// 	pub container_id: String,
-// 	pub image: String,
-// 	pub created: String,
-// 	pub status: String,
-// }
 
 pub type Apps = Arc<Box<dyn AppsBuilderTrait + Send + Sync>>;
 pub type AppsWithConn<'a> = Box<dyn AppsTrait + Send + Sync + 'a>;
@@ -47,11 +36,13 @@ pub trait AppsBuilderTrait {
 
 #[async_trait::async_trait]
 pub trait AppsTrait {
-	async fn all(&self) -> Result<Vec<App>>;
+	async fn all(&self, team_id: &Option<UniqueId>) -> Result<Vec<App>>;
 
-	async fn all_by_team(&self, team_id: &UniqueId) -> Result<Vec<App>>;
-
-	async fn by_id(&self, id: &AppId) -> Result<Option<App>>;
+	async fn by_id(
+		&self,
+		id: &AppId,
+		team_id: &Option<UniqueId>,
+	) -> Result<Option<App>>;
 
 	async fn insert(&self, app: &App) -> Result<()>;
 }

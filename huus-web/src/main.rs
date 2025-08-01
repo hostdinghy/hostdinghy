@@ -35,6 +35,8 @@ struct Args {
 	config: String,
 	#[clap(long, default_value = "../ui/dist")]
 	dist_dir: String,
+	#[clap(long)]
+	internal_api_mock: Option<bool>,
 }
 
 #[derive(Debug, Parser)]
@@ -145,8 +147,9 @@ async fn main() {
 	let users = users::database::UsersBuilder::new(&database).await;
 	let servers = servers::database::ServersBuilder::new(&database).await;
 	let apps = apps::database::AppsBuilder::new(&database).await;
-	let mock_api_client = cfg!(debug_assertions);
-	let api_client = ApiClient::new(mock_api_client);
+	let api_client = ApiClient::new(
+		args.internal_api_mock.unwrap_or(cfg!(debug_assertions)),
+	);
 
 	let state = AppState {
 		teams: Arc::new(Box::new(teams)),

@@ -17,6 +17,8 @@ pub enum Error {
 	InvalidUser,
 	InsufficientRights,
 	NotFound,
+	/// gets returned if the internal api server has some error
+	InternalApiServer(String),
 	Internal(String),
 	Request(String),
 }
@@ -32,7 +34,9 @@ impl Error {
 			| Self::InsufficientRights => StatusCode::FORBIDDEN,
 
 			Self::NotFound => StatusCode::NOT_FOUND,
-			Self::Internal(_) => StatusCode::INTERNAL_SERVER_ERROR,
+			Self::InternalApiServer(_) | Self::Internal(_) => {
+				StatusCode::INTERNAL_SERVER_ERROR
+			}
 			Self::Request(_) => StatusCode::BAD_REQUEST,
 		}
 	}
@@ -67,7 +71,11 @@ impl From<DatabaseError> for Error {
 
 impl From<ApiError> for Error {
 	fn from(e: ApiError) -> Self {
-		// todo do better conversion
-		Self::Internal(e.to_string())
+		// todo better error matching
+		match e {
+			ApiError::AppNotFound => Self::NotFound,
+			ApiError::Any { .. } => Self::InternalApiServer(e.to_string()),
+			e => Self::Internal(e.to_string()),
+		}
 	}
 }

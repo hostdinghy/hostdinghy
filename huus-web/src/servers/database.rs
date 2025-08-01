@@ -5,6 +5,7 @@ use pg::{
 	filter,
 	table::{Table, table::TableWithConn},
 	time::DateTime,
+	whr,
 };
 
 use crate::servers::data::{self, Server, ServersBuilderTrait, ServersTrait};
@@ -79,23 +80,30 @@ pub struct Servers<'a> {
 
 #[async_trait::async_trait]
 impl ServersTrait for Servers<'_> {
-	async fn all(&self) -> Result<Vec<Server>> {
+	async fn all(&self, team_id: &Option<UniqueId>) -> Result<Vec<Server>> {
+		let filter = team_id
+			.as_ref()
+			.map(|team_id| filter!(team_id))
+			.unwrap_or_else(|| filter!());
+
 		self.servers
-			.select::<ServerRow>(filter!())
+			.select::<ServerRow>(filter)
 			.await
 			.map(|r| r.into_iter().map(Into::into).collect())
 	}
 
-	async fn all_by_team(&self, team_id: &UniqueId) -> Result<Vec<Server>> {
-		self.servers
-			.select::<ServerRow>(filter!(team_id))
-			.await
-			.map(|r| r.into_iter().map(Into::into).collect())
-	}
+	async fn by_id(
+		&self,
+		id: &UniqueId,
+		team_id: &Option<UniqueId>,
+	) -> Result<Option<Server>> {
+		let mut filter = filter!(id);
+		if let Some(team_id) = team_id {
+			filter.and_where(whr!(team_id));
+		}
 
-	async fn by_id(&self, id: &UniqueId) -> Result<Option<Server>> {
 		self.servers
-			.select_opt::<ServerRow>(filter!(id))
+			.select_opt::<ServerRow>(filter)
 			.await
 			.map(|r| r.map(Into::into))
 	}

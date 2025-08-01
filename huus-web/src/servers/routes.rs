@@ -21,12 +21,11 @@ async fn all(
 ) -> Result<Json<Vec<Server>>> {
 	let servers = servers.with_conn(conn.conn());
 
-	if user.user.rights.root {
-		servers.all().await.map(Json)
-	} else {
-		servers.all_by_team(&user.user.team_id).await.map(Json)
-	}
-	.map_err(Into::into)
+	servers
+		.all(&user.team_for_filter())
+		.await
+		.map(Json)
+		.map_err(Into::into)
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

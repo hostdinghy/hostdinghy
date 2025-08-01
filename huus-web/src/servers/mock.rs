@@ -39,25 +39,36 @@ impl Servers {
 
 #[async_trait::async_trait]
 impl ServersTrait for Arc<Servers> {
-	async fn all(&self) -> Result<Vec<Server>> {
+	async fn all(&self, team_id: &Option<UniqueId>) -> Result<Vec<Server>> {
 		let inner = self.servers.read().unwrap();
-		Ok(inner.values().cloned().collect())
+		if let Some(team_id) = team_id {
+			let servers = inner
+				.values()
+				.filter(|server| &server.team_id == team_id)
+				.cloned()
+				.collect();
+			Ok(servers)
+		} else {
+			Ok(inner.values().cloned().collect())
+		}
 	}
 
-	async fn all_by_team(&self, team_id: &UniqueId) -> Result<Vec<Server>> {
+	async fn by_id(
+		&self,
+		id: &UniqueId,
+		team_id: &Option<UniqueId>,
+	) -> Result<Option<Server>> {
 		let inner = self.servers.read().unwrap();
-		let servers = inner
-			.values()
-			.filter(|server| &server.team_id == team_id)
-			.cloned()
-			.collect();
 
-		Ok(servers)
-	}
+		let server = inner
+			.get(id)
+			// Filter by team_id if provided
+			.filter(|server| {
+				team_id.map(|t| server.team_id == t).unwrap_or(true)
+			})
+			.cloned();
 
-	async fn by_id(&self, id: &UniqueId) -> Result<Option<Server>> {
-		let inner = self.servers.read().unwrap();
-		Ok(inner.get(id).cloned())
+		Ok(server)
 	}
 
 	async fn insert(&self, server: &Server) -> Result<()> {

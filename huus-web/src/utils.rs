@@ -22,12 +22,12 @@ macro_rules! migration_files {
 pub struct ConnOwned(pub pg::db::ConnOwned);
 
 impl ConnOwned {
-	pub fn conn(&self) -> Conn {
+	pub fn conn(&self) -> Conn<'_> {
 		self.0.conn()
 	}
 
 	#[allow(dead_code)]
-	pub async fn trans(&mut self) -> Result<Trans, pg::Error> {
+	pub async fn trans(&mut self) -> Result<Trans<'_>, pg::Error> {
 		self.0.trans().await
 	}
 }

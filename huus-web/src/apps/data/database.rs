@@ -5,6 +5,7 @@ use pg::{
 	filter,
 	table::{Table, table::TableWithConn},
 	time::DateTime,
+	whr,
 };
 
 use crate::apps::data::{self, App, AppsBuilderTrait, AppsTrait};
@@ -75,23 +76,30 @@ pub struct Apps<'a> {
 
 #[async_trait::async_trait]
 impl AppsTrait for Apps<'_> {
-	async fn all(&self) -> Result<Vec<App>> {
+	async fn all(&self, team_id: &Option<UniqueId>) -> Result<Vec<App>> {
+		let filter = team_id
+			.as_ref()
+			.map(|team_id| filter!(team_id))
+			.unwrap_or_else(|| filter!());
+
 		self.apps
-			.select::<AppRow>(filter!())
+			.select::<AppRow>(filter)
 			.await
 			.map(|r| r.into_iter().map(Into::into).collect())
 	}
 
-	async fn all_by_team(&self, team_id: &UniqueId) -> Result<Vec<App>> {
-		self.apps
-			.select::<AppRow>(filter!(team_id))
-			.await
-			.map(|r| r.into_iter().map(Into::into).collect())
-	}
+	async fn by_id(
+		&self,
+		id: &AppId,
+		team_id: &Option<UniqueId>,
+	) -> Result<Option<App>> {
+		let mut filter = filter!(id);
+		if let Some(team_id) = team_id {
+			filter.and_where(whr!(team_id));
+		};
 
-	async fn by_id(&self, id: &AppId) -> Result<Option<App>> {
 		self.apps
-			.select_opt::<AppRow>(filter!(id))
+			.select_opt::<AppRow>(filter)
 			.await
 			.map(|r| r.map(Into::into))
 	}

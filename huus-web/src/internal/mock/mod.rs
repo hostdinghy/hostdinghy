@@ -40,10 +40,10 @@ impl ApiClient {
 	// not sure this is a good idear, but it works
 	pub async fn populate_mock_data(&self, conn: &ConnOwned, state: &AppState) {
 		let servers = state.servers.with_conn(conn.conn());
-		let servers = servers.all().await.unwrap();
+		let servers = servers.all(&None).await.unwrap();
 
 		let apps = state.apps.with_conn(conn.conn());
-		let apps = apps.all().await.unwrap();
+		let apps = apps.all(&None).await.unwrap();
 
 		let mut inner = self.inner.lock().unwrap();
 		inner.populate_mock_data(servers, apps);

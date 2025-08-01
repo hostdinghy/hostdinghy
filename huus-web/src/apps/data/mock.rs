@@ -4,9 +4,9 @@ use std::{
 };
 
 use internal_api::app_id::AppId;
-use pg::{Result, UniqueId, db::Conn};
+use pg::{Error, Result, UniqueId, db::Conn, try2};
 
-use super::data::{App, AppsBuilderTrait, AppsTrait, AppsWithConn};
+use super::{App, AppsBuilderTrait, AppsTrait, AppsWithConn};
 
 pub struct AppsBuilder {
 	inner: Arc<Apps>,
@@ -40,29 +40,43 @@ impl Apps {
 
 #[async_trait::async_trait]
 impl AppsTrait for Arc<Apps> {
-	async fn all(&self) -> Result<Vec<App>> {
+	async fn all(&self, team_id: &Option<UniqueId>) -> Result<Vec<App>> {
 		let inner = self.apps.read().unwrap();
-		Ok(inner.values().cloned().collect())
+
+		if let Some(team_id) = team_id {
+			let apps = inner
+				.values()
+				.filter(|app| &app.team_id == team_id)
+				.cloned()
+				.collect();
+			Ok(apps)
+		} else {
+			Ok(inner.values().cloned().collect())
+		}
 	}
 
-	async fn all_by_team(&self, team_id: &UniqueId) -> Result<Vec<App>> {
+	async fn by_id(
+		&self,
+		id: &AppId,
+		team_id: &Option<UniqueId>,
+	) -> Result<Option<App>> {
 		let inner = self.apps.read().unwrap();
-		let apps = inner
-			.values()
-			.filter(|app| &app.team_id == team_id)
-			.cloned()
-			.collect();
 
-		Ok(apps)
-	}
+		let app = inner
+			.get(id)
+			// Filter by team_id if provided
+			.filter(|app| team_id.map(|t| app.team_id == t).unwrap_or(true))
+			.cloned();
 
-	async fn by_id(&self, id: &AppId) -> Result<Option<App>> {
-		let inner = self.apps.read().unwrap();
-		Ok(inner.get(id).cloned())
+		Ok(app)
 	}
 
 	async fn insert(&self, app: &App) -> Result<()> {
 		let mut inner = self.apps.write().unwrap();
+		if inner.contains_key(&app.id) {
+			return Err(Error::unique_violation(Some("id".into())));
+		}
+
 		inner.insert(app.id.clone(), app.clone());
 		Ok(())
 	}

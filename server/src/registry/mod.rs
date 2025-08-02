@@ -1,5 +1,6 @@
 use std::path::Path;
 
+use api::app_id::AppId;
 use clap::Parser;
 use tokio::{fs, io::AsyncWriteExt as _};
 use tracing::{error, info};
@@ -34,9 +35,9 @@ pub async fn registry(registry: Registry) {
 pub async fn inner_registry(registry: Registry) -> Result<(), CliError> {
 	match registry.cmd {
 		SubCommand::AddUser(au) => {
-			add_user(au).await?;
+			let username = add_user(au).await?;
 
-			info!("User added to registry successfully.");
+			info!("User \"{username}\" added to registry successfully.");
 		}
 		SubCommand::RemoveUser(ru) => {
 			remove_user(ru).await?;
@@ -76,11 +77,32 @@ async fn restart_registry(
 
 #[derive(Debug, Parser)]
 pub struct AddUser {
+	app_id: Option<AppId>,
 	username: String,
 	password: String,
 }
 
-async fn add_user(add_user: AddUser) -> Result<(), CliError> {
+async fn add_user(add_user: AddUser) -> Result<String, CliError> {
+	let prefix = add_user
+		.app_id
+		.map(|a| a.to_string())
+		.unwrap_or_else(|| "internal".into());
+	let username = format!("{prefix}${}", add_user.username);
+
+	// check that the username does not exist and is valid
+	if username.contains(":") {
+		// todo better errors
+		return Err(CliError::any(
+			"username contains a colon symbol",
+			username,
+		));
+	}
+
+	let users = list_users().await?;
+	if users.contains(&username) {
+		return Err(CliError::any("username already exists", username));
+	}
+
 	let password = bcrypt::hash(&add_user.password, bcrypt::DEFAULT_COST)
 		.with_message("Failed to hash password")?;
 
@@ -94,7 +116,7 @@ async fn add_user(add_user: AddUser) -> Result<(), CliError> {
 		.with_message(
 			"Failed to open $HOSTDINGHY_DIR/registry/registry.password",
 		)?
-		.write_all(format!("{}:{}\n", add_user.username, password).as_bytes())
+		.write_all(format!("{username}:{password}\n").as_bytes())
 		.await
 		.with_message(
 			"Failed to write to $HOSTDINGHY_DIR/registry/registry.password",
@@ -102,7 +124,7 @@ async fn add_user(add_user: AddUser) -> Result<(), CliError> {
 
 	restart_registry(&hostdinghy_dir).await?;
 
-	Ok(())
+	Ok(username)
 }
 
 #[derive(Debug, Parser)]

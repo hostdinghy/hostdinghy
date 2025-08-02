@@ -28,18 +28,41 @@ impl From<AppId> for String {
 	}
 }
 
+const BLACKLIST: &[&str] = &[
+	// create is not allowed because the webui uses /app/create
+	"create",
+	// since we wan't to use AppId as prefix sometimes
+	// we need to have our own values not tied to an App
+	// ex registry users (which get prefix ed with the AppId)
+	"internal",
+	// the default postgres database and folder
+	"postgres",
+	"postgresql",
+	//
+	// default apps
+	"hostdinghy",
+	"registry",
+	"traefik",
+];
+
 impl FromStr for AppId {
 	type Err = InvalidAppId;
 
 	fn from_str(s: &str) -> Result<Self, Self::Err> {
-		let invalid = s.len() < 2
-				|| !s.as_bytes().iter().all(|&c| {
-					c.is_ascii_alphanumeric() || c == b'-' || c == b'_'
-				})
-				// create is not allowed because the webui uses /app/create
-				|| s == "create";
+		let last_idx = s.len().saturating_sub(1);
 
-		(!invalid).then(|| Self(s.into())).ok_or(InvalidAppId {})
+		let valid = s.len() >= 3
+			&& s.len() <= 42
+			&& s.as_bytes().iter().enumerate().all(|(i, &c)| {
+				let first_or_last = i == 0 || i == last_idx;
+
+				c.is_ascii_lowercase()
+					|| c.is_ascii_digit()
+					|| (!first_or_last && (c == b'-' || c == b'_'))
+			}) // -
+			&& !BLACKLIST.contains(&s);
+
+		valid.then(|| Self(s.into())).ok_or(InvalidAppId {})
 	}
 }
 

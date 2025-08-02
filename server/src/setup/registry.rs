@@ -1,3 +1,4 @@
+use chuchi_crypto::token::Token;
 use clap::Parser;
 use serde::{Deserialize, Serialize};
 use tokio::fs;
@@ -8,6 +9,8 @@ use crate::utils::{
 };
 
 use super::hostdinghy_dir;
+
+pub type WebhookToken = Token<32>;
 
 const COMPOSE_YML: &str = r#"
 services:
@@ -55,16 +58,29 @@ health:
     enabled: true
     interval: 10s
     threshold: 3
+notifications:
+      endpoints:
+        - name: webhook
+          url: https://{studio_domain}/api/servers/registry/webhook
+          headers:
+            Authorization: [Bearer {webhook_token}]
+          events:
+            - name: push
+              action: push
 "#;
 
 #[derive(Debug, Parser)]
 pub struct Registry {
 	domain: String,
+	// should not contain https or anything else
+	studio_domain: String,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct RegistryConfig {
 	pub domain: String,
+	pub studio_domain: String,
+	pub webhook_token: WebhookToken,
 }
 
 pub async fn setup(registry: Registry) -> Result<(), CliError> {
@@ -75,19 +91,23 @@ pub async fn setup(registry: Registry) -> Result<(), CliError> {
 		.await
 		.with_message("Failed to create $HOSTDINGHY_DIR/registry")?;
 
-	write_toml(
-		&RegistryConfig {
-			domain: registry.domain.clone(),
-		},
-		registry_dir.join("config.toml"),
-	)
-	.await
-	.with_message("Failed to write $HOSTDINGHY_DIR/registry/config.toml")?;
+	let cfg = RegistryConfig {
+		domain: registry.domain,
+		studio_domain: registry.studio_domain,
+		webhook_token: WebhookToken::new(),
+	};
+
+	write_toml(&cfg, registry_dir.join("config.toml"))
+		.await
+		.with_message("Failed to write $HOSTDINGHY_DIR/registry/config.toml")?;
 
 	let compose_file = registry_dir.join("compose.yml");
 	fs::write(
 		&compose_file,
-		COMPOSE_YML.replace("{registry_domain}", &registry.domain),
+		COMPOSE_YML
+			.replace("{registry_domain}", &cfg.domain)
+			.replace("{studio_domain}", &cfg.studio_domain)
+			.replace("{webhook_token}", &cfg.webhook_token.to_string()),
 	)
 	.await
 	.with_message("Failed to write $HOSTDINGHY_DIR/registry/compose.yml")?;

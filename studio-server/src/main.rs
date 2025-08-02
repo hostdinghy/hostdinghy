@@ -8,6 +8,7 @@ mod teams;
 mod users;
 mod webui;
 
+use std::collections::HashSet;
 use std::{fs, sync::Arc};
 
 use axum::Router;
@@ -62,6 +63,8 @@ struct Config {
 	/// Any string value which will be displayed somewhere in the UI.
 	#[serde(default = "default_env")]
 	environment: String,
+	#[serde(default)]
+	registry_webhook_tokens: HashSet<String>,
 }
 
 fn default_env() -> String {

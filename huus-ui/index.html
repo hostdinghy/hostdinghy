@@ -11,10 +11,13 @@
 			rel="stylesheet"
 		/>
 
-		<!--ssr-head-->
+		<script>
+			window.ENVIRONMENT = 'debug';
+			window.VERSION = 'debug';
+			window.API_ADDR = 'http://localhost:3000/';
+		</script>
 	</head>
 	<body>
-		<!--ssr-body-->
 		<script type="module" src="/src/client.ts"></script>
 
 		<!-- 100% privacy-first analytics -->

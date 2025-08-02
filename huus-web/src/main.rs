@@ -5,6 +5,7 @@ mod error;
 mod internal;
 mod servers;
 mod teams;
+mod ui;
 mod users;
 
 use std::{fs, sync::Arc};
@@ -21,6 +22,7 @@ use tower_http::cors::{self, CorsLayer};
 use tower_http::trace::TraceLayer;
 
 use crate::internal::ApiClient;
+use crate::ui::DistDir;
 
 #[derive(Debug, Parser)]
 #[command(version)]
@@ -33,7 +35,7 @@ struct Args {
 	tracing: String,
 	#[clap(long, default_value = "./config.toml")]
 	config: String,
-	#[clap(long, default_value = "../ui/dist")]
+	#[clap(long, default_value = "../huus-ui/dist")]
 	dist_dir: String,
 	#[clap(long)]
 	internal_api_mock: Option<bool>,
@@ -49,6 +51,17 @@ enum SubCommand {
 #[serde(rename_all = "kebab-case")]
 struct Config {
 	database: DbConf,
+	/// Any string value which will be displayed somewhere in the UI.
+	#[serde(default = "default_env")]
+	environment: String,
+}
+
+fn default_env() -> String {
+	if cfg!(debug_assertions) {
+		"debug".to_string()
+	} else {
+		"production".to_string()
+	}
 }
 
 #[derive(Debug, Clone, Deserialize)]
@@ -67,6 +80,7 @@ pub struct AppState {
 	apps: apps::Apps,
 	api_client: ApiClient,
 	db: Db,
+	dist_dir: DistDir,
 	cfg: Arc<Config>,
 }
 
@@ -94,6 +108,7 @@ fn create_app(state: AppState, enable_cors: bool) -> Router {
 		.nest("/api/users", users::routes::routes())
 		.nest("/api/servers", servers::routes::routes())
 		.nest("/api/apps", apps::routes::routes())
+		.merge(ui::routes::routes())
 		.layer(TraceLayer::new_for_http());
 
 	if enable_cors {
@@ -158,6 +173,7 @@ async fn main() {
 		apps: Arc::new(Box::new(apps)),
 		api_client: api_client.clone(),
 		db,
+		dist_dir: DistDir(args.dist_dir),
 		cfg: Arc::new(cfg),
 	};
 

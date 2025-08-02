@@ -1207,6 +1207,7 @@ dependencies = [
 name = "huus-web"
 version = "0.1.0"
 dependencies = [
+ "aho-corasick",
  "async-trait",
  "axum",
  "bcrypt 0.15.1",
@@ -1219,6 +1220,7 @@ dependencies = [
  "thiserror 2.0.12",
  "tokio",
  "toml",
+ "tower",
  "tower-http",
  "tracing",
  "tracing-subscriber",

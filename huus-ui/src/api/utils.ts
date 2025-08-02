@@ -7,9 +7,7 @@ import { Api } from 'chuchi/api';
  */
 export function newApi(uri: string) {
 	if (!uri.startsWith('/')) throw new Error('uri needs to start with /');
-	if (import.meta.env.DEV) {
-		return new Api('http://localhost:3030/api' + uri);
-	}
 
-	return new Api('/api' + uri);
+	/** @ts-ignore */
+	return new Api(window.API_ADDR + 'api' + uri);
 }

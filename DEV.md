@@ -1,11 +1,11 @@
 ```bash
 rustup target add x86_64-unknown-linux-musl
 
-rsync ../target/release/huus smadmin@p1.goodserver.ch:/usr/local/bin
+rsync ../target/release/hostdinghy smadmin@p1.goodserver.ch:/usr/local/bin
 
 cargo build --release --target=x86_64-unknown-linux-musl
-rsync ../target/x86_64-unknown-linux-musl/release/huus smadmin@192.168.1.11:/tmp/huus
-ssh -t smadmin@192.168.1.11 'sudo mv /tmp/huus /usr/local/bin/huus'
+rsync ../target/x86_64-unknown-linux-musl/release/hostdinghy smadmin@192.168.1.11:/tmp/hostdinghy
+ssh -t smadmin@192.168.1.11 'sudo mv /tmp/hostdinghy /usr/local/bin/hostdinghy'
 ```
 
 # Remove postgresql
@@ -21,5 +21,5 @@ sudo deluser postgres
 sudo delgroup postgres
 sudo apt-get autoremove
 sudo apt-get autoclean
-sudo rm -rf /mnt/md0/huus/postgresql
+sudo rm -rf /mnt/md0/hostdinghy/postgresql
 ```

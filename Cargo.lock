@@ -1155,79 +1155,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "df3b46402a9d5adb4c86a0cf463f42e19994e3ee891101b1841f30a545cb49a9"
 
 [[package]]
-name = "huus"
-version = "0.1.0"
-dependencies = [
- "axum",
- "bcrypt 0.17.0",
- "bollard",
- "chuchi-crypto 0.2.0-pre.0",
- "chuchi-postgres",
- "clap",
- "dotenvy",
- "huus-internal-api",
- "hyper",
- "hyper-util",
- "libc",
- "rcgen",
- "regex",
- "reqwest",
- "semver",
- "serde",
- "subtle",
- "thiserror 2.0.12",
- "tokio",
- "tokio-postgres",
- "tokio-rustls",
- "toml",
- "tower",
- "tracing",
- "tracing-subscriber",
-]
-
-[[package]]
-name = "huus-internal-api"
-version = "0.1.0"
-dependencies = [
- "axum",
- "bytes",
- "chuchi-crypto 0.1.2",
- "chuchi-postgres",
- "http",
- "postgres-types",
- "reqwest",
- "semver",
- "serde",
- "serde_plain",
- "thiserror 2.0.12",
- "tracing",
-]
-
-[[package]]
-name = "huus-web"
-version = "0.1.0"
-dependencies = [
- "aho-corasick",
- "async-trait",
- "axum",
- "bcrypt 0.15.1",
- "chuchi-crypto 0.1.2",
- "chuchi-postgres",
- "clap",
- "huus-internal-api",
- "rand 0.9.2",
- "serde",
- "thiserror 2.0.12",
- "tokio",
- "toml",
- "tower",
- "tower-http",
- "tracing",
- "tracing-subscriber",
- "tracing-test",
-]
-
-[[package]]
 name = "hybrid-array"
 version = "0.3.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1505,6 +1432,24 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "879f10e63c20629ecabbb64a8010319738c66a5cd0c29b02d63d272b03751d01"
 dependencies = [
  "generic-array",
+]
+
+[[package]]
+name = "internal-api"
+version = "0.1.0"
+dependencies = [
+ "axum",
+ "bytes",
+ "chuchi-crypto 0.1.2",
+ "chuchi-postgres",
+ "http",
+ "postgres-types",
+ "reqwest",
+ "semver",
+ "serde",
+ "serde_plain",
+ "thiserror 2.0.12",
+ "tracing",
 ]
 
 [[package]]
@@ -2478,6 +2423,37 @@ dependencies = [
 ]
 
 [[package]]
+name = "server"
+version = "0.1.0"
+dependencies = [
+ "axum",
+ "bcrypt 0.17.0",
+ "bollard",
+ "chuchi-crypto 0.2.0-pre.0",
+ "chuchi-postgres",
+ "clap",
+ "dotenvy",
+ "hyper",
+ "hyper-util",
+ "internal-api",
+ "libc",
+ "rcgen",
+ "regex",
+ "reqwest",
+ "semver",
+ "serde",
+ "subtle",
+ "thiserror 2.0.12",
+ "tokio",
+ "tokio-postgres",
+ "tokio-rustls",
+ "toml",
+ "tower",
+ "tracing",
+ "tracing-subscriber",
+]
+
+[[package]]
 name = "sha2"
 version = "0.10.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2572,6 +2548,30 @@ name = "strsim"
 version = "0.11.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7da8b5736845d9f2fcb837ea5d9e2628564b3b043a70948a3f0b778838c5fb4f"
+
+[[package]]
+name = "studio-server"
+version = "0.1.0"
+dependencies = [
+ "aho-corasick",
+ "async-trait",
+ "axum",
+ "bcrypt 0.15.1",
+ "chuchi-crypto 0.1.2",
+ "chuchi-postgres",
+ "clap",
+ "internal-api",
+ "rand 0.9.2",
+ "serde",
+ "thiserror 2.0.12",
+ "tokio",
+ "toml",
+ "tower",
+ "tower-http",
+ "tracing",
+ "tracing-subscriber",
+ "tracing-test",
+]
 
 [[package]]
 name = "subtle"

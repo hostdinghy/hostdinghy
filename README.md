@@ -12,13 +12,13 @@ postgres as db
 
 
 
-1. huus service
-- setup huus container
+1. hostdinghy service
+- setup hostdinghy container
 - make sure traefik, postgres etc are running
-- do updates (of itself and huus)
+- do updates (of itself and hostdinghy)
 - installation script
 
-2. huus container
+2. hostdinghy container
 
 
 zero downtime:

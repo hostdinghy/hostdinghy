@@ -11,12 +11,12 @@ We need to define a folder where everything should be stored.
 
 Modify /etc/environment with the following line:
 ```
-HUUS_DIR="/huus"
+HOSTDINGHY_DIR="/hostdinghy"
 ```
 
 ## Setup traefik
 
-`sudo mkdir ${HUUS_DIR}/traefik`
+`sudo mkdir ${HOSTDINGHY_DIR}/traefik`
 
 the traefik folder needs to be owned by root.
 
@@ -106,7 +106,7 @@ Then run `docker compose up -d --pull always`.
 
 ## Setup registry
 
-Create folder `sudo mkdir ${HUUS_DIR}/registry`
+Create folder `sudo mkdir ${HOSTDINGHY_DIR}/registry`
 
 ```compose.yml
 services:
@@ -159,7 +159,7 @@ health:
 ```registry.password
 # This file contains the username and password for the registry.
 # The password is hashed using bcrypt.
-huus:$2a$12$0BfGj92QSXxzAMJLD3dqIu0HlCof4D7l8fZ86Captj.vxEZ39uMUG
+hostdinghy:$2a$12$0BfGj92QSXxzAMJLD3dqIu0HlCof4D7l8fZ86Captj.vxEZ39uMUG
 ```
 
 Then run `docker compose up -d --pull always`.

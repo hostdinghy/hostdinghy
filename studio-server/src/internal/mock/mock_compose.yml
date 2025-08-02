@@ -27,7 +27,3 @@ services:
       - ./pgadmin-servers.json:/pgadmin4/servers.json:ro
     depends_on:
       - hostdinghy-web-db
-
-volumes:
-  hostdinghy_web_db_data:
-  pgadmin_data:

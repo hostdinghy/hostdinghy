@@ -14,10 +14,10 @@ we should be able to deploy
 
 
 
-1. huus service
-- do updates (of itself and huus)
+1. hostdinghy service
+- do updates (of itself and hostdinghy)
 
-2. huus container
+2. hostdinghy container
 - expose a webhook to restart the application
 
 

@@ -1,45 +1,47 @@
+<script module lang="ts">
+	import * as composeApi from '@/api/apps/compose';
+	import type { loadProps as layoutLoadProps } from '@/layout/AppLayout.svelte';
+
+	export async function loadProps({ id }) {
+		return {
+			compose: await composeApi.get(id),
+		};
+	}
+
+	type Props = ResolvedProps<typeof loadProps> &
+		ResolvedProps<typeof layoutLoadProps>;
+</script>
+
 <script lang="ts">
 	import Button from '@/components/Button.svelte';
 	import Editor from '@/components/Editor.svelte';
-	import type { loadProps } from '@/layout/AppLayout.svelte';
 	import CommitConfigModal from '@/layout/modals/CommitConfig.svelte';
 	import type { ResolvedProps } from '@/lib/LoadProps';
+	import { toast } from '@/layout/Toasts.svelte';
 
-	let { app }: ResolvedProps<typeof loadProps> = $props();
-
-	const value = `services:
-  frontend:
-    image: traefik:2.6
-    command: --providers.docker --entrypoints.web.address=:80 --providers.docker.exposedbydefault=false
-    ports:
-      # The HTTP port
-      - "80:80"
-    volumes:
-      # So that Traefik can listen to the Docker events
-      - /var/run/docker.sock:/var/run/docker.sock
-    depends_on:
-      - backend
-  backend:
-    build: backend
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.go.rule=Path(\`/\`)"
-      - "traefik.http.services.go.loadbalancer.server.port=80"
-`;
+	let { app, compose }: Props = $props();
 
 	let editor;
 	let commitConfigOpen = $state(false);
-	let original = $state(value);
-	let modified = $state(value);
+	let original = $state(compose);
+	let modified = $state(compose);
 
 	function onsave(newValue) {
 		modified = newValue;
 		commitConfigOpen = true;
 	}
 
-	function oncommit() {
+	async function oncommit() {
 		original = modified;
-		console.warn('todo: send config to backend');
+		const res = await composeApi.set(app.id, {
+			createDatabase: false,
+			compose: modified,
+		});
+
+		toast({
+			status: 'success',
+			message: 'new Config saved',
+		});
 	}
 
 	function onreset() {
@@ -57,7 +59,7 @@
 		<h1>Docker Compose</h1>
 		<Button onclick={() => editor.save()}>save</Button>
 	</header>
-	<Editor {value} {onsave} bind:this={editor} />
+	<Editor value={compose} {onsave} bind:this={editor} />
 </div>
 
 <CommitConfigModal

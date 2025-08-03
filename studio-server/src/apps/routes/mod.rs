@@ -1,3 +1,4 @@
+pub mod compose;
 pub mod get;
 pub mod set;
 
@@ -10,6 +11,7 @@ use pg::time::DateTime;
 use serde::{Deserialize, Serialize};
 
 use crate::AppState;
+use crate::apps::routes::compose::{get_compose, set_compose};
 use crate::apps::routes::get::{all, by_id};
 use crate::apps::routes::set::create;
 
@@ -28,4 +30,5 @@ pub fn routes() -> Router<AppState> {
 	Router::new()
 		.route("/", get(all).post(create))
 		.route("/{id}", get(by_id))
+		.route("/{id}/compose", get(get_compose).post(set_compose))
 }

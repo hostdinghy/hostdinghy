@@ -1,5 +1,5 @@
-import { getSessionHeaders } from './users';
-import { newApi } from './utils';
+import { getSessionHeaders } from '../users';
+import { newApi } from '../utils';
 
 const api = newApi('/apps');
 

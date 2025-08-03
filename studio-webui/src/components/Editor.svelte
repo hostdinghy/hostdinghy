@@ -7,25 +7,15 @@
 	let monacoEl: HTMLDivElement;
 	let editor: monaco.editor.IStandaloneCodeEditor;
 
-	const configFromServer = `services:
-  frontend:
-    image: traefik:2.6
-    command: --providers.docker --entrypoints.web.address=:80 --providers.docker.exposedbydefault=false
-    ports:
-      # The HTTP port
-      - "80:80"
-    volumes:
-      # So that Traefik can listen to the Docker events
-      - /var/run/docker.sock:/var/run/docker.sock
-    depends_on:
-      - backend
-  backend:
-    build: backend
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.go.rule=Path(\`/\`)"
-      - "traefik.http.services.go.loadbalancer.server.port=80"
-`;
+	let { value, onsave } = $props();
+
+	export function save() {
+		onsave(editor.getValue());
+	}
+
+	export function setValue(v) {
+		editor.setValue(v);
+	}
 
 	const themes = {
 		light: 'dinghy-light',
@@ -35,9 +25,25 @@
 	onMount(() => {
 		monaco.languages.register({ id: 'yaml' });
 		editor = monaco.editor.create(monacoEl, {
-			value: configFromServer,
+			value,
 			language: 'yaml',
 			theme: themes[get(derivedMode)],
+		});
+
+		editor.addAction({
+			id: 'save-config',
+			label: 'Save Config',
+			keybindings: [
+				monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS, // Bind to Ctrl+S
+			],
+			run: function (editor) {
+				// Get the content of the editor
+				const configContent = editor.getValue();
+
+				// Call the POST API to save the config
+				// saveConfig(configContent);
+				onsave(configContent);
+			},
 		});
 	});
 
@@ -50,7 +56,6 @@
 
 <style>
 	.editor {
-		width: 100%;
-		height: 100%;
+		flex: 1;
 	}
 </style>

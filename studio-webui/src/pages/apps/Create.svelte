@@ -10,7 +10,7 @@
 	export type Props = ResolvedProps<typeof loadProps>;
 </script>
 
-<script>
+<script lang="ts">
 	import { create } from '@/api/apps';
 	import Input from '@/form/Input.svelte';
 	import Select from '@/form/Select.svelte';

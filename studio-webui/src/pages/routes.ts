@@ -5,15 +5,17 @@ import { layoutGroup, withLayout } from '@/lib/layout';
 
 export { NotFound };
 
+const MainLayout = () => import('../layout/MainLayout.svelte');
+
 export function register(router: Router) {
 	router.register(
 		'/',
-		withLayout(
-			() => import('../layout/MainLayout.svelte'),
-			() => import('./Index.svelte'),
-		),
+		withLayout(MainLayout, () => import('./Index.svelte')),
 	);
-	router.register('/apps/create', () => import('./apps/Create.svelte'));
+	router.register(
+		'/apps/create',
+		withLayout(MainLayout, () => import('./apps/Create.svelte')),
+	);
 
 	layoutGroup(
 		router,

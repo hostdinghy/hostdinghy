@@ -18,6 +18,7 @@ pub struct AppInfoRes {
 #[serde(rename_all = "camelCase")]
 pub struct AppService {
 	pub name: String,
+	pub container_name: String,
 	pub state: ServiceState,
 	// human readable state
 	pub state_hr: String,

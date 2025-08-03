@@ -27,11 +27,11 @@ impl ApiClient {
 
 	pub fn connect(
 		&self,
-		addr: impl Into<String>,
+		domain: impl Into<String>,
 		cert: &str,
 		token: ApiToken,
 	) -> Result<ApiServerClient> {
-		let addr = addr.into();
+		let addr = format!("https://{}:4242", domain.into());
 		let cert = Certificate::from_pem(cert.as_bytes())
 			.map_err(|_| Error::InvalidCertificate)?;
 

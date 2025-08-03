@@ -20,7 +20,7 @@ services:
     ports:
       - "80:80"
       - "443:443"
-      - "8080:8080"
+      - "127.0.0.1:8080:8080"
     networks:
      - traefik
     extra_hosts:
@@ -57,7 +57,7 @@ entryPoints:
     address: :443
 
   weblocal:
-    address: "127.0.0.1:8080"
+    address: :8080
 
 api:
   dashboard: true
@@ -148,7 +148,7 @@ pub async fn setup(_traefik: Traefik) -> Result<(), CliError> {
 			.replace("{dashboard_domain}", &cfg.traefik.dashboard_domain)
 			.replace(
 				"{api_token}",
-				&bcrypt::hash(&cfg.traefik.api_token, 10).unwrap(),
+				&bcrypt::hash(&cfg.traefik.api_token.to_string(), 10).unwrap(),
 			),
 	)
 	.await

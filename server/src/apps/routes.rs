@@ -52,14 +52,24 @@ async fn app_info(
 
 	let mut services = services
 		.into_iter()
-		.map(|s| AppService {
-			name: container_names_to_service_name(&s.names).unwrap_or_default(),
-			state: s
-				.state
-				.map(cont_sum_state_enum_to_service_state)
-				.unwrap_or(ServiceState::Unknown),
-			state_hr: s.status.unwrap_or_default(),
-			routes: vec![],
+		.map(|s| {
+			let labels = s.labels.unwrap_or_default();
+			let container_name =
+				container_names_to_service_name(&s.names).unwrap_or_default();
+
+			AppService {
+				name: labels
+					.get("com.docker.compose.service")
+					.cloned()
+					.unwrap_or_else(|| container_name.clone()),
+				container_name: container_name,
+				state: s
+					.state
+					.map(cont_sum_state_enum_to_service_state)
+					.unwrap_or(ServiceState::Unknown),
+				state_hr: s.status.unwrap_or_default(),
+				routes: vec![],
+			}
 		})
 		.collect::<Vec<_>>();
 
@@ -100,7 +110,7 @@ async fn get_compose(
 
 	// now lets check if we have a compose file
 	let compose_path = app_dir.join("compose.yml");
-	if is_file(&compose_path).await {
+	if !is_file(&compose_path).await {
 		return Err(Error::AppNotFound);
 	}
 
@@ -194,10 +204,10 @@ async fn compose_action(
 	}
 
 	match command {
-		ComposeCommand::Start => compose::start(&app_dir).await,
-		ComposeCommand::Up => compose::up(&app_dir).await,
-		ComposeCommand::Restart => compose::restart(&app_dir).await,
-		ComposeCommand::Stop => compose::stop(&app_dir).await,
+		ComposeCommand::Start => compose::start(&compose_path).await,
+		ComposeCommand::Up => compose::up(&compose_path).await,
+		ComposeCommand::Restart => compose::restart(&compose_path).await,
+		ComposeCommand::Stop => compose::stop(&compose_path).await,
 	}?;
 
 	Ok(())

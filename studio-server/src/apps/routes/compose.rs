@@ -1,14 +1,10 @@
 use axum::Json;
 use axum::extract::{Path, State};
 use internal_api::app_id::AppId;
-use internal_api::apps::{AppService, SaveComposeReq};
+use internal_api::apps::{ComposeCommand, SaveComposeReq};
 use internal_api::error::Error as ApiError;
-use pg::UniqueId;
-use pg::time::DateTime;
-use serde::{Deserialize, Serialize};
 
 use crate::apps::Apps;
-use crate::apps::routes::AppSummary;
 use crate::error::Error;
 use crate::error::Result;
 use crate::internal::ApiClient;
@@ -77,5 +73,9 @@ pub async fn set_compose(
 
 	api.app_set_compose(&id, &req).await?;
 
-	Ok(Json(req.compose))
+	let gcompose = api.app_get_compose(&id).await?;
+
+	api.app_compose_command(&id, &ComposeCommand::Up).await?;
+
+	Ok(Json(gcompose.compose))
 }

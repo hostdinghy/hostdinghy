@@ -1,5 +1,5 @@
 <script>
-	import { derivedMode } from '@/lib/theme/themeMode.svelte';
+	import { derivedMode } from '@/lib/theme/themeMode';
 	import * as monaco from 'monaco-editor/esm/vs/editor/editor.api';
 	import { get } from 'svelte/store';
 

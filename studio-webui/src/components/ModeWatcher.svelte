@@ -1,5 +1,5 @@
 <script>
-	import { systemPrefersMode } from '@/lib/theme/themeMode.svelte';
+	import { systemPrefersMode } from '@/lib/theme/themeMode';
 	import { onMount } from 'svelte';
 
 	onMount(() => {

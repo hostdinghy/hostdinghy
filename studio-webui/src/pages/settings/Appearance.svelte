@@ -1,7 +1,7 @@
 <script>
 	import Input from '@/form/Input.svelte';
 	import Select from '@/form/Select.svelte';
-	import { userPrefersMode } from '@/lib/theme/themeMode.svelte';
+	import { userPrefersMode } from '@/lib/theme/themeMode';
 
 	const themeModes = {
 		system: 'System',

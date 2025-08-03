@@ -43,6 +43,10 @@ impl ApiClient {
 		}
 	}
 
+	pub fn is_mock(&self) -> bool {
+		matches!(self.inner, Inner::Mock(_))
+	}
+
 	pub async fn populate_mock_data(
 		&self,
 		conn: &mut ConnOwned,

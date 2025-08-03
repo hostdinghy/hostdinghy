@@ -1,5 +1,6 @@
 use std::path::Path;
 
+use base64::{Engine, prelude::BASE64_URL_SAFE_NO_PAD};
 use tokio::fs;
 use tracing::info;
 
@@ -21,7 +22,7 @@ Wants=network-online.target
 
 [Service]
 Type=simple
-ExecStart=/usr/bin/hostdinghy serve
+ExecStart=/usr/local/bin/hostdinghy serve
 Restart=always
 
 [Install]
@@ -60,6 +61,7 @@ pub async fn setup() -> Result<(), CliError> {
 	let cert = read_cert(hostdinghy_dir)
 		.await
 		.with_message("Failed to read self-signed certificate")?;
+	let cert = BASE64_URL_SAFE_NO_PAD.encode(cert);
 
 	info!(
 		"Server setup completed successfully with domain: {}",

@@ -65,7 +65,7 @@ impl From<ServerRow> for Server {
 		Self {
 			id: row.id,
 			team_id: row.team_id,
-			addr: row.addr,
+			domain: row.addr,
 			name: row.name,
 			api_token: row.api_token,
 			tls_cert: row.tls_cert,
@@ -112,7 +112,7 @@ impl ServersTrait for Servers<'_> {
 		let row = ServerRow {
 			id: server.id,
 			team_id: server.team_id,
-			addr: server.addr.clone(),
+			addr: server.domain.clone(),
 			name: server.name.clone(),
 			api_token: server.api_token.clone(),
 			tls_cert: server.tls_cert.clone(),

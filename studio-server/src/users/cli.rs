@@ -4,7 +4,7 @@ use pg::{UniqueId, db::ConnOwned, time::DateTime};
 use crate::{
 	AppState,
 	teams::data::Team,
-	users::data::{Rights, UnsafeUser},
+	users::data::{Rights, UnsafeUser, User},
 };
 
 /// Will always create a root user
@@ -12,6 +12,8 @@ use crate::{
 pub struct CreateUser {
 	username: String,
 	password: String,
+	#[clap(long)]
+	json: bool,
 }
 
 pub async fn create_user(
@@ -44,5 +46,11 @@ pub async fn create_user(
 	};
 	users.insert(&user).await.unwrap();
 
-	println!("created new user {user:#?}");
+	let user = User::from(user);
+
+	if cu.json {
+		print!("{}", serde_json::to_string(&user).unwrap());
+	} else {
+		println!("created new user {user:#?}");
+	}
 }

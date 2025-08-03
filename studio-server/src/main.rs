@@ -33,7 +33,7 @@ struct Args {
 	enable_cors: bool,
 	#[clap(long, default_value = "studio_server=info,tower_http=debug,warn")]
 	tracing: String,
-	#[clap(long, default_value = "./config.toml")]
+	#[clap(long, default_value_t = default_config_path())]
 	config: String,
 	#[clap(long, default_value_t = default_dist_dir())]
 	dist_dir: String,
@@ -41,11 +41,19 @@ struct Args {
 	internal_api_mock: Option<bool>,
 }
 
+fn default_config_path() -> String {
+	if cfg!(debug_assertions) {
+		"./config.toml".into()
+	} else {
+		"/data/config.toml".into()
+	}
+}
+
 fn default_dist_dir() -> String {
 	if cfg!(debug_assertions) {
-		"../studio-webui/dist".to_string()
+		"../studio-webui/dist".into()
 	} else {
-		"dist".to_string()
+		"dist".into()
 	}
 }
 
@@ -53,6 +61,7 @@ fn default_dist_dir() -> String {
 enum SubCommand {
 	CreateUser(users::cli::CreateUser),
 	CreateServer(servers::cli::CreateServer),
+	CreateMockServer(servers::cli::CreateMockServer),
 }
 
 #[derive(Debug, Clone, Deserialize)]
@@ -195,6 +204,10 @@ async fn main() {
 		}
 		Some(SubCommand::CreateServer(c)) => {
 			servers::cli::create_server(&mut conn, &state, c).await;
+			return;
+		}
+		Some(SubCommand::CreateMockServer(c)) => {
+			servers::cli::create_mock_server(&mut conn, &state, c).await;
 			return;
 		}
 		None => {}

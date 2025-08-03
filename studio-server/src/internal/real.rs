@@ -14,7 +14,7 @@ pub struct ApiServerClient {
 impl ApiServerClient {
 	pub fn new(client: &int::ApiClient, server: &Server) -> Result<Self> {
 		client
-			.connect(&server.addr, &server.tls_cert, server.api_token.clone())
+			.connect(&server.domain, &server.tls_cert, server.api_token.clone())
 			.map(|inner| Self { inner })
 	}
 }

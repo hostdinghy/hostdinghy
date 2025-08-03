@@ -1,6 +1,7 @@
 mod postgresql;
 mod registry;
 mod server;
+mod studio;
 mod traefik;
 
 use std::{env, path::PathBuf};
@@ -37,6 +38,7 @@ enum SubCommand {
 	Registry(registry::Registry),
 	Postgresql(postgresql::Postgresql),
 	Server,
+	Studio(studio::Studio),
 }
 
 pub async fn setup(setup: Setup) {
@@ -86,6 +88,12 @@ pub async fn inner_setup(setup: Setup) -> Result<(), CliError> {
 			verify_root().await?;
 			server::setup().await?;
 		}
+		SubCommand::Studio(su) => {
+			verify_root().await?;
+			studio::setup(su).await?;
+
+			info!("Studio setup completed successfully.");
+		}
 	}
 
 	Ok(())
@@ -109,7 +117,6 @@ sudo apt-get update
 sudo apt-get install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin -y
 
 # sudo usermod -aG docker username
-
 
 sudo systemctl enable docker.service
 sudo systemctl enable containerd.service

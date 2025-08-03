@@ -13,7 +13,7 @@ pub struct Server {
 	pub id: UniqueId,
 	pub team_id: UniqueId,
 	pub name: String,
-	pub addr: String,
+	pub domain: String,
 	pub api_token: ApiToken,
 	pub tls_cert: String,
 	pub created_on: DateTime,

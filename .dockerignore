@@ -1,0 +1,4 @@
+/target
+/studio-server/config.toml
+/studio-webui/dist
+/studio-webui/node_modules

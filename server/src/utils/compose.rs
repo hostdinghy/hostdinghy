@@ -73,3 +73,15 @@ pub async fn logs(
 
 	cmd(&args).run().await
 }
+
+pub async fn exec(
+	file: impl AsRef<Path>,
+	service: &str,
+	command: &[&str],
+) -> Result<String, CmdError> {
+	let file_str = file.as_ref().to_string_lossy();
+	let mut args = vec!["docker", "compose", "-f", &file_str, "exec", service];
+	args.extend(command);
+
+	cmd(&args).run().await
+}

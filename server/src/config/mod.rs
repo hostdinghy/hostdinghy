@@ -65,13 +65,20 @@ impl Config {
 	}
 
 	pub fn new_from_user() -> Self {
+		println!(
+			"Welcome to the HostDinghy setup!\n\
+			You will be asked a few questions to configure your server."
+		);
+		println!(
+			"To Start enter a domain for your server.\n\
+			This domain will be used for the self-signed certificate and \
+			the internal API.\n\
+			If you intend to run the studio (the web ui) on this server \
+			this domain will be used for that.
+			"
+		);
 		let domain: String = Input::with_theme(&ColorfulTheme::default())
-			.with_prompt(
-				"Enter the domain for this server\n\
-				This is the domain which resolves to this server. No website \
-				needs to be hosted on this domain.\n\
-				The self signed certificate for the internal API will use this domain.",
-			)
+			.with_prompt("Enter the domain for this server")
 			.validate_with(|domain: &String| {
 				if domain.starts_with("http") {
 					Err("The domain should not start with http or https")

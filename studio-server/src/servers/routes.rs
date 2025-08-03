@@ -32,7 +32,7 @@ async fn all(
 #[serde(rename_all = "camelCase")]
 struct CreateServerReq {
 	name: String,
-	addr: String,
+	domain: String,
 	api_token: ApiToken,
 	cert: String,
 }
@@ -51,7 +51,7 @@ async fn create(
 		id: UniqueId::new(),
 		team_id: user.user.team_id,
 		name: req.name,
-		addr: req.addr,
+		domain: req.domain,
 		api_token: req.api_token,
 		tls_cert: req.cert,
 		created_on: DateTime::now(),

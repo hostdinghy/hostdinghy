@@ -1,6 +1,7 @@
 pub mod client;
 pub mod utils;
 
+use chuchi_crypto::token::Token;
 use clap::Parser;
 use tracing::info;
 
@@ -33,9 +34,14 @@ pub async fn postgresql(postgresql: Postgresql) {
 
 pub async fn inner_postgresql(postgresql: Postgresql) -> Result<(), CliError> {
 	match postgresql.cmd {
-		SubCommand::CreateUser(cu) => {
-			create_user(cu).await?;
+		SubCommand::CreateUser(mut cu) => {
+			let tell_pw = cu.password.is_none();
+			create_user(&mut cu).await?;
 			info!("User created successfully.");
+			if tell_pw {
+				info!("Username: {}", cu.username);
+				info!("Password: {}", cu.password.as_ref().unwrap());
+			}
 		}
 		SubCommand::CreateDatabase(cd) => {
 			create_database(cd).await?;
@@ -79,22 +85,25 @@ pub async fn inner_postgresql(postgresql: Postgresql) -> Result<(), CliError> {
 #[derive(Debug, Parser)]
 pub struct CreateUser {
 	username: String,
-	password: String,
+	/// If not password is provided a password will be generated
+	password: Option<String>,
 	#[clap(long, help = "Create user with superuser privileges")]
 	superuser: bool,
 }
 
-async fn create_user(create_user: CreateUser) -> Result<(), CliError> {
+async fn create_user(create_user: &mut CreateUser) -> Result<(), CliError> {
 	let client = Client::new().await?;
+
+	let password = create_user
+		.password
+		.get_or_insert_with(|| Token::<32>::new().to_string());
 
 	if create_user.superuser {
 		client
-			.create_superuser(&create_user.username, &create_user.password)
+			.create_superuser(&create_user.username, &password)
 			.await?;
 	} else {
-		client
-			.create_user(&create_user.username, &create_user.password)
-			.await?;
+		client.create_user(&create_user.username, &password).await?;
 	}
 
 	Ok(())

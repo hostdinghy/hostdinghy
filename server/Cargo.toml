@@ -55,3 +55,4 @@ regex = "1.11.1"
 dotenvy = "0.15.7"
 console = "0.16.0"
 dialoguer = "0.11.0"
+tower-http = { version = "0.6.6", features = ["cors", "fs", "trace"] }

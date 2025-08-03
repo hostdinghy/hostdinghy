@@ -3,8 +3,10 @@ use tokio::fs;
 
 use crate::{
 	config::Config,
+	registry::{self, AddUser},
 	utils::{
 		cli::{CliError, WithMessage as _},
+		cmd::cmd,
 		compose,
 	},
 };
@@ -110,6 +112,28 @@ pub async fn setup(_registry: Registry) -> Result<(), CliError> {
 	)?;
 
 	compose::up(compose_file).await?;
+
+	let mut add_user = AddUser {
+		username: "internal".into(),
+		password: None,
+	};
+	registry::add_user(&mut add_user).await?;
+
+	cmd(&[
+		"docker",
+		"login",
+		&cfg.registry.domain,
+		"-u",
+		&add_user.username,
+		"-p",
+		add_user.password.as_ref().unwrap(),
+	])
+	.run()
+	.await
+	.with_message(
+		"Failed to log in to the registry. Make \
+			sure the registry is running and accessible.",
+	)?;
 
 	Ok(())
 }

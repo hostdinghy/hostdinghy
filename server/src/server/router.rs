@@ -6,6 +6,7 @@ use api::{
 };
 use axum::{Json, Router, extract::FromRef, routing::get};
 use chuchi_postgres::time::DateTime;
+use tower_http::trace::TraceLayer;
 
 use crate::{
 	apps,
@@ -52,6 +53,7 @@ pub async fn app(cfg: Config) -> Result<Router<()>, Error> {
 		.route("/version", get(version_req))
 		.nest("/apps", apps::routes::routes())
 		.nest("/registry", registry::routes::routes())
+		.layer(TraceLayer::new_for_http())
 		.with_state(state);
 
 	Ok(router)

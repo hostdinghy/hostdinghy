@@ -2496,6 +2496,7 @@ dependencies = [
  "tokio-rustls",
  "toml",
  "tower",
+ "tower-http",
  "tracing",
  "tracing-subscriber",
 ]

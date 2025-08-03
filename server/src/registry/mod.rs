@@ -11,7 +11,7 @@ use tracing::{error, info};
 
 use crate::utils::{
 	cli::{CliError, WithMessage as _},
-	compose, hostdinghy_dir,
+	compose, hostdinghy_dir, verify_root,
 };
 
 pub type WebhookToken = Token<32>;
@@ -60,11 +60,18 @@ pub async fn registry(registry: Registry) {
 }
 
 pub async fn inner_registry(registry: Registry) -> Result<(), CliError> {
+	verify_root().await?;
+
 	match registry.cmd {
-		SubCommand::AddUser(au) => {
-			add_user(au).await?;
+		SubCommand::AddUser(mut au) => {
+			let tell_pw = au.password.is_none();
+			add_user(&mut au).await?;
 
 			info!("User added to registry successfully.");
+			if tell_pw {
+				info!("Username: {}", au.username);
+				info!("Password: {}", au.password.as_ref().unwrap());
+			}
 		}
 		SubCommand::RemoveUser(ru) => {
 			remove_user(ru).await?;
@@ -102,19 +109,20 @@ async fn restart_registry(
 	Ok(())
 }
 
-#[derive(Debug, Parser)]
+#[derive(Debug, Clone, Parser)]
 pub struct AddUser {
-	username: String,
-	password: String,
+	pub username: String,
+	/// If no password is provided a random one will be generated
+	pub password: Option<String>,
 }
 
-async fn add_user(add_user: AddUser) -> Result<(), CliError> {
+pub async fn add_user(add_user: &mut AddUser) -> Result<(), CliError> {
 	// check that the username does not exist and is valid
 	if add_user.username.contains(":") {
 		// todo better errors
 		return Err(CliError::any(
 			"username contains a colon symbol",
-			add_user.username,
+			add_user.username.clone(),
 		));
 	}
 
@@ -122,11 +130,16 @@ async fn add_user(add_user: AddUser) -> Result<(), CliError> {
 	if users.contains(&add_user.username) {
 		return Err(CliError::any(
 			"username already exists",
-			add_user.username,
+			add_user.username.clone(),
 		));
 	}
 
-	let password = bcrypt::hash(&add_user.password, bcrypt::DEFAULT_COST)
+	let password = add_user.password.get_or_insert_with(|| {
+		// generate a random password
+		Token::<32>::new().to_string()
+	});
+
+	let password = bcrypt::hash(password, bcrypt::DEFAULT_COST)
 		.with_message("Failed to hash password")?;
 
 	let hostdinghy_dir = hostdinghy_dir()?;

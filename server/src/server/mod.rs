@@ -14,7 +14,7 @@ use tokio_rustls::{
 };
 
 use tower::Service as _;
-use tracing::{error, warn};
+use tracing::{error, info, warn};
 
 use crate::{
 	config::Config,
@@ -65,6 +65,8 @@ async fn inner_serve() -> Result<(), Error> {
 		.with_message("failed to bind to [::]:4242")?;
 
 	let app = router::app(cfg).await?;
+
+	info!("Server is running on [::]:4242");
 
 	loop {
 		let tower_service = app.clone();

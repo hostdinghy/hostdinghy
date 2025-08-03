@@ -25,7 +25,7 @@ use clap::Parser;
 struct Args {
 	#[clap(subcommand)]
 	subcmd: SubCommand,
-	#[clap(long, default_value = "hostdinghy=info,warn")]
+	#[clap(long, default_value = "hostdinghy=info,tower_http=info,warn")]
 	tracing: String,
 }
 

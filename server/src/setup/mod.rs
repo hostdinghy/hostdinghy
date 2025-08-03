@@ -1,11 +1,12 @@
 mod postgresql;
 mod registry;
+mod server;
 mod traefik;
 
-use std::path::PathBuf;
+use std::{env, path::PathBuf};
 
-use api::requests::ApiToken;
 use clap::Parser;
+use dialoguer::{Input, theme::ColorfulTheme};
 use tokio::{
 	fs::{self, OpenOptions},
 	io::AsyncWriteExt,
@@ -13,7 +14,8 @@ use tokio::{
 use tracing::info;
 
 use crate::{
-	server::{self, maybe_create_cert, read_cert},
+	config::Config,
+	server::maybe_create_cert,
 	utils::{
 		cli::{CliError, WithMessage as _},
 		cmd::cmd,
@@ -29,22 +31,12 @@ pub struct Setup {
 
 #[derive(Debug, Parser)]
 enum SubCommand {
+	Config,
 	Docker,
-	Dir {
-		#[clap(default_value = "/hostdinghy")]
-		dir: String,
-	},
 	Traefik(traefik::Traefik),
 	Registry(registry::Registry),
 	Postgresql(postgresql::Postgresql),
-	Server {
-		/// This is the domain which resolves to this server.
-		/// No website needs to be hosted on this domain.
-		///
-		/// The self signed certificate for the internal api
-		/// will use this domain.
-		domain: String,
-	},
+	Server,
 }
 
 pub async fn setup(setup: Setup) {
@@ -57,20 +49,20 @@ pub async fn setup(setup: Setup) {
 
 pub async fn inner_setup(setup: Setup) -> Result<(), CliError> {
 	match setup.cmd {
+		SubCommand::Config => {
+			verify_root().await?;
+			let hostdinghy_dir = setup_dir().await?;
+			setup_config(hostdinghy_dir).await?;
+
+			info!(
+				"Config setup completed successfully at $HOSTDINGHY_DIR/config.toml"
+			);
+		}
 		SubCommand::Docker => {
 			verify_root().await?;
 			setup_docker().await?;
 
 			info!("Docker setup completed successfully.");
-		}
-		SubCommand::Dir { dir } => {
-			verify_root().await?;
-			let new_dir = setup_dir(dir).await?;
-
-			info!(
-				"Directory \"{}\" setup completed successfully.",
-				new_dir.display()
-			);
 		}
 		SubCommand::Traefik(traefik) => {
 			verify_root().await?;
@@ -90,37 +82,9 @@ pub async fn inner_setup(setup: Setup) -> Result<(), CliError> {
 
 			info!("PostgreSQL setup completed successfully.");
 		}
-		SubCommand::Server { domain } => {
+		SubCommand::Server => {
 			verify_root().await?;
-			let hostdinghy_dir = hostdinghy_dir()?;
-			let mut cfg = server::Config::read(&hostdinghy_dir)
-				.await
-				.with_message("Failed to read server config")?;
-
-			cfg.domain = domain;
-			cfg.api_token = Some(ApiToken::new());
-			cfg.write(&hostdinghy_dir)
-				.await
-				.with_message("Failed to write server config")?;
-
-			maybe_create_cert(&cfg, &hostdinghy_dir)
-				.await
-				.with_message("Failed to create self-signed certificate")?;
-			let cert = read_cert(hostdinghy_dir)
-				.await
-				.with_message("Failed to read self-signed certificate")?;
-
-			info!(
-				"Server setup completed successfully with domain: {}",
-				cfg.domain
-			);
-
-			eprintln!(
-				"With the following information you can add the server \
-				to the hostdinghy ui:\n\n{}\n{}",
-				cfg.api_token.unwrap(),
-				cert
-			)
+			server::setup().await?;
 		}
 	}
 
@@ -145,6 +109,10 @@ sudo apt-get update
 sudo apt-get install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin -y
 
 # sudo usermod -aG docker username
+
+
+sudo systemctl enable docker.service
+sudo systemctl enable containerd.service
 "#;
 
 async fn setup_docker() -> Result<(), CliError> {
@@ -153,24 +121,30 @@ async fn setup_docker() -> Result<(), CliError> {
 	Ok(())
 }
 
-async fn setup_dir(dir: String) -> Result<PathBuf, CliError> {
+async fn setup_dir() -> Result<PathBuf, CliError> {
 	// check if HOSTDINGHY_DIR env variable is already set
 	match hostdinghy_dir() {
-		Ok(dir) => {
-			return Err(CliError::HostdinghyDirAlreadySet(
-				dir.to_string_lossy().to_string(),
-			));
-		}
+		Ok(dir) => return Ok(dir),
 		Err(CliError::HostdinghyDirNotPresent) => {}
 		Err(e) => return Err(e),
-	};
-
-	if dir.contains("\"") {
-		return Err(CliError::any(
-			"HOSTDINGHY_DIR cannot contain double quotes",
-			"",
-		));
 	}
+
+	let dir: String = Input::with_theme(&ColorfulTheme::default())
+		.with_prompt(
+			"At what directory should hostdinghy and \
+			all projects be stored?\nNote this cannot be changed \
+			after the setup is complete.",
+		)
+		.validate_with(|dir: &String| {
+			if dir.contains("\"") {
+				Err("Directory cannot contain double quotes")
+			} else {
+				Ok(())
+			}
+		})
+		.with_initial_text("/hostdinghy")
+		.interact_text()
+		.unwrap();
 
 	// lets first check if the dir exists or can be created
 	// maybe we need to canonicalize first
@@ -194,5 +168,37 @@ async fn setup_dir(dir: String) -> Result<PathBuf, CliError> {
 		.with_message("Failed to write to /etc/environment")?;
 	}
 
+	// Safe this function will not be running while somebody else
+	// tries to read env variables
+	unsafe {
+		env::set_var("HOSTDINGHY_DIR", &abs_dir);
+	}
+
 	Ok(abs_dir)
+}
+
+async fn setup_config(hostdinghy_dir: PathBuf) -> Result<(), CliError> {
+	let cfg = match Config::try_read(&hostdinghy_dir)
+		.await
+		.with_message("failed to read config")?
+	{
+		Some(c) => {
+			info!("Config already exists at $HOSTDINGHY_DIR/config.toml");
+			c
+		}
+		None => {
+			let cfg = Config::new_from_user();
+			cfg.write(&hostdinghy_dir)
+				.await
+				.with_message("Failed to write config")?;
+
+			cfg
+		}
+	};
+
+	maybe_create_cert(&cfg, &hostdinghy_dir)
+		.await
+		.with_message("Failed to create self-signed certificate")?;
+
+	Ok(())
 }

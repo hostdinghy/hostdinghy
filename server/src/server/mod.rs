@@ -16,7 +16,10 @@ use tokio_rustls::{
 use tower::Service as _;
 use tracing::{error, warn};
 
-use crate::utils::{hostdinghy_dir, verify_root};
+use crate::{
+	config::Config,
+	utils::{hostdinghy_dir, is_file, verify_root},
+};
 
 mod cert;
 pub mod config;
@@ -25,7 +28,6 @@ pub mod router;
 mod utils;
 
 pub use cert::{maybe_create_cert, read_cert};
-pub use config::Config;
 pub use utils::Authenticated;
 
 pub async fn serve() {
@@ -40,16 +42,14 @@ pub async fn serve() {
 async fn inner_serve() -> Result<(), Error> {
 	verify_root().await?;
 	let hostdinghy_dir = hostdinghy_dir()?;
-	let mut cfg = Config::read(&hostdinghy_dir).await?;
+	let cfg = Config::read(&hostdinghy_dir).await?;
 
-	if cfg.domain.is_empty() {
+	if !is_file(cert::cert_path(&hostdinghy_dir)).await {
 		return Err(Error::any(
-			"run setup server to define a domain",
-			"domain required to run the internal server",
+			"could not find tls certficiate",
+			"run `hostdinghy setup server`",
 		));
 	}
-
-	maybe_create_cert(&mut cfg, &hostdinghy_dir).await?;
 
 	// this is not really necessary since we don't do anything async but
 	// since everything else is async, might be good practice
@@ -64,7 +64,7 @@ async fn inner_serve() -> Result<(), Error> {
 		.await
 		.with_message("failed to bind to [::]:4242")?;
 
-	let app = router::app(&hostdinghy_dir, cfg).await?;
+	let app = router::app(cfg).await?;
 
 	loop {
 		let tower_service = app.clone();

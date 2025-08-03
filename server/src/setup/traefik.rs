@@ -3,11 +3,11 @@ use clap::Parser;
 use tokio::fs;
 
 use crate::{
+	config::Config,
 	docker::Docker,
-	traefik::{ApiToken, TraefikConfig},
 	utils::{
 		cli::{CliError, WithMessage as _},
-		compose, write_toml,
+		compose,
 	},
 };
 
@@ -113,28 +113,19 @@ http:
 "#;
 
 #[derive(Debug, Parser)]
-pub struct Traefik {
-	letsencrypt_email: String,
-	dashboard_domain: String,
-}
+pub struct Traefik {}
 
-pub async fn setup(traefik: Traefik) -> Result<(), CliError> {
+pub async fn setup(_traefik: Traefik) -> Result<(), CliError> {
 	let hostdinghy_dir = hostdinghy_dir()?;
+	let cfg = Config::read(&hostdinghy_dir)
+		.await
+		.with_message("Failed to read config")?;
+
 	let traefik_dir = hostdinghy_dir.join("traefik");
 
 	fs::create_dir_all(&traefik_dir)
 		.await
 		.with_message("Failed to create $HOSTDINGHY_DIR/traefik")?;
-
-	let cfg = TraefikConfig {
-		letsencrypt_email: traefik.letsencrypt_email,
-		dashboard_domain: traefik.dashboard_domain,
-		api_token: ApiToken::new(),
-	};
-
-	write_toml(&cfg, traefik_dir.join("config.toml"))
-		.await
-		.with_message("Failed to write $HOSTDINGHY_DIR/traefik/config.toml")?;
 
 	let compose_file = traefik_dir.join("compose.yml");
 	fs::write(&compose_file, COMPOSE_YML)
@@ -144,7 +135,8 @@ pub async fn setup(traefik: Traefik) -> Result<(), CliError> {
 	let traefik_yml = traefik_dir.join("traefik.yml");
 	fs::write(
 		traefik_yml,
-		TRAEFIK_YML.replace("{letsencrypt_email}", &cfg.letsencrypt_email),
+		TRAEFIK_YML
+			.replace("{letsencrypt_email}", &cfg.traefik.letsencrypt_email),
 	)
 	.await
 	.with_message("Failed to write $HOSTDINGHY_DIR/traefik/traefik.yml")?;
@@ -153,8 +145,11 @@ pub async fn setup(traefik: Traefik) -> Result<(), CliError> {
 	fs::write(
 		dynamic_yml,
 		TRAEFIK_DYNAMIC_YML
-			.replace("{dashboard_domain}", &cfg.dashboard_domain)
-			.replace("{api_token}", &bcrypt::hash(&cfg.api_token, 10).unwrap()),
+			.replace("{dashboard_domain}", &cfg.traefik.dashboard_domain)
+			.replace(
+				"{api_token}",
+				&bcrypt::hash(&cfg.traefik.api_token, 10).unwrap(),
+			),
 	)
 	.await
 	.with_message("Failed to write $HOSTDINGHY_DIR/traefik/dynamic.yml")?;

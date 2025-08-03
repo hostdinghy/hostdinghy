@@ -4,7 +4,7 @@ use api::error::{Error, WithMessage as _};
 use rcgen::generate_simple_self_signed;
 use tokio::fs;
 
-use crate::server::config::Config;
+use crate::config::Config;
 
 pub fn key_path(hostdinghy_dir: impl AsRef<Path>) -> PathBuf {
 	hostdinghy_dir.as_ref().join("key.pem")

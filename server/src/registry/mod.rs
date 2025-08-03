@@ -1,7 +1,11 @@
+pub mod routes;
+
 use std::path::Path;
 
-use api::app_id::AppId;
+use chuchi_crypto::token::Token;
 use clap::Parser;
+use dialoguer::{Input, theme::ColorfulTheme};
+use serde::{Deserialize, Serialize};
 use tokio::{fs, io::AsyncWriteExt as _};
 use tracing::{error, info};
 
@@ -9,6 +13,8 @@ use crate::utils::{
 	cli::{CliError, WithMessage as _},
 	compose, hostdinghy_dir,
 };
+
+pub type WebhookToken = Token<32>;
 
 #[derive(Debug, Parser)]
 pub struct Registry {
@@ -24,6 +30,27 @@ enum SubCommand {
 	Restart,
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "kebab-case")]
+pub struct RegistryConfig {
+	pub domain: String,
+	pub webhook_token: WebhookToken,
+}
+
+impl RegistryConfig {
+	pub fn new_from_user() -> Self {
+		let domain: String = Input::with_theme(&ColorfulTheme::default())
+			.with_prompt("Enter the domain for the registry")
+			.interact_text()
+			.unwrap();
+
+		Self {
+			domain,
+			webhook_token: WebhookToken::new(),
+		}
+	}
+}
+
 pub async fn registry(registry: Registry) {
 	let res = inner_registry(registry).await;
 
@@ -35,9 +62,9 @@ pub async fn registry(registry: Registry) {
 pub async fn inner_registry(registry: Registry) -> Result<(), CliError> {
 	match registry.cmd {
 		SubCommand::AddUser(au) => {
-			let username = add_user(au).await?;
+			add_user(au).await?;
 
-			info!("User \"{username}\" added to registry successfully.");
+			info!("User added to registry successfully.");
 		}
 		SubCommand::RemoveUser(ru) => {
 			remove_user(ru).await?;
@@ -77,30 +104,26 @@ async fn restart_registry(
 
 #[derive(Debug, Parser)]
 pub struct AddUser {
-	app_id: Option<AppId>,
 	username: String,
 	password: String,
 }
 
-async fn add_user(add_user: AddUser) -> Result<String, CliError> {
-	let prefix = add_user
-		.app_id
-		.map(|a| a.to_string())
-		.unwrap_or_else(|| "internal".into());
-	let username = format!("{prefix}${}", add_user.username);
-
+async fn add_user(add_user: AddUser) -> Result<(), CliError> {
 	// check that the username does not exist and is valid
-	if username.contains(":") {
+	if add_user.username.contains(":") {
 		// todo better errors
 		return Err(CliError::any(
 			"username contains a colon symbol",
-			username,
+			add_user.username,
 		));
 	}
 
 	let users = list_users().await?;
-	if users.contains(&username) {
-		return Err(CliError::any("username already exists", username));
+	if users.contains(&add_user.username) {
+		return Err(CliError::any(
+			"username already exists",
+			add_user.username,
+		));
 	}
 
 	let password = bcrypt::hash(&add_user.password, bcrypt::DEFAULT_COST)
@@ -116,7 +139,7 @@ async fn add_user(add_user: AddUser) -> Result<String, CliError> {
 		.with_message(
 			"Failed to open $HOSTDINGHY_DIR/registry/registry.password",
 		)?
-		.write_all(format!("{username}:{password}\n").as_bytes())
+		.write_all(format!("{}:{password}\n", add_user.username).as_bytes())
 		.await
 		.with_message(
 			"Failed to write to $HOSTDINGHY_DIR/registry/registry.password",
@@ -124,7 +147,7 @@ async fn add_user(add_user: AddUser) -> Result<String, CliError> {
 
 	restart_registry(&hostdinghy_dir).await?;
 
-	Ok(username)
+	Ok(())
 }
 
 #[derive(Debug, Parser)]

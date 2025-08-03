@@ -1,14 +1,11 @@
-use std::{path::Path, sync::Arc};
+use std::sync::Arc;
 
 use api::error::{Error, WithMessage as _};
 use hyper::Method;
 use reqwest::RequestBuilder;
 use serde::de::DeserializeOwned;
 
-use crate::{
-	traefik::{TraefikConfig, api::TraefikRoute},
-	utils::cli::CliError,
-};
+use crate::traefik::{TraefikConfig, api::TraefikRoute};
 
 #[derive(Debug, Clone)]
 pub struct Traefik {
@@ -17,13 +14,11 @@ pub struct Traefik {
 }
 
 impl Traefik {
-	pub async fn new(
-		hostdinghy_dir: impl AsRef<Path>,
-	) -> Result<Self, CliError> {
-		Ok(Self {
+	pub fn new(cfg: TraefikConfig) -> Self {
+		Self {
 			inner: reqwest::Client::new(),
-			cfg: Arc::new(TraefikConfig::read(hostdinghy_dir).await?),
-		})
+			cfg: Arc::new(cfg),
+		}
 	}
 
 	fn request(&self, method: Method, uri: &str) -> RequestBuilder {

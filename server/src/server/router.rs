@@ -1,4 +1,4 @@
-use std::{path::Path, sync::Arc};
+use std::sync::Arc;
 
 use api::{
 	error::Error,
@@ -10,6 +10,7 @@ use chuchi_postgres::time::DateTime;
 use crate::{
 	apps,
 	docker::Docker,
+	registry,
 	server::{Config, utils::Authenticated},
 	traefik::client::Traefik,
 };
@@ -39,13 +40,10 @@ impl FromRef<AppState> for Arc<Config> {
 	}
 }
 
-pub async fn app(
-	hostdinghy_dir: &Path,
-	cfg: Config,
-) -> Result<Router<()>, Error> {
+pub async fn app(cfg: Config) -> Result<Router<()>, Error> {
 	let state = AppState {
 		docker: Docker::new()?,
-		traefik: Traefik::new(hostdinghy_dir).await?,
+		traefik: Traefik::new(cfg.traefik.clone()),
 		cfg: Arc::new(cfg),
 	};
 
@@ -53,6 +51,7 @@ pub async fn app(
 		.route("/ping", get(ping_req))
 		.route("/version", get(version_req))
 		.nest("/apps", apps::routes::routes())
+		.nest("/registry", registry::routes::routes())
 		.with_state(state);
 
 	Ok(router)

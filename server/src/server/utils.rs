@@ -26,11 +26,9 @@ impl FromRequestParts<AppState> for Authenticated {
 				.and_then(|s| s.parse().ok())
 				.ok_or(Error::MissingApiToken)?;
 
-			let correct_token =
-				state.cfg.api_token.as_ref().ok_or(Error::InvalidApiToken)?;
-
 			// this is probably not necessary but why not
-			let choice = correct_token.as_ref().ct_eq(token.as_ref());
+			let choice =
+				state.cfg.server.api_token.as_ref().ct_eq(token.as_ref());
 
 			bool::from(choice)
 				.then_some(Self {})

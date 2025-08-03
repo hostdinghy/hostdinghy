@@ -22,11 +22,12 @@ use crate::{
 		cont_sum_state_enum_to_service_state, container_names_to_service_name,
 		traefik_route_to_service_route,
 	},
+	config::{Config, SecretToken},
 	docker::Docker,
 	postgresql::Client,
-	server::{Authenticated, Config, config::SecretToken, router::AppState},
+	server::{Authenticated, router::AppState},
 	traefik::client::Traefik,
-	utils::{cmd::CmdError, compose, hostdinghy_dir, is_dir, is_file},
+	utils::{compose, hostdinghy_dir, is_dir, is_file},
 };
 
 async fn app_info(

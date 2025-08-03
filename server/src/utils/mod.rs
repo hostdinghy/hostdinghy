@@ -4,7 +4,6 @@ use std::{
 	path::{Path, PathBuf},
 };
 
-use serde::{Deserialize, Serialize};
 use tokio::fs;
 
 use crate::utils::cli::{CliError, WithMessage};
@@ -22,28 +21,6 @@ pub fn hostdinghy_dir() -> Result<PathBuf, CliError> {
 			e,
 		)),
 	}
-}
-
-pub async fn write_toml<T: Serialize, P: AsRef<Path>>(
-	data: &T,
-	path: P,
-) -> Result<(), CliError> {
-	let s = toml::to_string(data)
-		.with_message("Failed to serialize data to TOML")?;
-
-	fs::write(path, s)
-		.await
-		.with_message("Failed to write TOML file")
-}
-
-pub async fn read_toml<T: for<'de> Deserialize<'de>, P: AsRef<Path>>(
-	path: P,
-) -> Result<T, CliError> {
-	let s = fs::read_to_string(path)
-		.await
-		.with_message("Failed to read TOML file")?;
-
-	toml::from_str(&s).with_message("Failed to deserialize TOML data")
 }
 
 pub async fn is_dir(path: impl AsRef<Path>) -> bool {

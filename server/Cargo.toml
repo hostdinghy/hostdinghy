@@ -53,3 +53,5 @@ chuchi-crypto = { version = "0.2.0-pre.0", features = ["b64", "serde", "hash"] }
 subtle = "2.6.1"
 regex = "1.11.1"
 dotenvy = "0.15.7"
+console = "0.16.0"
+dialoguer = "0.11.0"

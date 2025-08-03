@@ -7,6 +7,7 @@ How to install this
 */
 
 mod apps;
+mod config;
 mod docker;
 mod postgresql;
 mod registry;

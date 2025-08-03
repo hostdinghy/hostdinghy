@@ -2,19 +2,13 @@ pub mod api;
 pub mod client;
 pub mod utils;
 
-use std::path::{Path, PathBuf};
-
 use chuchi_crypto::token::Token;
+use dialoguer::{Input, theme::ColorfulTheme};
 use serde::{Deserialize, Serialize};
-
-use crate::utils::{
-	cli::{CliError, WithMessage as _},
-	read_toml,
-};
 
 pub type ApiToken = Token<32>;
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "kebab-case")]
 pub struct TraefikConfig {
 	pub letsencrypt_email: String,
@@ -23,15 +17,21 @@ pub struct TraefikConfig {
 }
 
 impl TraefikConfig {
-	fn path(hostdinghy_dir: impl AsRef<Path>) -> PathBuf {
-		hostdinghy_dir.as_ref().join("traefik/config.toml")
-	}
+	pub fn new_from_user() -> Self {
+		let email: String = Input::with_theme(&ColorfulTheme::default())
+			.with_prompt("Enter the email to use for Let's Encrypt")
+			.interact_text()
+			.unwrap();
 
-	pub async fn read(
-		hostdinghy_dir: impl AsRef<Path>,
-	) -> Result<Self, CliError> {
-		read_toml(Self::path(hostdinghy_dir)).await.with_message(
-			"Failed to read Traefik config from $HOSTDINGHY_DIR/traefik/config.toml",
-		)
+		let domain: String = Input::with_theme(&ColorfulTheme::default())
+			.with_prompt("Enter the domain for the Traefik dashboard")
+			.interact_text()
+			.unwrap();
+
+		Self {
+			letsencrypt_email: email,
+			dashboard_domain: domain,
+			api_token: ApiToken::new(),
+		}
 	}
 }

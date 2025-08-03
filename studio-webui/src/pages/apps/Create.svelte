@@ -17,9 +17,9 @@
 	import { getRouter } from '@/main';
 	import type { ResolvedProps } from '@/lib/LoadProps';
 
-	let name = $state();
-	let id = $state();
-	let serverId = $state();
+	let name = $state('');
+	let id = $state('');
+	let serverId = $state('');
 	let error = $state();
 	let { servers }: Props = $props();
 
@@ -66,8 +66,10 @@
 			/>
 
 			<Select
-				bind:value={serverId}
+				id="server-id"
+				name="server-id"
 				label="server"
+				bind:value={serverId}
 				options={servers.map(s => ({ value: s.name, key: s.id }))}
 			/>
 

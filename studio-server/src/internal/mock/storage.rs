@@ -76,7 +76,7 @@ impl ServerMock {
 	}
 
 	fn insert_app(&mut self, app: App) {
-		self.apps.insert(app.id.clone(), AppMock::new(app));
+		self.apps.insert(app.id.clone(), AppMock::new(app.id));
 	}
 
 	pub fn app_info(&self, id: &AppId) -> Result<AppInfoRes> {
@@ -94,7 +94,10 @@ impl ServerMock {
 		id: &AppId,
 		req: &SaveComposeReq,
 	) -> Result<()> {
-		let app = self.apps.get_mut(id).ok_or(Error::AppNotFound)?;
+		let app = self
+			.apps
+			.entry(id.clone())
+			.or_insert_with(|| AppMock::new(id.clone()));
 		app.app_set_compose(req)
 	}
 
@@ -125,11 +128,11 @@ pub struct AppMock {
 }
 
 impl AppMock {
-	fn new(app: App) -> Self {
+	fn new(id: AppId) -> Self {
 		let mut rng = rand::rng();
 
 		Self {
-			id: app.id,
+			id,
 			compose: rng.random_bool(0.5).then(|| MOCK_COMPOSE.to_string()),
 			started: None,
 			database: rng.random_bool(0.5),
@@ -146,6 +149,7 @@ impl AppMock {
 			let state = random_service_state(self.started);
 			services.push(AppService {
 				name: "craft".to_string(),
+				container_name: format!("{}-craft-1", self.id),
 				state_hr: service_state_to_str(&state).to_string(),
 				state,
 				routes: vec![ServiceRoute {
@@ -159,6 +163,7 @@ impl AppMock {
 			let state = random_service_state(self.started);
 			services.push(AppService {
 				name: "svelte".to_string(),
+				container_name: format!("{}-craft-1", self.id),
 				state_hr: service_state_to_str(&state).to_string(),
 				state,
 				routes: vec![ServiceRoute {

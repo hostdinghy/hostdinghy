@@ -21,13 +21,14 @@
 
 <div class="layout wrap">
 	<Table
+		search={true}
 		headers={[
 			{ key: 'name', value: 'Name' },
 			{ key: 'status', value: 'Status' },
 			{ key: 'port', value: 'Uptime' },
 			{ key: 'rule', value: 'Actions' },
 		]}
-		rows={apps.map(a => ({ ...a, status: 'running' }))}
+		rows={apps}
 	>
 		{#snippet toolbar()}
 			<Button href="/apps/create">add</Button>
@@ -42,8 +43,14 @@
 		{#snippet status(row)}
 			<td>
 				<div class="status">
-					<Status value={row.status} />
-					{row.status}
+					{#each row.servicesStates as state}
+						<Status value={state.toLowerCase()} />
+					{:else}
+						no services
+					{/each}
+					{#if new Set(row.servicesStates).size === 1}
+						{row.servicesStates[0].toLowerCase()}
+					{/if}
 				</div>
 			</td>
 		{/snippet}

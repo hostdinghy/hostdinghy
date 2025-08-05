@@ -3,12 +3,24 @@ import { newApi } from '../utils';
 
 const api = newApi('/apps');
 
+export type Service = {
+	name: string;
+	containerName: string;
+	state: 'RUNNING';
+	stateHr: string;
+	routes: {
+		rule: string;
+		domains: string[];
+	}[];
+};
+
 export class App {
 	id!: string;
 	name!: string;
 	teamId!: string;
 	serverId!: string;
 	createdOn!: Date;
+	services!: Service[];
 
 	constructor(data: any) {
 		Object.assign(this, {

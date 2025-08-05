@@ -1,16 +1,20 @@
 <script>
 	import Button from './Button.svelte';
 
-	let { headers, rows, toolbar, ...customCells } = $props();
+	let { headers, rows, toolbar, search = false, ...customCells } = $props();
 </script>
 
 <div class="data-table">
-	<div class="pre-header">
-		<input class="search" placeholder="search" type="text" />
-		{#if toolbar}
-			{@render toolbar()}
-		{/if}
-	</div>
+	{#if search || toolbar}
+		<div class="pre-header">
+			{#if search}
+				<input class="search" placeholder="search" type="text" />
+			{/if}
+			{#if toolbar}
+				{@render toolbar()}
+			{/if}
+		</div>
+	{/if}
 	<table>
 		<thead>
 			<tr>

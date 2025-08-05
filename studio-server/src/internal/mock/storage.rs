@@ -163,7 +163,7 @@ impl AppMock {
 			let state = random_service_state(self.started);
 			services.push(AppService {
 				name: "svelte".to_string(),
-				container_name: format!("{}-craft-1", self.id),
+				container_name: format!("{}-svelte-1", self.id),
 				state_hr: service_state_to_str(&state).to_string(),
 				state,
 				routes: vec![ServiceRoute {

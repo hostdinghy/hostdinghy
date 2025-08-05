@@ -15,7 +15,7 @@
 		$props();
 </script>
 
-<div class="status {size}" data-status={value}></div>
+<div class="status {size}" data-status={value} title={value}></div>
 
 <style>
 	.status {

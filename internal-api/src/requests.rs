@@ -18,16 +18,18 @@ pub struct PingRes {
 	pub time: DateTime,
 }
 
-/// A request to check the version of the server.
+/// A request to get information about the server.
 ///
-/// URL: `/version`
+/// URL: `/info`
 /// Method: `GET`
 /// Authentication: Yes
-pub struct VersionReq;
+pub struct InfoReq;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-pub struct VersionRes {
+pub struct InfoRes {
+	pub registry_domain: String,
+
 	pub version: Version,
 	// on prod this should never be None
 	pub commit: Option<String>,

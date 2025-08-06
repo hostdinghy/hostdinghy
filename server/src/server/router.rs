@@ -2,9 +2,13 @@ use std::sync::Arc;
 
 use api::{
 	error::Error,
-	requests::{PingRes, VersionRes},
+	requests::{InfoRes, PingRes},
 };
-use axum::{Json, Router, extract::FromRef, routing::get};
+use axum::{
+	Json, Router,
+	extract::{FromRef, State},
+	routing::get,
+};
 use chuchi_postgres::time::DateTime;
 use tower_http::trace::TraceLayer;
 
@@ -50,7 +54,7 @@ pub async fn app(cfg: Config) -> Result<Router<()>, Error> {
 
 	let router = Router::new()
 		.route("/ping", get(ping_req))
-		.route("/version", get(version_req))
+		.route("/version", get(info_req))
 		.nest("/apps", apps::routes::routes())
 		.nest("/registry", registry::routes::routes())
 		.layer(TraceLayer::new_for_http())
@@ -65,8 +69,12 @@ async fn ping_req() -> Json<PingRes> {
 	})
 }
 
-async fn version_req(_auth: Authenticated) -> Json<VersionRes> {
-	Json(VersionRes {
+async fn info_req(
+	_auth: Authenticated,
+	State(cfg): State<Arc<Config>>,
+) -> Json<InfoRes> {
+	Json(InfoRes {
+		registry_domain: cfg.registry.domain.clone(),
 		version: env!("CARGO_PKG_VERSION").parse().unwrap(),
 		commit: option_env!("GIT_COMMIT_HASH").map(|s| s.to_string()),
 		build_date: option_env!("BUILD_DATE")

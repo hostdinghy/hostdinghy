@@ -16,7 +16,7 @@ use internal_api::{
 	apps::{AppInfoRes, ComposeCommand, GetComposeRes, SaveComposeReq},
 	client::Result,
 	error::Error,
-	requests::{PingRes, VersionRes},
+	requests::{InfoRes, PingRes},
 };
 use pg::{UniqueId, db::ConnOwned, time::DateTime};
 
@@ -73,9 +73,12 @@ impl ApiServerClientTrait for ApiServerClient {
 		})
 	}
 
-	async fn version(&self) -> Result<VersionRes> {
-		Ok(VersionRes {
-			version: "0.0.0-debug.0".parse().unwrap(),
+	async fn info(&self) -> Result<InfoRes> {
+		let server = self.server.lock().unwrap();
+
+		Ok(InfoRes {
+			registry_domain: server.registry_domain.clone(),
+			version: server.version.clone(),
 			commit: None,
 			build_date: None,
 		})

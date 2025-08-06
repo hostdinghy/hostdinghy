@@ -1,0 +1,12 @@
+[package]
+name = "compose-yml"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+serde = { version = "1.0.219", features = ["derive"] }
+# todo replace with saphyr-serde when it comes out
+# https://github.com/saphyr-rs/saphyr/issues/1
+serde_yaml = "0.9.34"
+regex = "1.11.1"
+thiserror = "2.0.12"

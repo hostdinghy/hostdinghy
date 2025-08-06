@@ -3,7 +3,7 @@
 
 	export const layout = 'app';
 
-	export async function loadProps({ id }) {
+	export async function loadProps({ id }: { id: string }) {
 		return {
 			app: await byId(id),
 		};

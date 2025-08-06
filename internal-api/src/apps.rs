@@ -11,6 +11,7 @@ pub struct AppInfoReq;
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct AppInfoRes {
+	// todo add postgresql
 	pub services: Vec<AppService>,
 }
 
@@ -67,6 +68,8 @@ pub struct GetComposeReq;
 pub struct GetComposeRes {
 	pub compose: String,
 	/// Returns true if a database was created once
+	///
+	/// Todo this is deprecated
 	pub database: bool,
 }
 
@@ -85,6 +88,8 @@ pub struct SaveComposeReq {
 	/// Setting this to false will not delete the database
 	/// it is only possible to delete the database
 	/// when deleteing the app
+	///
+	/// Todo this is deprecated
 	pub create_database: bool,
 }
 

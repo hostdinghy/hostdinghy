@@ -11,7 +11,7 @@ use internal_api::{
 	app_id::AppId,
 	apps::{AppInfoRes, ComposeCommand, GetComposeRes, SaveComposeReq},
 	client::{self as int, Result},
-	requests::{PingRes, VersionRes},
+	requests::{InfoRes, PingRes},
 };
 use pg::{UniqueId, db::ConnOwned};
 
@@ -104,7 +104,7 @@ pub trait ApiServerClientTrait {
 	#[allow(dead_code)]
 	async fn ping(&self) -> Result<PingRes>;
 
-	async fn version(&self) -> Result<VersionRes>;
+	async fn info(&self) -> Result<InfoRes>;
 
 	async fn app_info(&self, id: &AppId) -> Result<AppInfoRes>;
 

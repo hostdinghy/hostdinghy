@@ -1,8 +1,6 @@
-import { getSession } from '@/lib/Session';
-import { newApi } from './utils';
-import { ApiError } from 'chuchi/api';
+import { Api } from './lib';
 
-const api = newApi('/users');
+const api = new Api('/users');
 
 export class Session {
 	token!: string;
@@ -41,27 +39,15 @@ export class Authenticated {
 }
 
 export async function login(username: string, password: string) {
-	const d = await api.request('POST', '/login', { username, password });
+	const d = await api.post('/login', { username, password });
 
 	return new Authenticated(d);
 }
 
 export async function tokenAuth(token: string): Promise<Authenticated> {
-	const d = await api.request('POST', '/tokenauth', null, {
+	const d = await api.post('/tokenauth', null, {
 		'session-token': token,
 	});
 
 	return new Authenticated(d);
-}
-
-export function getSessionHeaders() {
-	const session = getSession();
-
-	if (!session.inner?.isValid()) {
-		throw new ApiError('InvalidSessionToken', 'session-token invalid.');
-	}
-
-	return {
-		'session-token': session.inner.token,
-	};
 }

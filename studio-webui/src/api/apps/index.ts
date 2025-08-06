@@ -1,7 +1,6 @@
-import { getSessionHeaders } from '../users';
-import { newApi } from '../utils';
+import { Api } from '../lib';
 
-const api = newApi('/apps');
+export const api = new Api('/apps');
 
 export type Service = {
 	name: string;
@@ -31,19 +30,12 @@ export class App {
 }
 
 export async function all() {
-	const apps: any[] = await api.request('GET', '', null, getSessionHeaders());
-
+	const apps: any[] = await api.get('');
 	return apps.map(a => new App(a));
 }
 
 export async function byId(id: string) {
-	const app: any = await api.request(
-		'GET',
-		`/${id}`,
-		null,
-		getSessionHeaders(),
-	);
-
+	const app = await api.get(`/${id}`);
 	return new App(app);
 }
 
@@ -54,7 +46,6 @@ export type CreateAppRequest = {
 };
 
 export async function create(data: CreateAppRequest) {
-	const app: any = await api.request('POST', '', data, getSessionHeaders());
-
+	const app = await api.post('', data);
 	return new App(app);
 }

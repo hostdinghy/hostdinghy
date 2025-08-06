@@ -2,7 +2,7 @@ use internal_api::{
 	app_id::AppId,
 	apps::{AppInfoRes, ComposeCommand, GetComposeRes, SaveComposeReq},
 	client::{self as int, Result},
-	requests::{PingRes, VersionRes},
+	requests::{InfoRes, PingRes},
 };
 
 use crate::{internal::ApiServerClientTrait, servers::data::Server};
@@ -25,8 +25,8 @@ impl ApiServerClientTrait for ApiServerClient {
 		self.inner.ping().await
 	}
 
-	async fn version(&self) -> Result<VersionRes> {
-		self.inner.version().await
+	async fn info(&self) -> Result<InfoRes> {
+		self.inner.info().await
 	}
 
 	async fn app_info(&self, id: &AppId) -> Result<AppInfoRes> {

@@ -1,31 +1,13 @@
-import { getSessionHeaders } from '../users';
-import { newApi } from '../utils';
+import { Api } from '../lib';
+import { api } from './index';
 
-const api = newApi('/apps');
-
-export async function get(appId: string) {
-	const compose: string = await api.request(
-		'GET',
-		`/${appId}/compose`,
-		null,
-		getSessionHeaders(),
-	);
-
-	return compose;
+export async function get(appId: string): Promise<string> {
+	return await api.get(`/${appId}/compose`);
 }
 
-export type CreateComposeRequest = {
-	compose: string;
-	createDatabase: boolean;
-};
-
-export async function set(appId: string, data: CreateComposeRequest) {
-	const compose: any = await api.request(
-		'POST',
-		`/${appId}/compose`,
-		data,
-		getSessionHeaders(),
-	);
-
-	return compose;
+export async function set(appId: string, compose: string): Promise<string> {
+	return await api.post(`/${appId}/compose`, {
+		compose,
+		createDatabase: false,
+	});
 }

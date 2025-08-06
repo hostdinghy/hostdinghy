@@ -1,7 +1,6 @@
-import { getSessionHeaders } from './users';
-import { newApi } from './utils';
+import { Api } from './lib';
 
-const api = newApi('/servers');
+const api = new Api('/servers');
 
 export class Server {
 	id!: string;
@@ -21,7 +20,7 @@ export class Server {
 }
 
 export async function all() {
-	const apps: any[] = await api.request('GET', '', null, getSessionHeaders());
+	const apps: any[] = await api.get('');
 
 	return apps.map(a => new Server(a));
 }
@@ -30,11 +29,11 @@ export interface CreateServerRequest {
 	name: string;
 	addr: string;
 	apiToken: string;
-	cert: string;
+	tlsCert: string;
 }
 
 export async function create(data: CreateServerRequest) {
-	const app: any = await api.request('POST', '', data, getSessionHeaders());
+	const app: any = await api.post('', data);
 
 	return new Server(app);
 }

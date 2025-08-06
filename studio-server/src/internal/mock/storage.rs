@@ -3,6 +3,7 @@ use std::{
 	sync::{Arc, Mutex},
 };
 
+use compose_yml::Compose;
 use internal_api::{
 	app_id::AppId,
 	apps::{
@@ -14,6 +15,7 @@ use internal_api::{
 };
 use pg::UniqueId;
 use rand::Rng;
+use semver::Version;
 
 use crate::{apps::data::App, servers::data::Server};
 
@@ -63,7 +65,10 @@ impl ServersMock {
 
 #[derive(Debug)]
 pub struct ServerMock {
-	id: UniqueId,
+	#[allow(dead_code)]
+	pub id: UniqueId,
+	pub registry_domain: String,
+	pub version: Version,
 	apps: HashMap<AppId, AppMock>,
 }
 
@@ -71,6 +76,8 @@ impl ServerMock {
 	fn new(server: Server) -> Self {
 		Self {
 			id: server.id,
+			registry_domain: "registry.local".into(),
+			version: "0.0.0-debug.0".parse().unwrap(),
 			apps: HashMap::new(),
 		}
 	}
@@ -94,6 +101,9 @@ impl ServerMock {
 		id: &AppId,
 		req: &SaveComposeReq,
 	) -> Result<()> {
+		let parsed = req.compose.parse::<Compose>()?;
+		parsed.validate_for(&self.registry_domain, id.as_ref())?;
+
 		let app = self
 			.apps
 			.entry(id.clone())

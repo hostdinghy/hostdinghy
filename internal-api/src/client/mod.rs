@@ -6,7 +6,7 @@ use crate::{
 	app_id::AppId,
 	apps::{AppInfoRes, ComposeCommand, GetComposeRes, SaveComposeReq},
 	error::{Error, WithMessage},
-	requests::{ApiToken, PingRes, VersionRes},
+	requests::{ApiToken, InfoRes, PingRes},
 };
 
 pub type Result<T> = std::result::Result<T, Error>;
@@ -109,8 +109,8 @@ impl ApiServerClient {
 		self.send_json(self.get("/ping")).await
 	}
 
-	pub async fn version(&self) -> Result<VersionRes> {
-		self.send_json(self.get("/version")).await
+	pub async fn info(&self) -> Result<InfoRes> {
+		self.send_json(self.get("/info")).await
 	}
 
 	pub async fn app_info(&self, id: &AppId) -> Result<AppInfoRes> {

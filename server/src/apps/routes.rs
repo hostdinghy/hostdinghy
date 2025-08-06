@@ -14,6 +14,7 @@ use axum::{
 	routing::{get, post},
 };
 use chuchi_crypto::hash::Hasher;
+use compose_yml::Compose;
 use serde::{Deserialize, Serialize};
 use tokio::fs;
 
@@ -42,6 +43,12 @@ async fn app_info(
 	if !is_dir(&path).await {
 		return Err(Error::AppNotFound);
 	}
+
+	let compose_file = path.join("compose.yml");
+	let compose = fs::read_to_string(&compose_file)
+		.await
+		.map_err(|_| Error::AppNotFound)?;
+	let compose = compose.parse::<Compose>()?;
 
 	// search for all containers and find the ones that are tagged
 	// with the given composer id
@@ -73,6 +80,21 @@ async fn app_info(
 		})
 		.collect::<Vec<_>>();
 
+	// add any missing service
+	for (name, _) in compose.services {
+		if services.iter().any(|s| s.name == name) {
+			continue;
+		}
+
+		services.push(AppService {
+			container_name: format!("{id}-{name}-1"),
+			name,
+			state: ServiceState::Unknown,
+			state_hr: "Service does not exist".to_string(),
+			routes: vec![],
+		});
+	}
+
 	/*
 	 * So for each compose.yaml file there is a rule how to name routers
 	 * each router needs to start with <compose-project-name>-<service-name>
@@ -97,11 +119,6 @@ async fn get_compose(
 	_auth: Authenticated,
 	Path(id): Path<AppId>,
 ) -> Result<Json<GetComposeRes>, Error> {
-	// we need to check if the folder exists
-	// and if a compose.yml file exists
-	//
-	// also we need to check if a db exists with the AppId name
-
 	// let's first check if the folder exists
 	let app_dir = hostdinghy_dir()?.join(id.as_ref());
 	if !is_dir(&app_dir).await {
@@ -145,6 +162,10 @@ async fn save_compose(
 	Path(id): Path<AppId>,
 	Json(req): Json<SaveComposeReq>,
 ) -> Result<(), Error> {
+	// before doing anything let's validate a small part of the compose file
+	let parsed = req.compose.parse::<Compose>()?;
+	parsed.validate_for(&config.registry.domain, id.as_ref())?;
+
 	let mut db_password: Option<String> = None;
 
 	if req.create_database {

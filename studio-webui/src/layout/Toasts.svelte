@@ -103,4 +103,8 @@
 			color: var(--white);
 		}
 	}
+
+	.close {
+		cursor: pointer;
+	}
 </style>

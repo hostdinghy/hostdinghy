@@ -9,9 +9,9 @@
 </script>
 
 <script lang="ts">
+	import { errorToStr } from '@/api/lib';
 	import { login } from '@/api/users';
 	import Input from '@/form/Input.svelte';
-	// import { toast } from '@/layout/Toasts.svelte';
 	import type { LoadPropsFn } from '@/lib/LoadProps';
 	import { getSession } from '@/lib/Session';
 	import { getRouter } from '@/main';
@@ -39,7 +39,7 @@
 			router.open(url);
 		} catch (e) {
 			console.error(e);
-			error = 'Username or password is incorrect.';
+			error = errorToStr(e);
 			return;
 		}
 	}

@@ -2,11 +2,17 @@ use axum::{
 	Json,
 	response::{IntoResponse, Response},
 };
+pub use compose_yml::ComposeError;
 use http::StatusCode;
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, thiserror::Error, Serialize, Deserialize)]
+#[derive(Debug, thiserror::Error, Clone, Serialize, Deserialize)]
+#[serde(tag = "type", content = "detail", rename_all = "SCREAMING_SNAKE_CASE")]
 pub enum Error {
+	#[error("Compose file not valid: {0}")]
+	Compose(#[from] ComposeError),
+	#[error("Invalid certificate provided")]
+	InvalidCertificate,
 	/// Gets returned if the app folder or the compose file (if required) could not be found
 	#[error("Could not find app folder")]
 	AppNotFound,
@@ -14,8 +20,6 @@ pub enum Error {
 	MissingApiToken,
 	#[error("Invalid bearer token in request")]
 	InvalidApiToken,
-	#[error("Invalid certificate provided")]
-	InvalidCertificate,
 	#[error("Failed to run command: {command}, message: {message}")]
 	Command { command: String, message: String },
 	#[error("HOSTDINGHY_DIR environment variable is not set")]
@@ -41,10 +45,12 @@ impl Error {
 
 	pub fn status_code(&self) -> StatusCode {
 		match self {
+			Self::Compose(_) | Self::InvalidCertificate => {
+				StatusCode::BAD_REQUEST
+			}
 			Self::AppNotFound => StatusCode::NOT_FOUND,
 			Self::MissingApiToken => StatusCode::UNAUTHORIZED,
 			Self::InvalidApiToken => StatusCode::FORBIDDEN,
-			Self::InvalidCertificate => StatusCode::BAD_REQUEST,
 			Self::Command { .. }
 			| Self::HostdinghyDirNotPresent
 			| Self::Any { .. } => StatusCode::INTERNAL_SERVER_ERROR,

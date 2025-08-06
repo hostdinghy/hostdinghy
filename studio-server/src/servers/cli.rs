@@ -41,11 +41,8 @@ pub async fn create_server(
 		.expect("failed to connect to the server");
 
 	// check if the information of the server works
-	let _version = client
-		.version()
-		.await
-		.expect("failed to get server version");
-	// seems to work else version would have failed now we can insert the server
+	let _info = client.info().await.expect("failed to get server info");
+	// seems to work else info would have failed now we can insert the server
 
 	servers.insert(&server).await.unwrap();
 

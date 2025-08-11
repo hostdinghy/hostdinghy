@@ -15,7 +15,7 @@
 <header class:border={!app.services.length}>
 	<h1>
 		<span class="name">{app.name}</span>
-		<span class="id">({app.id})</span>
+		<span class="id">[{app.id}]</span>
 		<span class="server">running on {app.server?.name}</span>
 	</h1>
 </header>
@@ -86,7 +86,7 @@
 
 		.id,
 		.server {
-			opacity: 0.5;
+			color: var(--c-label);
 		}
 
 		.server {

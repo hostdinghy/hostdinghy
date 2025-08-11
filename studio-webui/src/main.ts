@@ -86,8 +86,8 @@ export async function handleRoute(
 			status: 500,
 			page: {
 				layout: null,
-				component: routes.NotFound,
-				props: {},
+				component: routes.Error,
+				props: { error: e },
 			},
 		};
 	}

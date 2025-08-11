@@ -1,4 +1,5 @@
 import { Api } from '../lib';
+import { loadServers, type Server } from '../servers';
 
 export const api = new Api('/apps');
 
@@ -18,19 +19,20 @@ export class AppSummary {
 	id!: string;
 	name!: string;
 	teamId!: string;
-	serverId!: string;
+	server: Server | null;
 	createdOn: Date;
 	servicesStates!: ServiceState[];
 
-	constructor(data: any) {
+	constructor(data: any, server: Server | null = null) {
 		Object.assign(this, data);
 		this.createdOn = new Date(data.createdOn);
+		this.server = server;
 	}
 }
 
 export async function all() {
-	const apps: any[] = await api.get('');
-	return apps.map(a => new AppSummary(a));
+	const [servers, apps] = await Promise.all([loadServers(), api.get('')]);
+	return apps.map((a: any) => new AppSummary(a, servers.get(a.serverId)));
 }
 
 export class Service {
@@ -52,20 +54,24 @@ export class App {
 	id!: string;
 	name!: string;
 	teamId!: string;
-	serverId!: string;
+	server: Server | null;
 	createdOn: Date;
 	services: Service[];
 
-	constructor(data: any) {
+	constructor(data: any, server: Server | null = null) {
 		Object.assign(this, data);
 		this.createdOn = new Date(data.createdOn);
+		this.server = server;
 		this.services = data.services.map((s: any) => new Service(s));
 	}
 }
 
 export async function byId(id: string) {
-	const app = await api.get(`/${id}`);
-	return new App(app);
+	const [servers, app] = await Promise.all([
+		loadServers(),
+		api.get(`/${id}`),
+	]);
+	return new App(app, servers.get(app.serverId));
 }
 
 export type CreateAppRequest = {
@@ -74,7 +80,20 @@ export type CreateAppRequest = {
 	serverId: string;
 };
 
+export class AppShort {
+	id!: string;
+	name!: string;
+	teamId!: string;
+	serverId!: string;
+	createdOn: Date;
+
+	constructor(data: any) {
+		Object.assign(this, data);
+		this.createdOn = new Date(data.createdOn);
+	}
+}
+
 export async function create(data: CreateAppRequest) {
 	const app = await api.post('', data);
-	return new App(app);
+	return new AppShort(app);
 }

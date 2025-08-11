@@ -22,7 +22,7 @@
 
 	let name = $state('');
 	let id = $state('');
-	let serverId = $state(servers[0]?.id ?? '');
+	let serverId = $state(servers.first()?.id ?? '');
 	let error = $state('');
 
 	async function onsubmit(e: Event) {
@@ -77,7 +77,7 @@
 				name="server-id"
 				label="server"
 				bind:value={serverId}
-				options={servers.map(s => ({ value: s.name, key: s.id }))}
+				options={servers.all().map(s => ({ value: s.name, key: s.id }))}
 			/>
 
 			{#if error}

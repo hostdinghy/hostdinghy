@@ -33,11 +33,16 @@
 		search
 		headers={[
 			{ key: 'name', value: 'Name' },
+			{ key: 'serverName', value: 'Server' },
 			{ key: 'status', value: 'Status' },
 			{ key: 'port', value: 'Uptime' },
 			{ key: 'rule', value: 'Actions' },
 		]}
-		rows={apps as (Props['apps'][number] & { status: any })[]}
+		rows={apps.map(a => ({
+			...a,
+			serverName: a.server?.name ?? '',
+			status: null,
+		}))}
 	>
 		{#snippet toolbar()}
 			<Button href="/apps/create">add</Button>

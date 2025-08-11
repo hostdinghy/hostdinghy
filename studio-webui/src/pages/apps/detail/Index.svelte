@@ -14,7 +14,9 @@
 
 <header class:border={!app.services.length}>
 	<h1>
-		{app.name}
+		<span class="name">{app.name}</span>
+		<span class="id">({app.id})</span>
+		<span class="server">running on {app.server?.name}</span>
 	</h1>
 </header>
 
@@ -81,7 +83,17 @@
 	}
 	h1 {
 		font-size: 1.125rem;
+
+		.id,
+		.server {
+			opacity: 0.5;
+		}
+
+		.server {
+			font-size: 0.9rem;
+		}
 	}
+
 	.msg {
 		padding: 1rem;
 		color: rgb(from var(--c-text) r g b / 70%);

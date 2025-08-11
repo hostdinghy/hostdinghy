@@ -22,7 +22,7 @@
 			{ key: 'name', value: 'Name' },
 			{ key: 'domain', value: 'Domain' },
 		]}
-		rows={servers}
+		rows={servers.all()}
 	>
 		{#snippet toolbar()}
 			<h1>Servers</h1>

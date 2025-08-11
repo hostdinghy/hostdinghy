@@ -12,6 +12,7 @@ pub async fn up(file: impl AsRef<Path>) -> Result<(), CmdError> {
 		"-d",
 		"--pull",
 		"always",
+		"--remove-orphans",
 	])
 	.run()
 	.await

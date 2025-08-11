@@ -1,7 +1,27 @@
-<script>
-	import Button from './Button.svelte';
+<script lang="ts" generics="Row extends Record<string, any>">
+	import type { Snippet } from 'svelte';
 
-	let { headers, rows, toolbar, search = false, ...customCells } = $props();
+	type MainProps = {
+		headers: { key: string; value: string }[];
+		rows: Row[];
+		toolbar?: Snippet;
+		search?: boolean;
+	};
+
+	type RowSnippets = {
+		// we need to map and cant use [key: string]
+		// because else this type would need to be all typeof
+		// of MainProps
+		[Property in keyof Row]?: Snippet<[Row]>;
+	};
+
+	let {
+		headers,
+		rows,
+		toolbar = undefined,
+		search = false,
+		...customCells
+	}: MainProps & RowSnippets = $props();
 </script>
 
 <div class="data-table">
@@ -27,8 +47,10 @@
 			{#each rows as row, i}
 				<tr>
 					{#each headers as header}
-						{#if customCells[header.key]}
-							{@render customCells[header.key](row)}
+						<!-- this fixes type inference -->
+						{@const cc = customCells[header.key]}
+						{#if cc}
+							{@render cc(row)}
 						{:else}
 							<td>{row[header.key] ?? '-'}</td>
 						{/if}
@@ -68,8 +90,10 @@
 
 	.pre-header {
 		display: flex;
+		min-height: 3.5rem;
 		border: var(--border);
 		border-bottom-style: none;
+		justify-content: end;
 	}
 
 	.search {

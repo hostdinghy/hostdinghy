@@ -50,6 +50,13 @@ pub async fn create_server(
 }
 
 #[derive(Debug, Parser)]
+pub struct GenerateApiToken {}
+
+pub fn generate_api_token(gat: GenerateApiToken) {
+	eprintln!("generated token: {}", ApiToken::new());
+}
+
+#[derive(Debug, Parser)]
 pub struct CreateMockServer {
 	name: String,
 	team_id: UniqueId,

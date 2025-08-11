@@ -1,18 +1,27 @@
-<script module>
-	import { all, App } from '@/api/apps';
-	import Button from '@/components/Button.svelte';
-	import Status from '@/components/Status.svelte';
+<script module lang="ts">
+	import { all, AppSummary } from '@/api/apps';
 
-	export async function loadProps() {
+	// Maybe another type approach?
+	// signature of loadProps is enforced but return type needs
+	// to be defined, also no that nice
+	type Props = {
+		apps: AppSummary[];
+	};
+
+	export const loadProps: LoadPropsFn = async (): Promise<Props> => {
 		return {
 			apps: await all(),
 		};
-	}
+	};
 </script>
 
 <script lang="ts">
 	import Table from '@/components/Table.svelte';
-	let { apps }: { apps: App[] } = $props();
+	import Button from '@/components/Button.svelte';
+	import Status from '@/components/Status.svelte';
+	import type { LoadPropsFn } from '@/lib/LoadProps';
+
+	let { apps }: Props = $props();
 </script>
 
 <svelte:head>
@@ -21,14 +30,14 @@
 
 <div class="layout wrap">
 	<Table
-		search={true}
+		search
 		headers={[
 			{ key: 'name', value: 'Name' },
 			{ key: 'status', value: 'Status' },
 			{ key: 'port', value: 'Uptime' },
 			{ key: 'rule', value: 'Actions' },
 		]}
-		rows={apps}
+		rows={apps as (Props['apps'][number] & { status: any })[]}
 	>
 		{#snippet toolbar()}
 			<Button href="/apps/create">add</Button>
@@ -44,7 +53,7 @@
 			<td>
 				<div class="status">
 					{#each row.servicesStates as state}
-						<Status value={state.toLowerCase()} />
+						<Status value={state} />
 					{:else}
 						no services
 					{/each}
@@ -61,13 +70,10 @@
 	.layout {
 		margin-top: 5rem;
 	}
+
 	.status {
 		display: flex;
 		gap: 0.5rem;
 		align-items: center;
-	}
-
-	.demo {
-		margin-top: 2rem;
 	}
 </style>

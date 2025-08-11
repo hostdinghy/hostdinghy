@@ -1,21 +1,17 @@
 <script lang="ts">
-	type State =
-		| 'empty'
-		| 'created'
-		| 'unhealthy'
-		| 'running'
-		| 'paused'
-		| 'restarting'
-		| 'exited'
-		| 'removing'
-		| 'dead'
-		| 'unknown';
+	import type { ServiceState } from '@/api/apps';
 
-	let { value, size = 'md' }: { value: State; size: 'sm' | 'md' | 'lg' } =
-		$props();
+	let {
+		value,
+		size = 'md',
+	}: { value: ServiceState; size?: 'sm' | 'md' | 'lg' } = $props();
 </script>
 
-<div class="status {size}" data-status={value} title={value}></div>
+<div
+	class="status {size}"
+	data-status={value.toLowerCase()}
+	title={value}
+></div>
 
 <style>
 	.status {

@@ -1,6 +1,4 @@
 <script lang="ts">
-	import button from './Button.svelte';
-
 	let {
 		headers,
 		default: def = null,

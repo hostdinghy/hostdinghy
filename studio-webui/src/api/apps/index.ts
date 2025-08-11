@@ -2,36 +2,65 @@ import { Api } from '../lib';
 
 export const api = new Api('/apps');
 
-export type Service = {
-	name: string;
-	containerName: string;
-	state: 'RUNNING';
-	stateHr: string;
-	routes: {
+export type ServiceState =
+	| 'EMTPY'
+	| 'CREATED'
+	| 'UNHEALTHY'
+	| 'RUNNING'
+	| 'PAUSED'
+	| 'RESTARTING'
+	| 'EXITED'
+	| 'REMOVING'
+	| 'DEAD'
+	| 'UNKNOWN';
+
+export class AppSummary {
+	id!: string;
+	name!: string;
+	teamId!: string;
+	serverId!: string;
+	createdOn: Date;
+	servicesStates!: ServiceState[];
+
+	constructor(data: any) {
+		Object.assign(this, data);
+		this.createdOn = new Date(data.createdOn);
+	}
+}
+
+export async function all() {
+	const apps: any[] = await api.get('');
+	return apps.map(a => new AppSummary(a));
+}
+
+export class Service {
+	name!: string;
+	containerName!: string;
+	state!: ServiceState;
+	stateHr!: string;
+	routes!: {
 		rule: string;
 		domains: string[];
 	}[];
-};
+
+	constructor(data: any) {
+		Object.assign(this, data);
+	}
+}
 
 export class App {
 	id!: string;
 	name!: string;
 	teamId!: string;
 	serverId!: string;
-	createdOn!: Date;
-	services!: Service[];
+	createdOn: Date;
+	services: Service[];
 
 	constructor(data: any) {
-		Object.assign(this, {
-			...data,
-			createdOn: new Date(data.createdOn),
-		});
+		Object.assign(this, data);
+		this.createdOn = new Date(data.createdOn);
+		this.services = data.services.map((s: any) => new Service(s));
 	}
-}
-
-export async function all() {
-	const apps: any[] = await api.get('');
-	return apps.map(a => new App(a));
 }
 
 export async function byId(id: string) {

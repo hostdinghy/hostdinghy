@@ -96,6 +96,8 @@ export class Api {
 				return await resp.json();
 			} else {
 				// we've got and error
+				// todo we need to replace the Json type in axum
+				// so we can use the same error type
 				const errObj = await resp.json();
 				err = ApiError.fromJson(errObj);
 			}

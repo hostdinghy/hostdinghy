@@ -41,7 +41,18 @@ export function register(router: Router) {
 				'/appearance',
 				() => import('./settings/Appearance.svelte'),
 			);
+			r.register(
+				'/servers',
+				() => import('./settings/servers/Index.svelte'),
+			);
 		},
+	);
+	router.register(
+		'/settings/servers/create',
+		withLayout(
+			MainLayout,
+			() => import('./settings/servers/Create.svelte'),
+		),
 	);
 
 	router.register('/signin', () => import('./SignIn.svelte'));

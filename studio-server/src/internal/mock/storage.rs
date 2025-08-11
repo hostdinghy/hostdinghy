@@ -73,7 +73,7 @@ pub struct ServerMock {
 }
 
 impl ServerMock {
-	fn new(server: Server) -> Self {
+	pub(super) fn new(server: Server) -> Self {
 		Self {
 			id: server.id,
 			registry_domain: "registry.local".into(),

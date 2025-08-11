@@ -1,28 +1,18 @@
-<script module lang="ts">
-	import { loadServers } from '@/api/servers';
-
-	export async function loadProps() {
-		return {
-			servers: await loadServers(),
-		};
-	}
-</script>
-
 <script lang="ts">
-	import { create } from '@/api/apps';
+	import { create } from '@/api/servers';
 	import Input from '@/form/Input.svelte';
 	import Select from '@/form/Select.svelte';
 	import { getRouter } from '@/main';
 	import type { ResolvedProps } from '@/lib/LoadProps';
 	import { errorToStr } from '@/api/lib';
+	import Textarea from '@/form/Textarea.svelte';
 
 	const router = getRouter();
 
-	let { servers }: ResolvedProps<typeof loadProps> = $props();
-
 	let name = $state('');
-	let id = $state('');
-	let serverId = $state(servers[0]?.id ?? '');
+	let domain = $state('');
+	let apiToken = $state('');
+	let tlsCert = $state('');
 	let error = $state('');
 
 	async function onsubmit(e: Event) {
@@ -32,11 +22,12 @@
 
 		try {
 			const app = await create({
-				id,
 				name,
-				serverId,
+				domain,
+				apiToken,
+				tlsCert,
 			});
-			router.open(`/apps/${app.id}`);
+			router.open('/settings/servers');
 		} catch (e) {
 			console.error('Error creating app:', e);
 			error = errorToStr(e);
@@ -50,34 +41,45 @@
 
 <div id="createApp">
 	<div class="center">
-		<h1>Create App</h1>
+		<h1>Create Server</h1>
 		<form {onsubmit}>
 			<Input
 				id="name"
 				name="name"
 				type="text"
 				label="name"
-				placeholder="Enter App Name..."
+				placeholder="Enter server name..."
 				bind:value={name}
 				required
 			/>
 
 			<Input
-				id="id"
-				name="id"
+				id="domain"
+				name="domain"
 				type="text"
-				label="id"
-				placeholder="Enter a unique id..."
-				bind:value={id}
+				label="domain"
+				placeholder="Enter domain..."
+				bind:value={domain}
 				required
 			/>
 
-			<Select
-				id="server-id"
-				name="server-id"
-				label="server"
-				bind:value={serverId}
-				options={servers.map(s => ({ value: s.name, key: s.id }))}
+			<Input
+				id="api-token"
+				name="api-token"
+				type="text"
+				label="api token"
+				placeholder="Enter API token..."
+				bind:value={apiToken}
+				required
+			/>
+
+			<Textarea
+				id="tls-cert"
+				name="tls-cert"
+				label="TLS cert"
+				placeholder="Enter TLS certificate..."
+				bind:value={tlsCert}
+				required
 			/>
 
 			{#if error}
@@ -101,6 +103,10 @@
 	h1 {
 		font-size: 1.25rem;
 		margin-bottom: 2rem;
+	}
+
+	form {
+		width: 30rem;
 	}
 
 	.error {

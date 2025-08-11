@@ -35,4 +35,8 @@
 		color: var(--c-label);
 		border-right: 1px solid var(--c-border);
 	}
+
+	.ctn {
+		flex: 1;
+	}
 </style>

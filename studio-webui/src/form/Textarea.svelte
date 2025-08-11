@@ -4,38 +4,29 @@
 	let {
 		id,
 		name,
-		type,
 		label,
 		value = $bindable(),
-		options,
 		...rest
 	}: {
 		id: string;
 		name: string;
 		label: string;
 		value: string;
-		options: { value: string; key: string }[];
 		[rest: string]: any;
 	} = $props();
 </script>
 
 <Field {id} {label}>
-	<select {id} {name} bind:value {...rest}>
-		{#each options as option}
-			<option value={option.key}>
-				{option.value}
-			</option>
-		{/each}
-	</select>
+	<textarea {id} {name} bind:value {...rest}></textarea>
 </Field>
 
 <style lang="scss">
-	select {
+	textarea {
 		width: 100%;
-		min-height: 100%;
 		padding: 0.5rem 1.5rem;
 		background-color: transparent;
 		border: none;
+		min-height: 100%;
 		color: var(--c-text);
 
 		&::placeholder {

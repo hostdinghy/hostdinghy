@@ -4,36 +4,34 @@ const api = new Api('/servers');
 
 export class Server {
 	id!: string;
-	name!: string;
 	teamId!: string;
-	addr!: string;
-	apiToken!: string;
-	tlsCert!: string;
-	createdOn!: Date;
+	name!: string;
+	domain!: string;
+	registryDomain!: string | null;
+	/** if this is empty the server could not be reached */
+	version!: string | null;
+	createdOn: Date;
 
 	constructor(data: any) {
-		Object.assign(this, {
-			...data,
-			createdOn: new Date(data.created_on),
-		});
+		Object.assign(this, data);
+		// make sure we always set the type createdOn
+		this.createdOn = new Date(data.created_on);
 	}
 }
 
-export async function all() {
-	const apps: any[] = await api.get('');
-
-	return apps.map(a => new Server(a));
+export async function loadServers() {
+	const servers: unknown[] = await api.get('');
+	return servers.map(a => new Server(a));
 }
 
 export interface CreateServerRequest {
 	name: string;
-	addr: string;
+	domain: string;
 	apiToken: string;
 	tlsCert: string;
 }
 
 export async function create(data: CreateServerRequest) {
-	const app: any = await api.post('', data);
-
+	const app = await api.post('', data);
 	return new Server(app);
 }

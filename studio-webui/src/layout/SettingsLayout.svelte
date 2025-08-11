@@ -1,20 +1,10 @@
-<script module lang="ts">
-	import { App, byId } from '@/api/apps';
-
-	export async function loadProps({ id }) {
-		return {
-			// app: await byId(id),
-		};
-	}
-</script>
-
 <script lang="ts">
 	import Footer from './Footer.svelte';
 	import Header from './Header.svelte';
 	import TabLayout from './TabLayout.svelte';
 	import type { LayoutProps } from '@/lib/LoadProps';
 
-	let { children }: LayoutProps<typeof loadProps> = $props();
+	let { children }: LayoutProps<() => void> = $props();
 </script>
 
 <div class="main">
@@ -41,6 +31,10 @@
 				{
 					label: 'Appearance',
 					url: `/settings/appearance/`,
+				},
+				{
+					label: 'Servers',
+					url: '/settings/servers',
 				},
 			]}
 		>

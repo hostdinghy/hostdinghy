@@ -8,13 +8,18 @@
 			app: await byId(id),
 		};
 	}
+
+	export type AppLayoutProps<T extends (...args: any) => any> = ResolvedProps<
+		typeof loadProps
+	> &
+		ResolvedProps<T>;
 </script>
 
 <script lang="ts">
 	import Footer from './Footer.svelte';
 	import Header from './Header.svelte';
 	import TabLayout from './TabLayout.svelte';
-	import type { LayoutProps } from '@/lib/LoadProps';
+	import type { LayoutProps, ResolvedProps } from '@/lib/LoadProps';
 
 	let { children, app }: LayoutProps<typeof loadProps> = $props();
 </script>

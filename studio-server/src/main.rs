@@ -61,6 +61,7 @@ fn default_dist_dir() -> String {
 enum SubCommand {
 	CreateUser(users::cli::CreateUser),
 	CreateServer(servers::cli::CreateServer),
+	GenerateApiToken(servers::cli::GenerateApiToken),
 	CreateMockServer(servers::cli::CreateMockServer),
 }
 
@@ -204,6 +205,10 @@ async fn main() {
 		}
 		Some(SubCommand::CreateServer(c)) => {
 			servers::cli::create_server(&mut conn, &state, c).await;
+			return;
+		}
+		Some(SubCommand::GenerateApiToken(c)) => {
+			servers::cli::generate_api_token(c);
 			return;
 		}
 		Some(SubCommand::CreateMockServer(c)) => {

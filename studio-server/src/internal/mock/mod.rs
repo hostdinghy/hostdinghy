@@ -19,6 +19,7 @@ use internal_api::{
 	requests::{InfoRes, PingRes},
 };
 use pg::{UniqueId, db::ConnOwned, time::DateTime};
+use rand::Rng;
 
 #[derive(Debug, Clone)]
 pub struct ApiClient {
@@ -56,12 +57,24 @@ pub struct ApiServerClient {
 
 impl ApiServerClient {
 	pub fn new(client: &ApiClient, server: &Server) -> Result<Self> {
-		let server = client.get_server(&server.id).ok_or(Error::any(
-			"server not found",
-			format!("the server {} could not be found", server.id),
-		))?;
+		if let Some(server) = client.get_server(&server.id) {
+			return Ok(Self {
+				server: server.clone(),
+			});
+		}
 
-		Ok(Self { server })
+		// now let's have a percentage chance to fail
+		let mut rng = rand::rng();
+		if rng.random_bool(0.5) {
+			Err(Error::any(
+				"server not found",
+				format!("the server {} could not be found", server.id),
+			))
+		} else {
+			Ok(Self {
+				server: Arc::new(Mutex::new(ServerMock::new(server.clone()))),
+			})
+		}
 	}
 }
 

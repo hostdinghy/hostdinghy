@@ -24,10 +24,11 @@
 
 <style lang="scss">
 	input {
+		width: 100%;
+		min-height: 100%;
 		padding: 0.5rem 1.5rem;
 		background-color: transparent;
 		border: none;
-		min-height: 100%;
 		color: var(--c-text);
 
 		&::placeholder {

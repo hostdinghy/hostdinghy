@@ -36,11 +36,10 @@ export type LoadPropsFn = (
 	lp: LoadProps,
 ) => Promise<Record<string, any> | null | void> | void;
 
-export type ResolvedProps<T extends (...args: any[]) => Promise<any>> = Awaited<
+export type ResolvedProps<T extends (...args: any) => any> = Awaited<
 	ReturnType<T>
 >;
 
-export type LayoutProps<T extends (...args: any[]) => Promise<any>> =
-	ResolvedProps<T> & {
-		children: Snippet;
-	};
+export type LayoutProps<T extends (...args: any) => any> = ResolvedProps<T> & {
+	children: Snippet;
+};

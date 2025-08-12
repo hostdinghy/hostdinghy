@@ -4,7 +4,6 @@
 	let {
 		id,
 		name,
-		type,
 		label,
 		value = $bindable(),
 		options,
@@ -21,7 +20,7 @@
 
 <Field {id} {label}>
 	<select {id} {name} bind:value {...rest}>
-		{#each options as option}
+		{#each options as option (option.key)}
 			<option value={option.key}>
 				{option.value}
 			</option>

@@ -3,9 +3,9 @@
 	import Button from '@/components/Button.svelte';
 	import Table from '@/components/Table.svelte';
 	import type LoadProps from '@/lib/LoadProps';
-	import type { LoadPropsFn, ResolvedProps } from '@/lib/LoadProps';
+	import type { ResolvedProps } from '@/lib/LoadProps';
 
-	export async function loadProps(props: any, lp: LoadProps) {
+	export async function loadProps(_props: any, _lp: LoadProps) {
 		return {
 			servers: await loadServers(),
 		};

@@ -1,9 +1,7 @@
 <script lang="ts">
 	import { create } from '@/api/servers';
 	import Input from '@/form/Input.svelte';
-	import Select from '@/form/Select.svelte';
 	import { getRouter } from '@/main';
-	import type { ResolvedProps } from '@/lib/LoadProps';
 	import { errorToStr } from '@/api/lib';
 	import Textarea from '@/form/Textarea.svelte';
 
@@ -21,7 +19,7 @@
 		error = '';
 
 		try {
-			const app = await create({
+			const _server = await create({
 				name,
 				domain,
 				apiToken,

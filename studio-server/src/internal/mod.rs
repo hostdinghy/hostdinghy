@@ -11,6 +11,7 @@ use internal_api::{
 	app_id::AppId,
 	apps::{AppInfoRes, ComposeCommand, GetComposeRes, SaveComposeReq},
 	client::{self as int, Result},
+	registry::CreateUserRes,
 	requests::{InfoRes, PingRes},
 };
 use pg::{UniqueId, db::ConnOwned};
@@ -124,4 +125,13 @@ pub trait ApiServerClientTrait {
 
 	/// How many lines to return, if None all lines are returned
 	async fn app_logs(&self, id: &AppId, lines: Option<u32>) -> Result<String>;
+
+	async fn registry_users(&self) -> Result<Vec<String>>;
+
+	async fn registry_create_user(
+		&self,
+		username: &str,
+	) -> Result<CreateUserRes>;
+
+	async fn registry_delete_user(&self, username: &str) -> Result<()>;
 }

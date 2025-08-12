@@ -2,7 +2,7 @@
 	import type { Snippet } from 'svelte';
 
 	type MainProps = {
-		headers: { key: string; value: string }[];
+		headers: { key: keyof Row; value: string }[];
 		rows: Row[];
 		toolbar?: Snippet;
 		search?: boolean;
@@ -38,17 +38,17 @@
 	<table>
 		<thead>
 			<tr>
-				{#each headers as header}
+				{#each headers as header (header.key)}
 					<th>{header.value}</th>
 				{/each}
 			</tr>
 		</thead>
 		<tbody>
-			{#each rows as row, i}
+			{#each rows as row, i (row.id ?? i)}
 				<tr>
-					{#each headers as header}
+					{#each headers as header (header.key)}
 						<!-- this fixes type inference -->
-						{@const cc = customCells[header.key]}
+						{@const cc = customCells[header.key as string]}
 						{#if cc}
 							{@render cc(row)}
 						{:else}

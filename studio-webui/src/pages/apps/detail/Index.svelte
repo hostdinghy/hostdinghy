@@ -1,11 +1,9 @@
 <script lang="ts">
-	import type { Service } from '@/api/apps';
 	import Status from '@/components/Status.svelte';
 	import Table from '@/components/Table.svelte';
 	import type { AppLayoutProps } from '@/layout/AppLayout.svelte';
-	import type { ResolvedProps } from '@/lib/LoadProps';
 
-	let { app }: AppLayoutProps<() => void> = $props();
+	let { app }: AppLayoutProps = $props();
 </script>
 
 <svelte:head>
@@ -44,8 +42,8 @@
 
 		{#snippet domains(row)}
 			<td>
-				{#each row.routes as route}
-					{#each route.domains as domain}
+				{#each row.routes as route (route.rule)}
+					{#each route.domains as domain (domain)}
 						<a
 							target="_blank"
 							class="underline"

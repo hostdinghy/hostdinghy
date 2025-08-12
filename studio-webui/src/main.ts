@@ -1,10 +1,10 @@
-import type { Request, Route, Router } from 'chuchi';
+import type { Request } from 'chuchi';
 import * as routes from './pages/routes';
-import type { SsrCache } from 'chuchi/ssr';
 import { getContext } from 'svelte';
 import type { Cookies } from 'chuchi/cookies';
 import type LoadProps from './lib/LoadProps';
 import type { Writable } from 'chuchi/stores';
+import type { Component, ComponentModule, Route, Router } from './lib';
 
 export function getRouter(): Router {
 	return getContext('router');
@@ -19,8 +19,8 @@ export function getRequest(): Writable<Request> {
 }
 
 export type RoutePage = {
-	layout: any;
-	component: any;
+	layout: Component | null;
+	component: Component;
 	props: Record<string, any>;
 };
 
@@ -47,7 +47,7 @@ export async function handleRoute(
 ): Promise<RouteResponse> {
 	if (!route) return ERROR_404;
 
-	let comp: any;
+	let comp: ComponentModule;
 	let pageProps: Record<string, any>;
 	try {
 		comp = await route.load(req);
@@ -71,7 +71,12 @@ export async function handleRoute(
 
 		if (typeof comp.loadProps === 'function') {
 			const nProps = await comp.loadProps(pageProps, loadProps);
-			if (nProps) pageProps = nProps;
+			if (nProps) {
+				pageProps = {
+					...pageProps,
+					...nProps,
+				};
+			}
 		}
 
 		if (loadProps.redirect) {

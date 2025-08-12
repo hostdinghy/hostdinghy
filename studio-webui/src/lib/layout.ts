@@ -1,28 +1,35 @@
-import type { Request, Router } from 'chuchi';
+import type { Request } from 'chuchi';
+import type { ComponentModule, Router } from '.';
 
 export function withLayout(
-	loadLayoutComp: (req: Request) => Promise<any>,
-	loadComp: (req: Request) => Promise<any>,
-): (req: Request) => Promise<any> {
-	return async (req: Request) => {
-		const comp = await loadComp(req);
-		const layoutComp = await loadLayoutComp(req);
+	loadLayoutComp: (req: Request) => Promise<ComponentModule>,
+	loadComp: (req: Request) => Promise<ComponentModule>,
+): (req: Request) => Promise<ComponentModule> {
+	return async req => {
+		const [layoutComp, comp] = await Promise.all([
+			loadLayoutComp(req),
+			loadComp(req),
+		]);
 
 		return {
-			async loadProps(...args: any[]) {
-				const [layoutProps, pageProps] = await Promise.all([
-					layoutComp?.loadProps?.(...args) ?? {},
-					comp?.loadProps?.(...args) ?? {},
-				]);
+			async loadProps(pageProps, lp) {
+				// we cannot load the components in parallel because the component
+				// might depend on the props from the layout
 
-				return { ...layoutProps, ...pageProps };
+				const layoutProps =
+					(await layoutComp.loadProps?.(pageProps, lp)) ?? {};
+
+				// merge new Props
+				pageProps = { ...pageProps, ...layoutProps };
+				const nProps = (await comp?.loadProps?.(pageProps, lp)) ?? {};
+
+				return {
+					...pageProps,
+					...nProps,
+				};
 			},
-			layout(...args: any[]) {
-				return layoutComp.default(...args);
-			},
-			default(...args: any[]) {
-				return comp.default(...args);
-			},
+			layout: layoutComp.default,
+			default: comp.default,
 		};
 	};
 }
@@ -30,25 +37,25 @@ export function withLayout(
 export function layoutGroup(
 	router: Router,
 	path: string | RegExp,
-	loadLayoutComp: (req: Request) => Promise<any>,
+	loadLayoutComp: (req: Request) => Promise<ComponentModule>,
 	loadGroup: (groupRouter: Pick<Router, 'register'>) => void,
 ) {
-	const groupRouter = {
-		register(
-			subPath: string | RegExp,
-			loadComp: (req: Request) => Promise<any>,
-		) {
+	loadGroup({
+		register(subPath, loadComp) {
 			return router.register(
 				joinRoutePaths(path, subPath),
 				withLayout(loadLayoutComp, loadComp),
 			);
 		},
-	};
-
-	loadGroup(groupRouter);
+	});
 }
 
-function joinRoutePaths(a: RegExp | string, b: RegExp | string) {
+function joinRoutePaths(a: string, b: string): string;
+function joinRoutePaths(a: RegExp | string, b: RegExp | string): RegExp;
+function joinRoutePaths(
+	a: RegExp | string,
+	b: RegExp | string,
+): string | RegExp {
 	if (typeof a === 'string' && typeof b === 'string') {
 		return a + b;
 	}

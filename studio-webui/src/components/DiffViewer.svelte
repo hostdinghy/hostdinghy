@@ -42,8 +42,7 @@
 
 <style>
 	.editor {
-		flex: 1;
-		height: 200px;
+		min-height: 200px;
 		width: 100%;
 	}
 </style>

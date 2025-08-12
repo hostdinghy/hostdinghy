@@ -16,6 +16,7 @@ use internal_api::{
 	apps::{AppInfoRes, ComposeCommand, GetComposeRes, SaveComposeReq},
 	client::Result,
 	error::Error,
+	registry::CreateUserRes,
 	requests::{InfoRes, PingRes},
 };
 use pg::{UniqueId, db::ConnOwned, time::DateTime};
@@ -128,5 +129,23 @@ impl ApiServerClientTrait for ApiServerClient {
 	async fn app_logs(&self, id: &AppId, lines: Option<u32>) -> Result<String> {
 		let server = self.server.lock().unwrap();
 		server.app_logs(id, lines)
+	}
+
+	async fn registry_users(&self) -> Result<Vec<String>> {
+		let server = self.server.lock().unwrap();
+		server.registry_users()
+	}
+
+	async fn registry_create_user(
+		&self,
+		username: &str,
+	) -> Result<CreateUserRes> {
+		let mut server = self.server.lock().unwrap();
+		server.registry_create_user(username)
+	}
+
+	async fn registry_delete_user(&self, username: &str) -> Result<()> {
+		let mut server = self.server.lock().unwrap();
+		server.registry_delete_user(username)
 	}
 }

@@ -1,11 +1,13 @@
-import { Api } from '../lib';
-import { api } from './index';
+import { api } from '.';
 
-export async function get(appId: string): Promise<string> {
+export async function loadCompose(appId: string): Promise<string> {
 	return await api.get(`/${appId}/compose`);
 }
 
-export async function set(appId: string, compose: string): Promise<string> {
+export async function createCompose(
+	appId: string,
+	compose: string,
+): Promise<string> {
 	return await api.post(`/${appId}/compose`, {
 		compose,
 		createDatabase: false,

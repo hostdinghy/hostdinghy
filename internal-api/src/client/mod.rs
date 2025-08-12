@@ -6,6 +6,7 @@ use crate::{
 	app_id::AppId,
 	apps::{AppInfoRes, ComposeCommand, GetComposeRes, SaveComposeReq},
 	error::{Error, WithMessage},
+	registry::{CreateUserReq, CreateUserRes},
 	requests::{ApiToken, InfoRes, PingRes},
 };
 
@@ -159,5 +160,24 @@ impl ApiServerClient {
 			.text()
 			.await
 			.with_message("failed to parse logs response")
+	}
+
+	pub async fn registry_users(&self) -> Result<Vec<String>> {
+		self.send_json(self.get("/registry/users")).await
+	}
+
+	pub async fn registry_create_user(
+		&self,
+		username: &str,
+	) -> Result<CreateUserRes> {
+		self.send_json(self.post("/registry/users").json(&CreateUserReq {
+			username: username.into(),
+		}))
+		.await
+	}
+
+	pub async fn registry_delete_user(&self, username: &str) -> Result<()> {
+		self.send_json(self.delete(&format!("/registry/users/{username}")))
+			.await
 	}
 }

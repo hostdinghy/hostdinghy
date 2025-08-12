@@ -1,8 +1,7 @@
 <script lang="ts">
-	import type { loadProps } from '@/layout/AppLayout.svelte';
-	import type { ResolvedProps } from '@/lib/LoadProps';
+	import type { AppLayoutProps } from '@/layout/AppLayout.svelte';
 
-	let { app }: ResolvedProps<typeof loadProps> = $props();
+	let { app }: AppLayoutProps = $props();
 </script>
 
 <svelte:head>

@@ -5,7 +5,6 @@ import {
 	type User,
 } from '@/api/users';
 import Listeners from 'chuchi-utils/sync/Listeners';
-import { getContext } from 'svelte';
 
 /**
  * ## Note

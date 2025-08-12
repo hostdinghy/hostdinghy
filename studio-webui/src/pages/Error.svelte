@@ -1,6 +1,4 @@
 <script>
-	import Button from '@/components/Button.svelte';
-
 	let { error } = $props();
 </script>
 

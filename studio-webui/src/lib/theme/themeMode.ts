@@ -10,7 +10,7 @@ export const systemPrefersMode = createSystemPrefersMode();
 export const derivedMode = createDerivedMode();
 
 function createUserPrefersMode() {
-	let mode = (localStorage.getItem(THEME_MODE_KEY) as Mode) ?? 'system';
+	const mode = (localStorage.getItem(THEME_MODE_KEY) as Mode) ?? 'system';
 
 	const store = new Writable<Mode>(mode);
 

@@ -15,7 +15,7 @@
 <div class="tabs">
 	<nav>
 		<ul>
-			{#each sidebar as item}
+			{#each sidebar as item (item.url)}
 				<li>
 					<a
 						class:active={item.url.replace(/\/$/, '') ===

@@ -1,11 +1,13 @@
-use axum::Json;
 use axum::extract::{Path, State};
+use axum::routing::get;
+use axum::{Json, Router};
 use internal_api::app_id::AppId;
 use internal_api::apps::{ComposeCommand, SaveComposeReq};
 use internal_api::error::Error as ApiError;
 
+use crate::AppState;
 use crate::apps::Apps;
-use crate::error::Error;
+use crate::apps::routes::utils::{AppWithServer, app_with_server};
 use crate::error::Result;
 use crate::internal::ApiClient;
 use crate::servers::Servers;
@@ -22,20 +24,10 @@ pub async fn get_compose(
 	conn: ConnOwned,
 ) -> Result<Json<String>> {
 	let apps = apps.with_conn(conn.conn());
-	let app = apps
-		.by_id(&id, &user.team_for_filter())
-		.await?
-		.ok_or(Error::NotFound)?;
-
 	let servers = servers.with_conn(conn.conn());
-	let server = servers
-		.by_id(&app.server_id, &user.team_for_filter())
-		.await?
-		.ok_or(Error::Internal("Server was not found".into()))?;
 
-	let api = api_client
-		.connect(&server)
-		.map_err(|e| Error::InternalApiServer(e.to_string()))?;
+	let AppWithServer { api, .. } =
+		app_with_server(&id, &user, &apps, &servers, &api_client).await?;
 
 	let compose = match api.app_get_compose(&id).await {
 		Ok(a) => a.compose,
@@ -56,20 +48,10 @@ pub async fn set_compose(
 	Json(req): Json<SaveComposeReq>,
 ) -> Result<Json<String>> {
 	let apps = apps.with_conn(conn.conn());
-	let app = apps
-		.by_id(&id, &user.team_for_filter())
-		.await?
-		.ok_or(Error::NotFound)?;
-
 	let servers = servers.with_conn(conn.conn());
-	let server = servers
-		.by_id(&app.server_id, &user.team_for_filter())
-		.await?
-		.ok_or(Error::Internal("Server was not found".into()))?;
 
-	let api = api_client
-		.connect(&server)
-		.map_err(|e| Error::InternalApiServer(e.to_string()))?;
+	let AppWithServer { api, .. } =
+		app_with_server(&id, &user, &apps, &servers, &api_client).await?;
 
 	api.app_set_compose(&id, &req).await?;
 
@@ -78,4 +60,8 @@ pub async fn set_compose(
 	api.app_compose_command(&id, &ComposeCommand::Up).await?;
 
 	Ok(Json(gcompose.compose))
+}
+
+pub fn routes() -> Router<AppState> {
+	Router::new().route("/{id}/compose", get(get_compose).post(set_compose))
 }

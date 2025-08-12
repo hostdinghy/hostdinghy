@@ -1,23 +1,35 @@
 use std::collections::HashMap;
 
-use axum::Json;
 use axum::extract::{Path, State};
+use axum::routing::get;
+use axum::{Json, Router};
 use internal_api::app_id::AppId;
-use internal_api::apps::AppService;
+use internal_api::apps::{AppService, ServiceState};
 use internal_api::error::Error as ApiError;
 use pg::UniqueId;
 use pg::time::DateTime;
 use serde::{Deserialize, Serialize};
 
-use crate::apps::Apps;
-use crate::apps::routes::AppSummary;
-use crate::error::Error;
+use crate::AppState;
+use crate::apps::routes::utils::{AppWithServer, app_with_server};
+use crate::apps::{Apps, data};
 use crate::error::Result;
 use crate::internal::ApiClient;
 use crate::servers::Servers;
 use crate::users::utils::AuthedUser;
 use crate::users::utils::RightsAny;
 use crate::utils::ConnOwned;
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct AppSummary {
+	pub id: AppId,
+	pub name: String,
+	pub team_id: UniqueId,
+	pub server_id: UniqueId,
+	pub created_on: DateTime,
+	pub services_states: Vec<ServiceState>,
+}
 
 pub async fn all(
 	user: AuthedUser<RightsAny>,
@@ -88,21 +100,12 @@ pub async fn by_id(
 	State(api_client): State<ApiClient>,
 	Path(id): Path<AppId>,
 	conn: ConnOwned,
-) -> Result<Json<Option<App>>> {
+) -> Result<Json<App>> {
 	let apps = apps.with_conn(conn.conn());
-	let Some(app) = apps.by_id(&id, &user.team_for_filter()).await? else {
-		return Ok(Json(None));
-	};
+	let servers = servers.with_conn(conn.conn());
 
-	let server = servers
-		.with_conn(conn.conn())
-		.by_id(&app.server_id, &user.team_for_filter())
-		.await?
-		.ok_or(Error::Internal("Server was not found".into()))?;
-
-	let api = api_client
-		.connect(&server)
-		.map_err(|e| Error::InternalApiServer(e.to_string()))?;
+	let AppWithServer { app, api, .. } =
+		app_with_server(&id, &user, &apps, &servers, &api_client).await?;
 
 	let services = match api.app_info(&app.id).await {
 		Ok(a) => a.services,
@@ -110,12 +113,48 @@ pub async fn by_id(
 		Err(e) => return Err(e.into()),
 	};
 
-	Ok(Json(Some(App {
+	Ok(Json(App {
 		id: app.id,
 		name: app.name,
 		team_id: app.team_id,
 		server_id: app.server_id,
 		created_on: app.created_on,
 		services: services.into_iter().map(Into::into).collect(),
-	})))
+	}))
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct CreateAppReq {
+	id: AppId,
+	name: String,
+	server_id: UniqueId,
+}
+
+pub async fn create(
+	user: AuthedUser<RightsAny>,
+	State(apps): State<Apps>,
+	conn: ConnOwned,
+	Json(req): Json<CreateAppReq>,
+) -> Result<Json<data::App>> {
+	let apps = apps.with_conn(conn.conn());
+
+	// Create a new app
+	let app = data::App {
+		id: req.id,
+		name: req.name,
+		team_id: user.user.team_id,
+		server_id: req.server_id,
+		created_on: DateTime::now(),
+	};
+
+	apps.insert(&app).await?;
+
+	Ok(Json(app))
+}
+
+pub fn routes() -> Router<AppState> {
+	Router::new()
+		.route("/", get(all).post(create))
+		.route("/{id}", get(by_id))
 }

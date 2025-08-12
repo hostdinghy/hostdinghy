@@ -35,12 +35,13 @@
 			{ key: 'name', value: 'Name' },
 			{ key: 'serverName', value: 'Server' },
 			{ key: 'status', value: 'Status' },
-			{ key: 'rule', value: 'Actions' },
+			{ key: 'actions', value: 'Actions' },
 		]}
 		rows={apps.map(a => ({
 			...a,
 			serverName: a.server?.name,
 			status: null,
+			actions: null,
 		}))}
 	>
 		{#snippet toolbar()}
@@ -56,7 +57,7 @@
 		{#snippet status(row)}
 			<td>
 				<div class="status">
-					{#each row.servicesStates as state}
+					{#each row.servicesStates as state, i (i)}
 						<Status value={state} />
 					{:else}
 						no services

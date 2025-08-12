@@ -18,10 +18,8 @@
 
 	const session = getSession();
 	const router = getRouter();
-	const req = router.currentRequest;
 
 	const { url }: { url?: string } = $props();
-	$inspect('url', url);
 
 	let username = $state('');
 	let password = $state('');
@@ -34,9 +32,8 @@
 			const auth = await login(username, password);
 			session.setAuthed(auth);
 
-			// nows lets either redirect to url or to /me
-			const url = $req?.search.get('url') ?? '/';
-			router.open(url);
+			// nows lets either redirect to url or to /
+			router.open(url && url.startsWith('/') ? url : '/');
 		} catch (e) {
 			console.error(e);
 			error = errorToStr(e);

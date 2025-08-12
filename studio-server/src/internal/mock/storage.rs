@@ -1,9 +1,10 @@
 use std::{
-	collections::HashMap,
+	collections::{HashMap, HashSet},
 	sync::{Arc, Mutex},
 };
 
 use compose_yml::Compose;
+use crypto::token::Token;
 use internal_api::{
 	app_id::AppId,
 	apps::{
@@ -12,6 +13,7 @@ use internal_api::{
 	},
 	client::Result,
 	error::Error,
+	registry::CreateUserRes,
 };
 use pg::UniqueId;
 use rand::Rng;
@@ -70,6 +72,7 @@ pub struct ServerMock {
 	pub registry_domain: String,
 	pub version: Version,
 	apps: HashMap<AppId, AppMock>,
+	registry_users: HashSet<String>,
 }
 
 impl ServerMock {
@@ -79,6 +82,7 @@ impl ServerMock {
 			registry_domain: "registry.local".into(),
 			version: "0.0.0-debug.0".parse().unwrap(),
 			apps: HashMap::new(),
+			registry_users: HashSet::new(),
 		}
 	}
 
@@ -123,6 +127,33 @@ impl ServerMock {
 	pub fn app_logs(&self, id: &AppId, lines: Option<u32>) -> Result<String> {
 		let app = self.apps.get(id).ok_or(Error::AppNotFound)?;
 		app.app_logs(lines)
+	}
+
+	pub fn registry_users(&self) -> Result<Vec<String>> {
+		Ok(self.registry_users.iter().cloned().collect())
+	}
+
+	pub fn registry_create_user(
+		&mut self,
+		username: &str,
+	) -> Result<CreateUserRes> {
+		if self.registry_users.contains(username) {
+			return Err(Error::UserAlreadyExists);
+		}
+
+		let password = Token::<32>::new().to_string();
+		self.registry_users.insert(username.into());
+
+		Ok(CreateUserRes {
+			username: username.into(),
+			password,
+		})
+	}
+
+	pub fn registry_delete_user(&mut self, username: &str) -> Result<()> {
+		self.registry_users.remove(username);
+
+		Ok(())
 	}
 }
 

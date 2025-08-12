@@ -12,11 +12,12 @@
 	} = $props();
 </script>
 
-<Modal bind:open>
+<Modal bind:open class="commit-config" fillScreen>
 	<header>
 		<h2>Commit Changes</h2>
 		<Button onclick={() => (open = false)}>&times;</Button>
 	</header>
+
 	<DiffViewer bind:original bind:modified />
 
 	<footer>
@@ -39,7 +40,16 @@
 	</footer>
 </Modal>
 
-<style>
+<style lang="scss">
+	:global {
+		// not really a fan of global fully global styles in a
+		// component...
+		.commit-config.modal {
+			display: grid;
+			grid-template-rows: auto 1fr auto;
+		}
+	}
+
 	header {
 		padding: 1rem;
 		border-bottom: 1px solid var(--c-border);
@@ -47,6 +57,7 @@
 		justify-content: space-between;
 		align-items: center;
 	}
+
 	h2 {
 		font-size: 1.25rem;
 	}

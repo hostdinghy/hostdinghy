@@ -1,8 +1,7 @@
-import type { Router } from 'chuchi';
 import NotFound from './NotFound.svelte';
 import Error from './Error.svelte';
-// import DefaultLayout from '../layout/EmptyLayout.svelte';
 import { layoutGroup, withLayout } from '@/lib/layout';
+import type { Router } from '@/lib';
 
 export { NotFound, Error };
 
@@ -24,11 +23,15 @@ export function register(router: Router) {
 		() => import('../layout/AppLayout.svelte'),
 		r => {
 			r.register('', () => import('./apps/detail/Index.svelte'));
-			r.register('/logs', () => import('./apps/detail/Logs.svelte'));
 			r.register(
 				'/settings',
 				() => import('./apps/detail/Settings.svelte'),
 			);
+			r.register(
+				'/registry',
+				() => import('./apps/detail/Registry.svelte'),
+			);
+			r.register('/logs', () => import('./apps/detail/Logs.svelte'));
 		},
 	);
 

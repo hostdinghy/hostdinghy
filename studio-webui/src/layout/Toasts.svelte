@@ -59,7 +59,8 @@
 
 {#if toasts.length}
 	<div class="toasts">
-		{#each toasts as toast, i}
+		<!-- todo maybe can i use toast.ref? as key -->
+		{#each toasts as toast, i (i)}
 			<div class="toast status-{toast.status}">
 				<p>
 					{toast.message}

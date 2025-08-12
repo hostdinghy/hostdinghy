@@ -2,6 +2,11 @@
 @use './sass/form.scss';
 @use './sass/typography.scss';
 
+/*
+Z-Index Map
+1000: Modal
+*/
+
 :root {
 	/// colors
 	// atomic colors. descriptive naming

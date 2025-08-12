@@ -5,15 +5,8 @@
 
 	const session = getSession();
 	const router = getRouter();
-	const req = getRouter().currentRequest;
 
 	let { breadcrumbs = [{ label: '🛶 HostDinghy', url: '/' }] } = $props();
-
-	let open = $state(false);
-
-	$effect(() => {
-		open = !$req;
-	});
 
 	function signout() {
 		// todo: message server to invalidate session
@@ -24,7 +17,7 @@
 
 <header class="wrap">
 	<div class="crumbs">
-		{#each breadcrumbs as breadcrumb}
+		{#each breadcrumbs as breadcrumb (breadcrumb.url)}
 			<a href={breadcrumb.url}>
 				<span class="hover:underline">
 					{breadcrumb.label}

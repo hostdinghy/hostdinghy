@@ -1,26 +1,22 @@
 <script module lang="ts">
-	import * as composeApi from '@/api/apps/compose';
-	import type { loadProps as layoutLoadProps } from '@/layout/AppLayout.svelte';
+	import type { AppLayoutProps } from '@/layout/AppLayout.svelte';
+	import { createCompose, loadCompose } from '@/api/apps/compose';
 
-	export async function loadProps({ id }: { id: string }) {
+	export async function loadProps({ app }: AppLayoutProps) {
 		return {
-			compose: await composeApi.get(id),
+			compose: await loadCompose(app.id),
 		};
 	}
-
-	type Props = ResolvedProps<typeof loadProps> &
-		ResolvedProps<typeof layoutLoadProps>;
 </script>
 
 <script lang="ts">
 	import Button from '@/components/Button.svelte';
 	import Editor from '@/components/Editor.svelte';
 	import CommitConfigModal from '@/layout/modals/CommitConfig.svelte';
-	import type { ResolvedProps } from '@/lib/LoadProps';
 	import { toast, type ToastRef } from '@/layout/Toasts.svelte';
 	import { errorToStr } from '@/api/lib';
 
-	let { app, compose }: Props = $props();
+	let { app, compose }: AppLayoutProps<typeof loadProps> = $props();
 
 	let editor: Editor;
 	let commitConfigOpen = $state(false);
@@ -40,7 +36,7 @@
 		toastRef?.remove();
 
 		try {
-			original = await composeApi.set(app.id, modified);
+			original = await createCompose(app.id, modified);
 			modified = original;
 			editor.setValue(original);
 

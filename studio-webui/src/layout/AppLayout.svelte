@@ -1,7 +1,5 @@
 <script module lang="ts">
-	import { App, byId } from '@/api/apps';
-
-	export const layout = 'app';
+	import { byId } from '@/api/apps';
 
 	export async function loadProps({ id }: { id: string }) {
 		return {
@@ -9,10 +7,8 @@
 		};
 	}
 
-	export type AppLayoutProps<T extends (...args: any) => any> = ResolvedProps<
-		typeof loadProps
-	> &
-		ResolvedProps<T>;
+	export type AppLayoutProps<T extends (...args: any) => any = () => void> =
+		ResolvedProps<typeof loadProps> & ResolvedProps<T>;
 </script>
 
 <script lang="ts">
@@ -48,6 +44,10 @@
 				{
 					label: 'Settings',
 					url: `/apps/${app.id}/settings`,
+				},
+				{
+					label: 'Registry',
+					url: `/apps/${app.id}/registry`,
 				},
 				{ label: 'Logs', url: `/apps/${app.id}/logs` },
 			]}

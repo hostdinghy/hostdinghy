@@ -12,7 +12,7 @@
 <div class="tabs {extraClasses}">
 	<nav>
 		<ul>
-			{#each Object.entries(headers) as [id, label]}
+			{#each Object.entries(headers) as [id, label] (id)}
 				<li>
 					<button
 						class:active={id === tabId}

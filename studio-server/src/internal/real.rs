@@ -2,6 +2,7 @@ use internal_api::{
 	app_id::AppId,
 	apps::{AppInfoRes, ComposeCommand, GetComposeRes, SaveComposeReq},
 	client::{self as int, Result},
+	registry::CreateUserRes,
 	requests::{InfoRes, PingRes},
 };
 
@@ -55,5 +56,20 @@ impl ApiServerClientTrait for ApiServerClient {
 
 	async fn app_logs(&self, id: &AppId, lines: Option<u32>) -> Result<String> {
 		self.inner.app_logs(id, lines).await
+	}
+
+	async fn registry_users(&self) -> Result<Vec<String>> {
+		self.inner.registry_users().await
+	}
+
+	async fn registry_create_user(
+		&self,
+		username: &str,
+	) -> Result<CreateUserRes> {
+		self.inner.registry_create_user(username).await
+	}
+
+	async fn registry_delete_user(&self, username: &str) -> Result<()> {
+		self.inner.registry_delete_user(username).await
 	}
 }

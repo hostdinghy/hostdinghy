@@ -1,7 +1,15 @@
 use std::{collections::HashSet, sync::Arc};
 
-use api::{app_id::AppId, error::Error};
-use axum::{Router, extract::State, routing::post};
+use api::{
+	app_id::AppId,
+	error::Error,
+	registry::{CreateUserReq, CreateUserRes, RegistryUsersRes},
+};
+use axum::{
+	Json, Router,
+	extract::{Path, State},
+	routing::{delete, get, post},
+};
 use hyper::{HeaderMap, header::AUTHORIZATION};
 use serde::{Deserialize, Serialize};
 use subtle::ConstantTimeEq;
@@ -9,8 +17,10 @@ use tracing::{error, info, warn};
 
 use crate::{
 	config::Config,
-	registry::WebhookToken,
-	server::router::AppState,
+	registry::{
+		AddUser, RemoveUser, WebhookToken, add_user, list_users, remove_user,
+	},
+	server::{Authenticated, router::AppState},
 	utils::{compose, hostdinghy_dir, is_file},
 };
 
@@ -128,6 +138,45 @@ async fn webhook(
 	Ok(())
 }
 
+async fn all_users(
+	_auth: Authenticated,
+) -> Result<Json<RegistryUsersRes>, Error> {
+	list_users()
+		.await
+		.map(RegistryUsersRes)
+		.map(Json)
+		.map_err(Into::into)
+}
+
+async fn create_user(
+	_auth: Authenticated,
+	Json(req): Json<CreateUserReq>,
+) -> Result<Json<CreateUserRes>, Error> {
+	let mut au = AddUser {
+		username: req.username,
+		password: None,
+	};
+	add_user(&mut au).await?;
+
+	Ok(Json(CreateUserRes {
+		username: au.username,
+		password: au.password.unwrap(),
+	}))
+}
+
+async fn delete_user(
+	_auth: Authenticated,
+	Path(username): Path<String>,
+) -> Result<Json<()>, Error> {
+	remove_user(RemoveUser { username })
+		.await
+		.map(Json)
+		.map_err(Into::into)
+}
+
 pub fn routes() -> Router<AppState> {
-	Router::new().route("/webhook", post(webhook))
+	Router::new()
+		.route("/webhook", post(webhook))
+		.route("/users", get(all_users).post(create_user))
+		.route("/users/{username}", delete(delete_user))
 }

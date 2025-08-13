@@ -16,6 +16,7 @@ use crate::utils::ConnOwned;
 use crate::{servers::data, users::utils::AuthedUser};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct Server {
 	pub id: UniqueId,
 	pub team_id: UniqueId,

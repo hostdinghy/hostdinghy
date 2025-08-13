@@ -54,7 +54,7 @@ pub async fn app(cfg: Config) -> Result<Router<()>, Error> {
 
 	let router = Router::new()
 		.route("/ping", get(ping_req))
-		.route("/version", get(info_req))
+		.route("/info", get(info_req))
 		.nest("/apps", apps::routes::routes())
 		.nest("/registry", registry::routes::routes())
 		.layer(TraceLayer::new_for_http())

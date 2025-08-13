@@ -1,5 +1,7 @@
+use std::time::Duration;
+
 use clap::Parser;
-use tokio::fs;
+use tokio::{fs, time::sleep};
 
 use crate::{
 	config::Config,
@@ -118,6 +120,9 @@ pub async fn setup(_registry: Registry) -> Result<(), CliError> {
 		password: None,
 	};
 	registry::add_user(&mut add_user).await?;
+
+	// let's wait until the container is started
+	sleep(Duration::from_secs(5)).await;
 
 	cmd(&[
 		"docker",

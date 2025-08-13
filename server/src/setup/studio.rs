@@ -1,8 +1,10 @@
+use std::time::Duration;
+
 use base64::{Engine, prelude::BASE64_URL_SAFE_NO_PAD};
 use chuchi_crypto::token::Token;
 use clap::Parser;
 use serde::{Deserialize, Serialize};
-use tokio::fs;
+use tokio::{fs, time::sleep};
 
 use crate::{
 	config::Config,
@@ -17,7 +19,7 @@ use crate::{
 const COMPOSE_YML: &str = r#"
 services:
   studio:
-    image: registry.p1.goodserver.ch/hostdinghy/studio:latest
+    image: registry.s2.goodserver.ch/hostdinghy/studio:latest
     networks:
       - traefik
     restart: unless-stopped
@@ -109,6 +111,9 @@ pub async fn setup(args: Studio) -> Result<(), CliError> {
 	)?;
 
 	compose::up(&compose_file).await?;
+
+	// let's wait until the container is started
+	sleep(Duration::from_secs(5)).await;
 
 	let str = compose::exec(
 		&compose_file,

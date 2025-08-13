@@ -58,6 +58,11 @@ pub async fn setup() -> Result<(), CliError> {
 		.await
 		.with_message("Failed to enable hostdinghy service")?;
 
+	cmd(&["systemctl", "start", "hostdinghy"])
+		.run()
+		.await
+		.with_message("Failed to start hostdinghy service")?;
+
 	let cert = read_cert(hostdinghy_dir)
 		.await
 		.with_message("Failed to read self-signed certificate")?;

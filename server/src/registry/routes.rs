@@ -32,9 +32,9 @@ pub struct Events {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
 pub enum EventAction {
-	/// It seems that even if specified we get a pull as well
-	Pull,
 	Push,
+	#[serde(untagged)]
+	Other(String),
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

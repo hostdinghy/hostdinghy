@@ -1,7 +1,10 @@
 <script lang="ts">
-	let { directory } = $props();
+	import type { FsDir } from '@/pages/apps/detail/Files.svelte';
 
-	const isRoot = false;
+	type Props = {
+		directory: FsDir;
+	};
+	let { directory }: Props = $props();
 
 	function toRelativeTime(date: Date, locale: string = 'en'): string {
 		const rtf = new Intl.RelativeTimeFormat(locale, { numeric: 'auto' });
@@ -21,6 +24,10 @@
 		if (Math.abs(hours) >= 1) return rtf.format(hours, 'hour');
 		if (Math.abs(minutes) >= 1) return rtf.format(minutes, 'minute');
 		return rtf.format(seconds, 'second');
+	}
+
+	function joinPath(...parts) {
+		return '/' + parts.map(p => p.replace(/^\/+|\/+$/g, '')).join('/');
 	}
 </script>
 
@@ -51,14 +58,21 @@
 		<div>modified</div>
 	</header>
 	<div class="content">
-		{#if !isRoot}
-			{@render item('directory', '..', '#', ['', ''])}
+		{#if !directory.isRoot()}
+			{@render item(
+				'directory',
+				'..',
+				directory.getParentSegment()?.url ?? '#',
+				['', ''],
+			)}
 		{/if}
-		{#each directory.children as row, i (row.id ?? i)}
-			{@render item(row.type, row.name, '#' + row.name, [
-				row.permissions,
-				toRelativeTime(row.modified),
-			])}
+		{#each directory.content as row, i (row.id ?? i)}
+			{@render item(
+				row.type,
+				row.name,
+				joinPath(directory.getAbsoluteUrl(), row.name),
+				[(row.permissions, toRelativeTime(row.modified))],
+			)}
 		{/each}
 	</div>
 </div>

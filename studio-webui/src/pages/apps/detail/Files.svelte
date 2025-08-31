@@ -1,3 +1,107 @@
+<script module>
+	export async function loadProps(
+		{ app, path = '' }: { path: string },
+		route,
+	) {
+		function getRoot(path, separator = '/files/') {
+			const idx = path.indexOf(separator);
+			return idx === -1
+				? path
+				: path.slice(0, idx + separator.length - 1);
+		}
+
+		const cwd = new FsDir(path, [
+			{
+				url: getRoot(route.req.url.pathname),
+				label: app.name,
+			},
+		]);
+		return {
+			cwd,
+		};
+	}
+
+	export class FsDir {
+		content: (
+			| {
+					name: string;
+					type: string;
+					size: number;
+					mime: string;
+					permissions: string;
+					owner: number;
+					group: number;
+					modified: Date;
+			  }
+			| {
+					name: string;
+					type: string;
+					permissions: string;
+					owner: number;
+					group: number;
+					modified: Date;
+					size?: undefined;
+					mime?: undefined;
+			  }
+		)[];
+		crumbs: any;
+
+		constructor(path, rootSegment) {
+			this.content = [
+				{
+					name: 'file1.txt',
+					type: 'file',
+					size: 1234,
+					mime: 'text/plain',
+					permissions: 'rw-r--r--',
+					owner: 1000,
+					group: 1000,
+					modified: new Date('2025-08-30T09:00:00Z'),
+				},
+				{
+					name: 'subdir',
+					type: 'directory',
+					permissions: 'rwxr-xr-x',
+					owner: 1000,
+					group: 1000,
+					modified: new Date('2025-08-29T18:00:00Z'),
+				},
+			];
+
+			this.path = path;
+
+			this.crumbs = path
+				.split('/')
+				.filter(Boolean)
+				.reduce(
+					(acc, label) => [
+						...acc,
+						{
+							url: acc.at(-1)?.url + '/' + label,
+							label,
+						},
+					],
+					rootSegment,
+				);
+		}
+
+		getAbsoluteUrl() {
+			return this.crumbs[this.crumbs.length - 1].url;
+		}
+
+		getParentSegment() {
+			if (this.crumbs.length < 2) {
+				return null;
+			}
+			return this.crumbs[this.crumbs.length - 2];
+		}
+
+		isRoot() {
+			return this.crumbs.length === 1;
+		}
+	}
+</script>
+
 <script lang="ts">
 	import Crumbs from '@/components/Crumbs.svelte';
 	import DirectoryContent from '@/components/fs/DirectoryContent.svelte';
@@ -5,44 +109,20 @@
 	import Table from '@/components/Table.svelte';
 	import type { AppLayoutProps } from '@/layout/AppLayout.svelte';
 
-	let { app }: AppLayoutProps = $props();
-
-	const cwd = {
-		path: `${app.name}/craft/web/assets`
-			.split('/')
-			.map(s => ({ url: '#' + s, label: s })),
-		children: [
-			{
-				name: 'file1.txt',
-				type: 'file',
-				size: 1234,
-				mime: 'text/plain',
-				permissions: 'rw-r--r--',
-				owner: 1000,
-				group: 1000,
-				modified: new Date('2025-08-30T09:00:00Z'),
-			},
-			{
-				name: 'subdir',
-				type: 'directory',
-				permissions: 'rwxr-xr-x',
-				owner: 1000,
-				group: 1000,
-				modified: new Date('2025-08-29T18:00:00Z'),
-			},
-		],
-	};
+	let { app, cwd }: AppLayoutProps = $props();
 </script>
 
 <svelte:head>
 	<title>HostDinghy</title>
 </svelte:head>
 
-<header>
-	<Crumbs breadcrumbs={cwd.path} />
-</header>
+{#key cwd}
+	<header>
+		<Crumbs breadcrumbs={cwd.crumbs} />
+	</header>
 
-<DirectoryContent directory={cwd} />
+	<DirectoryContent directory={cwd} />
+{/key}
 
 <style lang="scss">
 	header {

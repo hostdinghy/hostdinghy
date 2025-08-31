@@ -68,6 +68,8 @@ function joinRoutePaths(
 
 	const combinedSource = sourceA + sourceB;
 
+	console.log('cmobind', combinedSource);
+
 	const combinedFlags = Array.from(new Set((flagsA + flagsB).split(''))).join(
 		'',
 	);

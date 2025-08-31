@@ -15,6 +15,9 @@ export function registerApps(router: Router) {
 		r.register('/settings', () => import('./detail/Settings.svelte'));
 		r.register('/registry', () => import('./detail/Registry.svelte'));
 		r.register('/logs', () => import('./detail/Logs.svelte'));
-		r.register('/files', () => import('./detail/Files.svelte'));
+		r.register(
+			/\/files(?:\/(?<path>.*))?$/,
+			() => import('./detail/Files.svelte'),
+		);
 	});
 }

@@ -18,6 +18,8 @@
 <style lang="scss">
 	.crumbs {
 		display: flex;
+		overflow-x: auto;
+		flex: 1;
 		a + a:before {
 			content: '/';
 			padding-left: 0.5rem;

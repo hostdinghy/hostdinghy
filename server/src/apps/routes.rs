@@ -98,18 +98,29 @@ async fn app_info(
 	/*
 	 * So for each compose.yaml file there is a rule how to name routers
 	 * each router needs to start with <compose-project-name>-<service-name>
-		* and the traefik service needs to be called <compose-project-name>-<service-name>
+	 * and the traefik service needs to be called <compose-project-name>-<service-name>
 	 */
 
-	// todo parallelize
-	for service in &mut services {
-		let service_name = format!("{id}-{}", &service.name);
-		let routers = traefik.routers_by_service(&service_name).await?;
+	// parallelize fetching the routes for each service
+	let routes = services
+		.iter()
+		.map(|s| {
+			let service_name = format!("{id}-{}", &s.name);
+			let traefik = traefik.clone();
 
-		service.routes = routers
-			.into_iter()
-			.map(traefik_route_to_service_route)
-			.collect::<Result<_, _>>()?;
+			tokio::spawn(async move {
+				traefik
+					.routers_by_service(&service_name)
+					.await?
+					.into_iter()
+					.map(traefik_route_to_service_route)
+					.collect::<Result<Vec<_>, _>>()
+			})
+		})
+		.collect::<Vec<_>>();
+
+	for (routes, service) in routes.into_iter().zip(services.iter_mut()) {
+		service.routes = routes.await.unwrap()?;
 	}
 
 	Ok(Json(AppInfoRes { services }))

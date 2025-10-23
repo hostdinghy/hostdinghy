@@ -23,7 +23,7 @@ impl Traefik {
 
 	fn request(&self, method: Method, uri: &str) -> RequestBuilder {
 		self.inner
-			.request(method, format!("http://127.0.0.1:8080{}", uri))
+			.request(method, format!("http://127.0.0.1:8080{uri}"))
 			.basic_auth("hostdinghy", Some(self.cfg.api_token.to_string()))
 	}
 
@@ -82,7 +82,7 @@ impl Traefik {
 		service_name: &str,
 	) -> Result<Vec<TraefikRoute>, Error> {
 		self.send(
-			self.get(&format!("/api/http/routers?serviceName={service_name}",)),
+			self.get(&format!("/api/http/routers?serviceName={service_name}")),
 		)
 		.await
 	}

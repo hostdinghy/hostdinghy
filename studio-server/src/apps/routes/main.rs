@@ -61,22 +61,45 @@ pub async fn all(
 		})
 		.collect::<Vec<_>>();
 
-	// todo parallize this
-	for app in &mut apps {
-		let Some(server) = servers.get(&app.server_id) else {
+	// paralellize fetching app infos
+	let app_infos = apps
+		.iter()
+		.map(|app| {
+			let id = app.id.clone();
+			let api = servers
+				.get(&app.server_id)
+				.map(|server| api_client.connect(server));
+
+			tokio::spawn(async move {
+				let api = match api {
+					Some(Ok(api)) => api,
+					Some(Err(e)) => return Err(e),
+					None => return Ok(None),
+				};
+
+				let app_info = match api.app_info(&id).await {
+					Ok(a) => a,
+					Err(ApiError::AppNotFound) => return Ok(None),
+					Err(e) => return Err(e.into()),
+				};
+
+				Ok(Some(
+					app_info
+						.services
+						.into_iter()
+						.map(|s| s.state)
+						.collect::<Vec<_>>(),
+				))
+			})
+		})
+		.collect::<Vec<_>>();
+
+	for (app_info, app) in app_infos.into_iter().zip(apps.iter_mut()) {
+		let Some(app_info) = app_info.await.unwrap()? else {
 			continue;
 		};
 
-		let api = api_client.connect(server)?;
-
-		let app_info = match api.app_info(&app.id).await {
-			Ok(a) => a,
-			Err(ApiError::AppNotFound) => continue,
-			Err(e) => return Err(e.into()),
-		};
-
-		app.services_states =
-			app_info.services.into_iter().map(|s| s.state).collect();
+		app.services_states = app_info;
 	}
 
 	Ok(Json(apps))

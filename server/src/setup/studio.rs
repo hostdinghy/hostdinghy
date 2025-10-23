@@ -19,7 +19,7 @@ use crate::{
 const COMPOSE_YML: &str = r#"
 services:
   studio:
-    image: registry.s2.goodserver.ch/hostdinghy/studio:latest
+    image: {registry_domain}/hostdinghy/studio:latest
     networks:
       - traefik
     restart: unless-stopped
@@ -55,6 +55,7 @@ struct DatabaseConfig {
 
 #[derive(Debug, Parser)]
 pub struct Studio {
+	registry_domain: String,
 	/// First user
 	username: String,
 	password: String,
@@ -82,11 +83,14 @@ pub async fn setup(args: Studio) -> Result<(), CliError> {
 		return Err(CliError::any("Hostdinghy studio is already set up", ""));
 	}
 
-	fs::write(&compose_file, COMPOSE_YML.replace("{domain}", &cfg.domain))
-		.await
-		.with_message(
-			"Failed to write $HOSTDINGHY_DIR/hostdinghy/compose.yml",
-		)?;
+	fs::write(
+		&compose_file,
+		COMPOSE_YML
+			.replace("{registry_domain}", &args.registry_domain)
+			.replace("{domain}", &cfg.domain),
+	)
+	.await
+	.with_message("Failed to write $HOSTDINGHY_DIR/hostdinghy/compose.yml")?;
 
 	let pg_client = Client::new().await?;
 	let pw = Token::<32>::new().to_string();

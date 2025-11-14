@@ -1,4 +1,11 @@
 <script lang="ts">
+	import { Service } from '@/api/apps';
+	import PlayArrow from '@/assets/icons/PlayArrow.svelte';
+	import Refresh from '@/assets/icons/Refresh.svelte';
+	import Stop from '@/assets/icons/Stop.svelte';
+	import Sync from '@/assets/icons/Sync.svelte';
+	import Button from '@/components/Button.svelte';
+	import ButtonGroup from '@/components/ButtonGroup.svelte';
 	import Status from '@/components/Status.svelte';
 	import Table from '@/components/Table.svelte';
 	import type { AppLayoutProps } from '@/layout/AppLayout.svelte';
@@ -26,10 +33,9 @@
 			{ value: 'State', key: 'state' },
 			{ value: 'State Human Readable', key: 'stateHr' },
 			{ value: 'Domains', key: 'domains' },
+			{ value: '', key: 'actions' },
 		]}
-		rows={app.services as ((typeof app.services)[number] & {
-			domains: any;
-		})[]}
+		rows={app.services as (Service & { domains: any; actions: any })[]}
 	>
 		{#snippet state(row)}
 			<td>
@@ -53,6 +59,35 @@
 						</a>
 					{/each}
 				{/each}
+			</td>
+		{/snippet}
+
+		{#snippet actions(service)}
+			<td class="actions">
+				<ButtonGroup>
+					{#if service.canStart()}
+						<Button
+							title="start"
+							aria-label="start"
+							onclick={() => console.log('todo')}
+						>
+							<PlayArrow />
+						</Button>
+					{/if}
+					{#if service.canRestart()}
+						<Button title="restart" aria-label="restart">
+							<Refresh />
+						</Button>
+					{/if}
+					{#if service.canStop()}
+						<Button title="stop" aria-label="stop">
+							<Stop />
+						</Button>
+					{/if}
+					<Button title="pull" aria-label="pull">
+						<Sync />
+					</Button>
+				</ButtonGroup>
 			</td>
 		{/snippet}
 	</Table>
@@ -104,5 +139,23 @@
 		display: flex;
 		gap: 0.5rem;
 		align-items: center;
+	}
+
+	// i dont really like the design here :/
+	.actions :global {
+		.button-group {
+			width: fit-content;
+			margin-left: auto;
+			border: 1px solid var(--c-border);
+
+			.btn {
+				border: none;
+				color: var(--white);
+
+				&:not(:last-child) {
+					border-right: 1px solid var(--c-border);
+				}
+			}
+		}
 	}
 </style>

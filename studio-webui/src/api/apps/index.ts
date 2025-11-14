@@ -48,6 +48,18 @@ export class Service {
 	constructor(data: any) {
 		Object.assign(this, data);
 	}
+
+	canStart(): boolean {
+		return ['EXITED', 'PAUSED', 'UNHEALTHY', 'EMPTY'].includes(this.state);
+	}
+
+	canRestart(): boolean {
+		return ['RUNNING', 'UNHEALTHY', 'PAUSED'].includes(this.state);
+	}
+
+	canStop(): boolean {
+		return ['RUNNING', 'RESTARTING'].includes(this.state);
+	}
 }
 
 export class App {

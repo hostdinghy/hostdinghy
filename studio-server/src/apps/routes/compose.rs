@@ -1,9 +1,10 @@
 use axum::extract::{Path, State};
-use axum::routing::get;
+use axum::routing::{get, post};
 use axum::{Json, Router};
 use internal_api::app_id::AppId;
-use internal_api::apps::{ComposeCommand, SaveComposeReq};
+use internal_api::apps::{ComposeCommand as ApiComposeCommand, SaveComposeReq};
 use internal_api::error::Error as ApiError;
+use serde::{Deserialize, Serialize};
 
 use crate::AppState;
 use crate::apps::Apps;
@@ -57,11 +58,55 @@ pub async fn set_compose(
 
 	let gcompose = api.app_get_compose(&id).await?;
 
-	api.app_compose_command(&id, &ComposeCommand::Up).await?;
+	api.app_compose_command(&id, &ApiComposeCommand::Up).await?;
 
 	Ok(Json(gcompose.compose))
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "kebab-case")]
+pub enum ComposeCommand {
+	/// only call this if you just called stop before
+	/// this will not rebuild the containers if for example
+	/// the compose file changed
+	Start,
+	Up,
+	Restart,
+	Stop,
+}
+
+impl From<ComposeCommand> for ApiComposeCommand {
+	fn from(cmd: ComposeCommand) -> Self {
+		match cmd {
+			ComposeCommand::Start => Self::Start,
+			ComposeCommand::Up => Self::Up,
+			ComposeCommand::Restart => Self::Restart,
+			ComposeCommand::Stop => Self::Stop,
+		}
+	}
+}
+
+pub async fn compose_command(
+	user: AuthedUser<RightsAny>,
+	State(apps): State<Apps>,
+	State(servers): State<Servers>,
+	State(api_client): State<ApiClient>,
+	Path((id, cmd)): Path<(AppId, ComposeCommand)>,
+	conn: ConnOwned,
+) -> Result<()> {
+	let apps = apps.with_conn(conn.conn());
+	let servers = servers.with_conn(conn.conn());
+
+	let AppWithServer { api, .. } =
+		app_with_server(&id, &user, &apps, &servers, &api_client).await?;
+
+	api.app_compose_command(&id, &cmd.into()).await?;
+
+	Ok(())
+}
+
 pub fn routes() -> Router<AppState> {
-	Router::new().route("/{id}/compose", get(get_compose).post(set_compose))
+	Router::new()
+		.route("/{id}/compose", get(get_compose).post(set_compose))
+		.route("/{id}/compose/{cmd}", post(compose_command))
 }

@@ -13,7 +13,7 @@
 	title={value}
 ></div>
 
-<style>
+<style lang="scss">
 	.status {
 		border-radius: 50%;
 		border: 0.1rem solid transparent;

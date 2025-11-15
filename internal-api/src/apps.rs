@@ -98,6 +98,11 @@ pub struct SaveComposeReq {
 /// URL: `/apps/:id/action/:command`
 /// Method: `POST`
 /// Authentication: Yes
+///
+/// Or
+/// URL: `/apps/:id/service/:service/action/:command`
+/// Method: `POST`
+/// Authentication: Yes
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "kebab-case")]
 pub enum ComposeCommand {

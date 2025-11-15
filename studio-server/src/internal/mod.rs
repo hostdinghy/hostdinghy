@@ -123,6 +123,13 @@ pub trait ApiServerClientTrait {
 		cmd: &ComposeCommand,
 	) -> Result<()>;
 
+	async fn app_compose_service_command(
+		&self,
+		id: &AppId,
+		service: &str,
+		cmd: &ComposeCommand,
+	) -> Result<()>;
+
 	/// How many lines to return, if None all lines are returned
 	async fn app_logs(&self, id: &AppId, lines: Option<u32>) -> Result<String>;
 

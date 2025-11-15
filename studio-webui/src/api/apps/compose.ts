@@ -13,3 +13,16 @@ export async function createCompose(
 		createDatabase: false,
 	});
 }
+
+export type ComposeCommand = 'start' | 'up' | 'restart' | 'stop';
+
+export async function composeCommand(
+	appId: string,
+	service: string | null,
+	command: ComposeCommand,
+): Promise<void> {
+	const url = service
+		? `/${appId}/compose/service/${service}/${command}`
+		: `/${appId}/compose/${command}`;
+	return await api.post(url);
+}

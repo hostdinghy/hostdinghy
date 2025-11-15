@@ -129,7 +129,7 @@ async fn webhook(
 			continue;
 		}
 
-		if let Err(e) = compose::up(compose_file).await {
+		if let Err(e) = compose::up(compose_file, None).await {
 			error!("Failed to start app {app} after pull {e}");
 			continue;
 		}

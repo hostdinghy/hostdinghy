@@ -13,4 +13,9 @@
 	&.mt {
 		margin-top: 1.5rem;
 	}
+
+	// has only an icon
+	&:has(svg:first-child:last-child) {
+		padding: 0.3rem;
+	}
 }

@@ -103,8 +103,11 @@ pub async fn inner_registry(registry: Registry) -> Result<(), CliError> {
 async fn restart_registry(
 	hostdinghy_dir: impl AsRef<Path>,
 ) -> Result<(), CliError> {
-	compose::restart(hostdinghy_dir.as_ref().join("registry/compose.yml"))
-		.await?;
+	compose::restart(
+		hostdinghy_dir.as_ref().join("registry/compose.yml"),
+		None,
+	)
+	.await?;
 
 	Ok(())
 }

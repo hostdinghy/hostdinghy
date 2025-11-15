@@ -113,7 +113,7 @@ pub async fn setup(_registry: Registry) -> Result<(), CliError> {
 		"Failed to write $HOSTDINGHY_DIR/registry/registry.password",
 	)?;
 
-	compose::up(compose_file).await?;
+	compose::up(compose_file, None).await?;
 
 	let mut add_user = AddUser {
 		username: "internal".into(),

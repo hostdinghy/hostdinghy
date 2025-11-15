@@ -38,6 +38,19 @@ pub struct CmdBuilder {
 
 impl CmdBuilder {
 	#[allow(dead_code)]
+	pub fn arg(mut self, arg: &str) -> Self {
+		self.inner.arg(arg);
+		self
+	}
+
+	pub fn arg_opt(mut self, arg: Option<&str>) -> Self {
+		if let Some(a) = arg {
+			self.inner.arg(a);
+		}
+		self
+	}
+
+	#[allow(dead_code)]
 	pub fn current_dir(mut self, path: impl AsRef<Path>) -> Self {
 		self.inner.current_dir(path);
 		self

@@ -54,6 +54,17 @@ impl ApiServerClientTrait for ApiServerClient {
 		self.inner.app_compose_command(id, cmd).await
 	}
 
+	async fn app_compose_service_command(
+		&self,
+		id: &AppId,
+		service: &str,
+		cmd: &ComposeCommand,
+	) -> Result<()> {
+		self.inner
+			.app_compose_service_command(id, service, cmd)
+			.await
+	}
+
 	async fn app_logs(&self, id: &AppId, lines: Option<u32>) -> Result<String> {
 		self.inner.app_logs(id, lines).await
 	}

@@ -6,6 +6,8 @@
 	import type { RoutePage } from './main';
 	import ModeWatcher from './components/ModeWatcher.svelte';
 
+	// page is a private implementation detail of App (and client.ts) so it should not be exposed
+	// globally
 	const { page }: { page: Writable<RoutePage> } = $props();
 
 	const LayoutComponent = $derived($page.layout);

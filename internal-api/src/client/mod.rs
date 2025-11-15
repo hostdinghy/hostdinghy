@@ -143,6 +143,19 @@ impl ApiServerClient {
 			.map(|_| ())
 	}
 
+	pub async fn app_compose_service_command(
+		&self,
+		id: &AppId,
+		service: &str,
+		cmd: &ComposeCommand,
+	) -> Result<()> {
+		self.send(
+			self.post(&format!("/apps/{id}/service/{service}/action/{cmd}")),
+		)
+		.await
+		.map(|_| ())
+	}
+
 	pub async fn app_logs(
 		&self,
 		id: &AppId,

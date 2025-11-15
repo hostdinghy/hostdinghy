@@ -165,7 +165,7 @@ pub async fn setup(_traefik: Traefik) -> Result<(), CliError> {
 			.await?;
 	}
 
-	compose::up(compose_file).await?;
+	compose::up(compose_file, None).await?;
 
 	Ok(())
 }

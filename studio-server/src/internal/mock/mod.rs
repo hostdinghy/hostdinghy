@@ -126,6 +126,16 @@ impl ApiServerClientTrait for ApiServerClient {
 		server.app_compose_command(id, cmd)
 	}
 
+	async fn app_compose_service_command(
+		&self,
+		id: &AppId,
+		_service: &str,
+		cmd: &ComposeCommand,
+	) -> Result<()> {
+		let mut server = self.server.lock().unwrap();
+		server.app_compose_command(id, cmd)
+	}
+
 	async fn app_logs(&self, id: &AppId, lines: Option<u32>) -> Result<String> {
 		let server = self.server.lock().unwrap();
 		server.app_logs(id, lines)

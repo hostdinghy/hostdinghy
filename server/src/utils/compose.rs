@@ -2,7 +2,10 @@ use std::path::Path;
 
 use crate::utils::cmd::{CmdError, cmd};
 
-pub async fn up(file: impl AsRef<Path>) -> Result<(), CmdError> {
+pub async fn up(
+	file: impl AsRef<Path>,
+	service: Option<&str>,
+) -> Result<(), CmdError> {
 	cmd(&[
 		"docker",
 		"compose",
@@ -14,12 +17,16 @@ pub async fn up(file: impl AsRef<Path>) -> Result<(), CmdError> {
 		"always",
 		"--remove-orphans",
 	])
+	.arg_opt(service)
 	.run()
 	.await
 	.map(|_| ())
 }
 
-pub async fn start(file: impl AsRef<Path>) -> Result<(), CmdError> {
+pub async fn start(
+	file: impl AsRef<Path>,
+	service: Option<&str>,
+) -> Result<(), CmdError> {
 	cmd(&[
 		"docker",
 		"compose",
@@ -27,12 +34,16 @@ pub async fn start(file: impl AsRef<Path>) -> Result<(), CmdError> {
 		&file.as_ref().to_string_lossy(),
 		"start",
 	])
+	.arg_opt(service)
 	.run()
 	.await
 	.map(|_| ())
 }
 
-pub async fn restart(file: impl AsRef<Path>) -> Result<(), CmdError> {
+pub async fn restart(
+	file: impl AsRef<Path>,
+	service: Option<&str>,
+) -> Result<(), CmdError> {
 	cmd(&[
 		"docker",
 		"compose",
@@ -40,12 +51,16 @@ pub async fn restart(file: impl AsRef<Path>) -> Result<(), CmdError> {
 		&file.as_ref().to_string_lossy(),
 		"restart",
 	])
+	.arg_opt(service)
 	.run()
 	.await
 	.map(|_| ())
 }
 
-pub async fn stop(file: impl AsRef<Path>) -> Result<(), CmdError> {
+pub async fn stop(
+	file: impl AsRef<Path>,
+	service: Option<&str>,
+) -> Result<(), CmdError> {
 	cmd(&[
 		"docker",
 		"compose",
@@ -53,6 +68,7 @@ pub async fn stop(file: impl AsRef<Path>) -> Result<(), CmdError> {
 		&file.as_ref().to_string_lossy(),
 		"stop",
 	])
+	.arg_opt(service)
 	.run()
 	.await
 	.map(|_| ())

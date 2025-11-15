@@ -114,7 +114,7 @@ pub async fn setup(args: Studio) -> Result<(), CliError> {
 		"Failed to write $HOSTDINGHY_DIR/hostdinghy/config.toml",
 	)?;
 
-	compose::up(&compose_file).await?;
+	compose::up(&compose_file, None).await?;
 
 	// let's wait until the container is started
 	sleep(Duration::from_secs(5)).await;

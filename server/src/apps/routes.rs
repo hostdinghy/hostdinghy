@@ -236,10 +236,40 @@ async fn compose_action(
 	}
 
 	match command {
-		ComposeCommand::Start => compose::start(&compose_path).await,
-		ComposeCommand::Up => compose::up(&compose_path).await,
-		ComposeCommand::Restart => compose::restart(&compose_path).await,
-		ComposeCommand::Stop => compose::stop(&compose_path).await,
+		ComposeCommand::Start => compose::start(&compose_path, None).await,
+		ComposeCommand::Up => compose::up(&compose_path, None).await,
+		ComposeCommand::Restart => compose::restart(&compose_path, None).await,
+		ComposeCommand::Stop => compose::stop(&compose_path, None).await,
+	}?;
+
+	Ok(())
+}
+
+async fn compose_service_action(
+	_auth: Authenticated,
+	Path((id, service, command)): Path<(AppId, String, ComposeCommand)>,
+) -> Result<(), Error> {
+	let app_dir = hostdinghy_dir()?.join(id.as_ref());
+	if !is_dir(&app_dir).await {
+		return Err(Error::AppNotFound);
+	}
+
+	let compose_path = app_dir.join("compose.yml");
+	if !is_file(&compose_path).await {
+		return Err(Error::AppNotFound);
+	}
+
+	match command {
+		ComposeCommand::Start => {
+			compose::start(&compose_path, Some(&service)).await
+		}
+		ComposeCommand::Up => compose::up(&compose_path, Some(&service)).await,
+		ComposeCommand::Restart => {
+			compose::restart(&compose_path, Some(&service)).await
+		}
+		ComposeCommand::Stop => {
+			compose::stop(&compose_path, Some(&service)).await
+		}
 	}?;
 
 	Ok(())
@@ -276,5 +306,9 @@ pub fn routes() -> Router<AppState> {
 		.route("/{id}", get(app_info))
 		.route("/{id}/compose", get(get_compose).post(save_compose))
 		.route("/{id}/action/{cmd}", post(compose_action))
+		.route(
+			"/{id}/service/{service}/action/{cmd}",
+			post(compose_service_action),
+		)
 		.route("/{id}/logs", get(logs))
 }

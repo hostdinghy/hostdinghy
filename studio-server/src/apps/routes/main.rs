@@ -176,8 +176,28 @@ pub async fn create(
 	Ok(Json(app))
 }
 
+pub async fn logs(
+	user: AuthedUser<RightsAny>,
+	State(apps): State<Apps>,
+	State(servers): State<Servers>,
+	State(api_client): State<ApiClient>,
+	Path(id): Path<AppId>,
+	conn: ConnOwned,
+) -> Result<Json<String>> {
+	let apps = apps.with_conn(conn.conn());
+	let servers = servers.with_conn(conn.conn());
+
+	let AppWithServer { app, api, .. } =
+		app_with_server(&id, &user, &apps, &servers, &api_client).await?;
+
+	let logs = api.app_logs(&app.id, None).await?;
+
+	Ok(Json(logs))
+}
+
 pub fn routes() -> Router<AppState> {
 	Router::new()
 		.route("/", get(all).post(create))
 		.route("/{id}", get(by_id))
+		.route("/{id}/logs", get(logs))
 }

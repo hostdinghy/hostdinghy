@@ -1,13 +1,34 @@
+<script module lang="ts">
+	import { logs as loadLogs } from '@/api/apps';
+
+	export async function loadProps({ app }: AppLayoutProps) {
+		return {
+			logs: await loadLogs(app.id),
+		};
+	}
+</script>
+
 <script lang="ts">
 	import type { AppLayoutProps } from '@/layout/AppLayout.svelte';
 
-	let { app }: AppLayoutProps = $props();
+	let { app, logs }: AppLayoutProps<typeof loadProps> = $props();
 </script>
 
 <svelte:head>
 	<title>HostDinghy</title>
 </svelte:head>
 
-Logs for {app.name}
+<div class="logs">
+	<pre>{logs}</pre>
+</div>
 
-<style></style>
+<style lang="scss">
+	.logs {
+		padding: 1rem;
+	}
+
+	pre {
+		white-space: pre-wrap;
+		word-break: break-word;
+	}
+</style>

@@ -109,3 +109,7 @@ export async function create(data: CreateAppRequest) {
 	const app = await api.post('', data);
 	return new AppShort(app);
 }
+
+export async function logs(id: string): Promise<string> {
+	return api.get(`/${id}/logs`);
+}

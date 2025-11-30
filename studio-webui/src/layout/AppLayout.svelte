@@ -55,17 +55,19 @@
 			{@render children()}
 		</TabLayout>
 	</div>
+
 	<Footer />
 </div>
 
 <style lang="scss">
-	.wrap {
-		display: flex;
-		margin-top: 2rem;
-	}
 	.main {
 		display: grid;
 		grid-template-rows: auto 1fr auto;
 		min-height: 100vh;
+	}
+
+	.wrap {
+		display: flex;
+		margin-top: 2rem;
 	}
 </style>

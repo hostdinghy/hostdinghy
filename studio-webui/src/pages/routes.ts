@@ -2,6 +2,9 @@ import NotFound from './NotFound.svelte';
 import Error from './Error.svelte';
 import { layoutGroup, withLayout } from '@/lib/layout';
 import type { Router } from '@/lib';
+import { registerApps } from './apps/routes';
+import { registerSettings } from './settings/routes';
+import { registerServers } from './servers/routes';
 
 export { NotFound, Error };
 
@@ -12,52 +15,11 @@ export function register(router: Router) {
 		'/',
 		withLayout(MainLayout, () => import('./Index.svelte')),
 	);
-	router.register(
-		'/apps/create',
-		withLayout(MainLayout, () => import('./apps/Create.svelte')),
-	);
+	registerApps(router);
 
-	layoutGroup(
-		router,
-		/^\/apps\/(?<id>[a-zA-Z0-9_-]+)$/,
-		() => import('../layout/AppLayout.svelte'),
-		r => {
-			r.register('', () => import('./apps/detail/Index.svelte'));
-			r.register(
-				'/settings',
-				() => import('./apps/detail/Settings.svelte'),
-			);
-			r.register(
-				'/registry',
-				() => import('./apps/detail/Registry.svelte'),
-			);
-			r.register('/logs', () => import('./apps/detail/Logs.svelte'));
-		},
-	);
+	registerSettings(router);
 
-	layoutGroup(
-		router,
-		'/settings',
-		() => import('../layout/SettingsLayout.svelte'),
-		r => {
-			r.register('/account', () => import('./settings/Account.svelte'));
-			r.register(
-				'/appearance',
-				() => import('./settings/Appearance.svelte'),
-			);
-		},
-	);
-	router.register(
-		'/servers',
-		withLayout(
-			() => import('../layout/SettingsLayout.svelte'),
-			() => import('./servers/Index.svelte'),
-		),
-	);
-	router.register(
-		'/servers/create',
-		withLayout(MainLayout, () => import('./servers/Create.svelte')),
-	);
+	registerServers(router);
 
 	router.register('/signin', () => import('./SignIn.svelte'));
 }

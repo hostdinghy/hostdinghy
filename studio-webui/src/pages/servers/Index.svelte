@@ -28,6 +28,12 @@
 			<h1>Servers</h1>
 			<Button href="/servers/create">add</Button>
 		{/snippet}
+
+		{#snippet name(row)}
+			<td>
+				<a class="underline" href="/servers/{row.id}">{row.name}</a>
+			</td>
+		{/snippet}
 	</Table>
 </div>
 

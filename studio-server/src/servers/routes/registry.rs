@@ -1,15 +1,14 @@
 use axum::extract::{Path, State};
 use axum::routing::{delete, get};
 use axum::{Json, Router};
-use internal_api::app_id::AppId;
 use internal_api::registry::{CreateUserReq, CreateUserRes};
+use pg::UniqueId;
 
 use crate::AppState;
-use crate::apps::Apps;
-use crate::apps::routes::utils::{AppWithServer, app_with_server};
 use crate::error::Result;
 use crate::internal::ApiClient;
 use crate::servers::Servers;
+use crate::servers::routes::utils::{LoadServer, load_server};
 use crate::users::utils::AuthedUser;
 use crate::users::utils::RightsAny;
 use crate::utils::ConnOwned;
@@ -17,35 +16,31 @@ use crate::utils::ConnOwned;
 /// Returns all users of that server not only for this app
 pub async fn all_users(
 	user: AuthedUser<RightsAny>,
-	State(apps): State<Apps>,
 	State(servers): State<Servers>,
 	State(api_client): State<ApiClient>,
 	conn: ConnOwned,
-	Path(id): Path<AppId>,
+	Path(id): Path<UniqueId>,
 ) -> Result<Json<Vec<String>>> {
-	let apps = apps.with_conn(conn.conn());
 	let servers = servers.with_conn(conn.conn());
 
-	let AppWithServer { api, .. } =
-		app_with_server(&id, &user, &apps, &servers, &api_client).await?;
+	let LoadServer { api, .. } =
+		load_server(&id, &user, &servers, &api_client).await?;
 
 	api.registry_users().await.map(Json).map_err(Into::into)
 }
 
 pub async fn create_user(
 	user: AuthedUser<RightsAny>,
-	State(apps): State<Apps>,
 	State(servers): State<Servers>,
 	State(api_client): State<ApiClient>,
 	conn: ConnOwned,
-	Path(id): Path<AppId>,
+	Path(id): Path<UniqueId>,
 	Json(req): Json<CreateUserReq>,
 ) -> Result<Json<CreateUserRes>> {
-	let apps = apps.with_conn(conn.conn());
 	let servers = servers.with_conn(conn.conn());
 
-	let AppWithServer { api, .. } =
-		app_with_server(&id, &user, &apps, &servers, &api_client).await?;
+	let LoadServer { api, .. } =
+		load_server(&id, &user, &servers, &api_client).await?;
 
 	api.registry_create_user(&req.username)
 		.await
@@ -55,17 +50,15 @@ pub async fn create_user(
 
 pub async fn delete_user(
 	user: AuthedUser<RightsAny>,
-	State(apps): State<Apps>,
 	State(servers): State<Servers>,
 	State(api_client): State<ApiClient>,
 	conn: ConnOwned,
-	Path((id, username)): Path<(AppId, String)>,
+	Path((id, username)): Path<(UniqueId, String)>,
 ) -> Result<Json<()>> {
-	let apps = apps.with_conn(conn.conn());
 	let servers = servers.with_conn(conn.conn());
 
-	let AppWithServer { api, .. } =
-		app_with_server(&id, &user, &apps, &servers, &api_client).await?;
+	let LoadServer { api, .. } =
+		load_server(&id, &user, &servers, &api_client).await?;
 
 	api.registry_delete_user(&username)
 		.await

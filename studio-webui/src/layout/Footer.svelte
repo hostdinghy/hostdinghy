@@ -1,6 +1,6 @@
 <footer class="wrap">
 	<nav class="footer">
-		<a href="https://github.com/chuchi-dev/chuchi-recipe" target="_blank">
+		<a href="https://github.com/hostdinghy/hostdinghy" target="_blank">
 			Source
 		</a>
 	</nav>

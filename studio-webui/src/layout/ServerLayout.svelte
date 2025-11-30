@@ -1,14 +1,15 @@
 <script module lang="ts">
-	import { byId } from '@/api/apps';
+	import { loadServer } from '@/api/servers';
 
 	export async function loadProps({ id }: { id: string }) {
 		return {
-			app: await byId(id),
+			server: await loadServer(id),
 		};
 	}
 
-	export type AppLayoutProps<T extends (...args: any) => any = () => void> =
-		ResolvedProps<typeof loadProps> & ResolvedProps<T>;
+	export type ServerLayoutProps<
+		T extends (...args: any) => any = () => void,
+	> = ResolvedProps<typeof loadProps> & ResolvedProps<T>;
 </script>
 
 <script lang="ts">
@@ -17,7 +18,7 @@
 	import TabLayout from './TabLayout.svelte';
 	import type { LayoutProps, ResolvedProps } from '@/lib/LoadProps';
 
-	let { children, app }: LayoutProps<typeof loadProps> = $props();
+	let { children, server }: LayoutProps<typeof loadProps> = $props();
 </script>
 
 <div class="main">
@@ -28,8 +29,8 @@
 				url: '/',
 			},
 			{
-				label: app.name,
-				url: `/apps/${app.id}`,
+				label: server.name,
+				url: `/servers/${server.id}`,
 			},
 		]}
 	/>
@@ -39,17 +40,12 @@
 			sidebar={[
 				{
 					label: 'Overview',
-					url: `/apps/${app.id}`,
-				},
-				{
-					label: 'Settings',
-					url: `/apps/${app.id}/settings`,
+					url: `/servers/${server.id}`,
 				},
 				{
 					label: 'Registry',
-					url: `/apps/${app.id}/registry`,
+					url: `/servers/${server.id}/registry`,
 				},
-				{ label: 'Logs', url: `/apps/${app.id}/logs` },
 			]}
 		>
 			{@render children()}

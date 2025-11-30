@@ -1,6 +1,6 @@
-import { Api } from './lib';
+import { Api, ApiError } from '../lib';
 
-const api = new Api('/servers');
+export const api = new Api('/servers');
 
 /**
  * Servers is a bit different then the other apis
@@ -28,6 +28,15 @@ export default class Servers {
 
 	get(id: string): Server | null {
 		return this.lookup.get(id) ?? null;
+	}
+
+	getOrFail(id: string): Server {
+		const server = this.get(id);
+
+		if (!server)
+			throw new ApiError('could not get server', { type: 'NOT_FOUND' });
+
+		return server;
 	}
 
 	_insert(server: Server) {
@@ -71,12 +80,12 @@ export type CreateServerRequest = {
 	tlsCert: string;
 };
 
-export async function loadServer(id: string) {
+export async function loadServer(id: string): Promise<Server> {
 	const servers = await loadServers();
-	return servers.get(id);
+	return servers.getOrFail(id);
 }
 
-export async function create(data: CreateServerRequest) {
+export async function create(data: CreateServerRequest): Promise<Server> {
 	const app = await api.post('', data);
 	const server = new Server(app);
 

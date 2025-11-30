@@ -1,5 +1,5 @@
 import { Api } from '../lib';
-import { loadServers, type Server } from '../servers';
+import { loadServers, type Server } from '../servers/index';
 
 export const api = new Api('/apps');
 
@@ -66,11 +66,11 @@ export class App {
 	id!: string;
 	name!: string;
 	teamId!: string;
-	server: Server | null;
+	server: Server;
 	createdOn: Date;
 	services: Service[];
 
-	constructor(data: any, server: Server | null = null) {
+	constructor(data: any, server: Server) {
 		Object.assign(this, data);
 		this.createdOn = new Date(data.createdOn);
 		this.server = server;
@@ -83,7 +83,7 @@ export async function byId(id: string) {
 		loadServers(),
 		api.get(`/${id}`),
 	]);
-	return new App(app, servers.get(app.serverId));
+	return new App(app, servers.getOrFail(app.serverId));
 }
 
 export type CreateAppRequest = {

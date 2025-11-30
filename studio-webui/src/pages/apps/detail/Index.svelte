@@ -56,7 +56,7 @@
 	<h1>
 		<span class="name">{app.name}</span>
 		<span class="id">[{app.id}]</span>
-		<span class="server">running on {app.server?.name}</span>
+		<span class="server">running on {app.server.name}</span>
 	</h1>
 
 	<ButtonGroup>

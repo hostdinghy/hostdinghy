@@ -3,22 +3,22 @@
 
 import { api } from '.';
 
-export async function loadRegistryUsers(appId: string): Promise<string[]> {
-	return await api.get(`/${appId}/registry/users`);
+export async function loadRegistryUsers(serverId: string): Promise<string[]> {
+	return await api.get(`/${serverId}/registry/users`);
 }
 
 export async function createRegistryUser(
-	appId: string,
+	serverId: string,
 	username: string,
 ): Promise<{ username: string; password: string }> {
-	return await api.post(`/${appId}/registry/users`, { username });
+	return await api.post(`/${serverId}/registry/users`, { username });
 }
 
 export async function deleteRegistryUser(
-	appId: string,
+	serverId: string,
 	username: string,
 ): Promise<void> {
 	return await api.delete(
-		`/${appId}/registry/users/${encodeURIComponent(username)}`,
+		`/${serverId}/registry/users/${encodeURIComponent(username)}`,
 	);
 }

@@ -7,4 +7,13 @@
 </footer>
 
 <style lang="scss">
+	.footer {
+		padding-top: 1rem;
+		padding-bottom: 1rem;
+		text-align: right;
+	}
+
+	a {
+		color: var(--c-label);
+	}
 </style>

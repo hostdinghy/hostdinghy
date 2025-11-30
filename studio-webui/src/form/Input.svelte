@@ -7,6 +7,7 @@
 		type,
 		label,
 		value = $bindable(),
+		bx,
 		...rest
 	}: {
 		id: string;
@@ -14,11 +15,13 @@
 		type: 'text' | 'email' | 'password';
 		label: string;
 		value: string;
+		/** border x */
+		bx?: boolean;
 		[rest: string]: any;
 	} = $props();
 </script>
 
-<Field {id} {label}>
+<Field {id} {label} {bx}>
 	<input {type} {name} {id} bind:value {...rest} />
 </Field>
 

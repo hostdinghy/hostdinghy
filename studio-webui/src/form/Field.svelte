@@ -5,10 +5,16 @@
 		id,
 		label,
 		children,
-	}: { id: string; label: string; children: Snippet } = $props();
+		bx = true,
+	}: {
+		id: string;
+		label: string;
+		children: Snippet;
+		bx?: boolean;
+	} = $props();
 </script>
 
-<div class="field">
+<div class="field" class:bx>
 	<label for={id}>{label}</label>
 
 	<div class="ctn">
@@ -21,10 +27,15 @@
 		display: flex;
 		min-height: 2.6rem;
 		border: 1px solid var(--c-border);
-	}
 
-	.field :global(+ .field) {
-		border-top: none;
+		&:not(:first-child) {
+			border-top: none;
+		}
+
+		&:not(.bx) {
+			border-left: none;
+			border-right: none;
+		}
 	}
 
 	label {

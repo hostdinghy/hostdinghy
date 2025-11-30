@@ -50,19 +50,20 @@
 		margin-top: 2rem;
 	}
 
-	.group {
-		display: flex;
-		gap: 0.5rem;
-		align-items: center;
-	}
-
 	.crumbs {
 		display: flex;
+
 		a + a:before {
 			content: '/';
 			padding-left: 0.5rem;
 			padding-right: 0.5rem;
 			opacity: 0.4;
 		}
+	}
+
+	.group {
+		display: flex;
+		gap: 1rem;
+		align-items: center;
 	}
 </style>

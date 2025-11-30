@@ -5,7 +5,7 @@
 		loadRegistryUsers,
 	} from '@/api/servers/registry';
 	import Button from '@/components/Button.svelte';
-	import Table from '@/components/Table.svelte';
+	import Table from '@/components/table/Table.svelte';
 
 	export type Users = string[];
 
@@ -25,6 +25,9 @@
 	import Delete from '@/assets/icons/Delete.svelte';
 	import ButtonGroup from '@/components/ButtonGroup.svelte';
 	import DescriptionList from '@/components/DescriptionList.svelte';
+	import TableToolbar from '@/components/table/TableToolbar.svelte';
+	import Add from '@/assets/icons/Add.svelte';
+	import Header from '@/components/Header.svelte';
 
 	let { server, users = $bindable() }: { server: Server; users: Users } =
 		$props();
@@ -78,7 +81,9 @@
 <!-- todo this looks shit -->
 
 <div id="registry">
-	<h1>Registry</h1>
+	<Header bb>
+		<h1>Registry</h1>
+	</Header>
 
 	<div class="detail">
 		<DescriptionList
@@ -88,24 +93,32 @@
 		/>
 	</div>
 
+	<TableToolbar bt={false} bx={false}>
+		<h2>Users</h2>
+
+		<Button
+			title="add user"
+			aria-label="add user"
+			onclick={() => (openCreateModal = true)}
+		>
+			<Add />
+		</Button>
+	</TableToolbar>
+
 	<Table
 		headers={[
 			{ key: 'name', value: 'Name' },
-			{ key: 'actions', value: 'Actions' },
+			{ key: 'actions', value: '' },
 		]}
 		rows={users.map(u => ({
 			name: u,
 			actions: null,
 		}))}
+		bx={false}
 	>
-		{#snippet toolbar()}
-			<h2 class="h2-table">Users</h2>
-			<Button onclick={() => (openCreateModal = true)}>add</Button>
-		{/snippet}
-
 		{#snippet actions(row)}
 			<td class="actions">
-				<ButtonGroup>
+				<ButtonGroup style="text" align="right">
 					<Button
 						title="delete"
 						aria-label="delete"
@@ -158,39 +171,14 @@
 </div>
 
 <style lang="scss">
-	h1 {
-		padding: 1rem;
-		font-size: 1.125rem;
-	}
-
 	.detail {
 		padding: 1rem;
 		margin-bottom: 1rem;
+		border-bottom: 1px solid var(--c-border);
 	}
 
-	.h2-table {
-		padding: 1rem;
-		flex: 1;
-		font-size: 1.125rem;
-	}
-
-	.actions :global {
+	.actions {
 		width: 10%;
-
-		.button-group {
-			width: fit-content;
-			margin-left: auto;
-			border: 1px solid var(--c-border);
-
-			.btn {
-				border: none;
-				color: var(--white);
-
-				&:not(:last-child) {
-					border-right: 1px solid var(--c-border);
-				}
-			}
-		}
 	}
 
 	// modal
@@ -205,10 +193,6 @@
 		justify-content: space-between;
 		align-items: center;
 		border-bottom: 1px solid var(--c-border);
-	}
-
-	.h2-mod {
-		font-size: 1.25rem;
 	}
 
 	.new-password {

@@ -16,10 +16,14 @@
 </script>
 
 <script lang="ts">
-	import Table from '@/components/Table.svelte';
 	import Button from '@/components/Button.svelte';
 	import Status from '@/components/Status.svelte';
 	import type { LoadPropsFn } from '@/lib/LoadProps';
+	import TableSearch from '@/components/table/TableSearch.svelte';
+	import Table from '@/components/table/Table.svelte';
+	import Add from '@/assets/icons/Add.svelte';
+	import ButtonGroup from '@/components/ButtonGroup.svelte';
+	import TableToolbar from '@/components/table/TableToolbar.svelte';
 
 	let { apps }: Props = $props();
 </script>
@@ -29,8 +33,15 @@
 </svelte:head>
 
 <div class="layout wrap">
+	<TableToolbar>
+		<TableSearch />
+
+		<Button href="/apps/create" title="add app" aria-label="add app">
+			<Add />
+		</Button>
+	</TableToolbar>
+
 	<Table
-		search
 		headers={[
 			{ key: 'name', value: 'Name' },
 			{ key: 'serverName', value: 'Server' },
@@ -44,10 +55,6 @@
 			actions: null,
 		}))}
 	>
-		{#snippet toolbar()}
-			<Button href="/apps/create">add</Button>
-		{/snippet}
-
 		{#snippet name(row)}
 			<td>
 				<a class="underline" href="/apps/{row.id}">{row.name}</a>

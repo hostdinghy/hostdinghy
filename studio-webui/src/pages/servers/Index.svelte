@@ -1,7 +1,9 @@
 <script module lang="ts">
 	import { loadServers } from '@/api/servers';
+	import Add from '@/assets/icons/Add.svelte';
 	import Button from '@/components/Button.svelte';
-	import Table from '@/components/Table.svelte';
+	import Table from '@/components/table/Table.svelte';
+	import TableToolbar from '@/components/table/TableToolbar.svelte';
 	import type LoadProps from '@/lib/LoadProps';
 	import type { ResolvedProps } from '@/lib/LoadProps';
 
@@ -13,22 +15,32 @@
 </script>
 
 <script lang="ts">
+	import Header from '@/components/Header.svelte';
+
 	let { servers }: ResolvedProps<typeof loadProps> = $props();
 </script>
 
 <div id="servers">
+	<Header>
+		<h1>Servers</h1>
+
+		<Button
+			href="/servers/create"
+			title="add server"
+			aria-label="add server"
+		>
+			<Add />
+		</Button>
+	</Header>
+
 	<Table
 		headers={[
 			{ key: 'name', value: 'Name' },
 			{ key: 'domain', value: 'Domain' },
 		]}
 		rows={servers.all()}
+		bx={false}
 	>
-		{#snippet toolbar()}
-			<h1>Servers</h1>
-			<Button href="/servers/create">add</Button>
-		{/snippet}
-
 		{#snippet name(row)}
 			<td>
 				<a class="underline" href="/servers/{row.id}">{row.name}</a>
@@ -36,16 +48,3 @@
 		{/snippet}
 	</Table>
 </div>
-
-<style lang="scss">
-	// todo this is not a good solution
-	#servers :global(.pre-header) {
-		border-top: none;
-	}
-
-	h1 {
-		padding: 1rem;
-		flex: 1;
-		font-size: 1.125rem;
-	}
-</style>

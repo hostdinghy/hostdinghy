@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { errorToStr } from '@/api/lib';
 	import { save } from '@/api/users';
+	import Header from '@/components/Header.svelte';
 	import Input from '@/form/Input.svelte';
 	import { toast } from '@/layout/Toasts.svelte';
 	import { getSession } from '@/lib/Session';
@@ -43,10 +44,12 @@
 </script>
 
 <div class="account">
-	<h1>
-		{name}
-		<span class="username">[{$session.user?.username}]</span>
-	</h1>
+	<Header>
+		<h1>
+			{name}
+			<span class="c-label">[{$session.user?.username}]</span>
+		</h1>
+	</Header>
 
 	<form {onsubmit}>
 		<Input
@@ -57,6 +60,7 @@
 			placeholder="Enter name..."
 			bind:value={name}
 			required
+			bx={false}
 		/>
 
 		<Input
@@ -66,6 +70,7 @@
 			label="password"
 			placeholder="Enter password..."
 			bind:value={password}
+			bx={false}
 		/>
 
 		{#if password}
@@ -77,6 +82,7 @@
 				placeholder="Repeat password..."
 				bind:value={passwordRepeat}
 				required
+				bx={false}
 			/>
 		{/if}
 
@@ -91,15 +97,6 @@
 </div>
 
 <style lang="scss">
-	h1 {
-		padding: 1rem;
-		font-size: 1.125rem;
-	}
-
-	.username {
-		color: var(--c-label);
-	}
-
 	.error {
 		margin-top: 1.5rem;
 		padding: 0 1rem;

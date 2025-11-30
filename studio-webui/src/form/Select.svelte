@@ -7,6 +7,7 @@
 		label,
 		value = $bindable(),
 		options,
+		bx,
 		...rest
 	}: {
 		id: string;
@@ -14,11 +15,13 @@
 		label: string;
 		value: string;
 		options: { value: string; key: string }[];
+		/** border x */
+		bx?: boolean;
 		[rest: string]: any;
 	} = $props();
 </script>
 
-<Field {id} {label}>
+<Field {id} {label} {bx}>
 	<select {id} {name} bind:value {...rest}>
 		{#each options as option (option.key)}
 			<option value={option.key}>

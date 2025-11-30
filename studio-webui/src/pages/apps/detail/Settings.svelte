@@ -15,6 +15,7 @@
 	import CommitConfigModal from '@/layout/modals/CommitConfig.svelte';
 	import { toast, type ToastRef } from '@/layout/Toasts.svelte';
 	import { errorToStr } from '@/api/lib';
+	import Header from '@/components/Header.svelte';
 
 	let { app, compose }: AppLayoutProps<typeof loadProps> = $props();
 
@@ -63,16 +64,17 @@
 </svelte:head>
 
 <div class="settings">
-	<header>
+	<Header bb>
 		<div class="title">
 			<h1>Docker Compose</h1>
 			{#if modified !== original}
-				<span class="unsaved">unsaved</span>
+				<span class="unsaved c-label">unsaved</span>
 			{/if}
 		</div>
 
 		<Button onclick={() => editor.save()}>save</Button>
-	</header>
+	</Header>
+
 	<Editor value={compose} {onsave} bind:this={editor} />
 </div>
 
@@ -90,6 +92,7 @@
 		display: flex;
 		flex-direction: column;
 	}
+
 	header {
 		padding: 1rem;
 		border-bottom: 1px solid var(--c-border);
@@ -97,16 +100,10 @@
 		justify-content: space-between;
 		align-items: center;
 	}
+
 	.title {
 		display: flex;
 		align-items: center;
 		gap: 1rem;
-	}
-	h1 {
-		font-size: 1.125rem;
-	}
-	.unsaved {
-		opacity: 0.5;
-		font-size: 0.9rem;
 	}
 </style>

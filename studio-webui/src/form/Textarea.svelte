@@ -6,17 +6,20 @@
 		name,
 		label,
 		value = $bindable(),
+		bx,
 		...rest
 	}: {
 		id: string;
 		name: string;
 		label: string;
 		value: string;
+		/** border x */
+		bx?: boolean;
 		[rest: string]: any;
 	} = $props();
 </script>
 
-<Field {id} {label}>
+<Field {id} {label} {bx}>
 	<textarea {id} {name} bind:value {...rest}></textarea>
 </Field>
 

@@ -7,8 +7,9 @@
 	import Sync from '@/assets/icons/Sync.svelte';
 	import Button from '@/components/Button.svelte';
 	import ButtonGroup from '@/components/ButtonGroup.svelte';
+	import Header from '@/components/Header.svelte';
 	import Status from '@/components/Status.svelte';
-	import Table from '@/components/Table.svelte';
+	import Table from '@/components/table/Table.svelte';
 	import type { AppLayoutProps } from '@/layout/AppLayout.svelte';
 	import { onMount } from 'svelte';
 
@@ -52,11 +53,11 @@
 	<title>HostDinghy</title>
 </svelte:head>
 
-<header class:border={!app.services.length}>
+<Header bb={!app.services.length}>
 	<h1>
 		<span class="name">{app.name}</span>
-		<span class="id">[{app.id}]</span>
-		<span class="server">running on {app.server.name}</span>
+		<span class="c-label">[{app.id}]</span>
+		<span class="c-label f-small">running on {app.server.name}</span>
 	</h1>
 
 	<ButtonGroup>
@@ -76,7 +77,7 @@
 			<Sync />
 		</Button>
 	</ButtonGroup>
-</header>
+</Header>
 
 {#if app.services.length > 0}
 	<!-- the type shenanigangs for domains is not that nice -->
@@ -89,6 +90,7 @@
 			{ value: '', key: 'actions' },
 		]}
 		rows={app.services as (Service & { domains: any; actions: any })[]}
+		bx={false}
 	>
 		{#snippet state(row)}
 			<td>
@@ -117,7 +119,7 @@
 
 		{#snippet actions(service)}
 			<td class="actions">
-				<ButtonGroup>
+				<ButtonGroup style="text" align="right">
 					{#if service.canStart()}
 						<Button
 							title="start"
@@ -172,32 +174,10 @@
 {/if}
 
 <style lang="scss">
-	header {
-		padding: 1rem;
-		display: flex;
-		justify-content: space-between;
-		align-items: center;
-
-		&.border {
-			border-bottom: 1px solid var(--c-border);
-		}
-	}
-	h1 {
-		font-size: 1.125rem;
-
-		.id,
-		.server {
-			color: var(--c-label);
-		}
-
-		.server {
-			font-size: 0.9rem;
-		}
-	}
-
 	.msg {
 		padding: 1rem;
 		color: rgb(from var(--c-text) r g b / 70%);
+
 		.underline {
 			color: var(--c-text);
 		}
@@ -207,23 +187,5 @@
 		display: flex;
 		gap: 0.5rem;
 		align-items: center;
-	}
-
-	// i dont really like the design here :/
-	.actions :global {
-		.button-group {
-			width: fit-content;
-			margin-left: auto;
-			border: 1px solid var(--c-border);
-
-			.btn {
-				border: none;
-				color: var(--white);
-
-				&:not(:last-child) {
-					border-right: 1px solid var(--c-border);
-				}
-			}
-		}
 	}
 </style>

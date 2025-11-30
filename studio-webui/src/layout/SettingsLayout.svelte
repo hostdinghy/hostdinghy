@@ -16,7 +16,7 @@
 			},
 			{
 				label: 'Settings',
-				url: `/settings/account/`,
+				url: '/settings/account',
 			},
 		]}
 	/>
@@ -26,15 +26,15 @@
 			sidebar={[
 				{
 					label: 'Account',
-					url: `/settings/account/`,
+					url: '/settings/account',
 				},
 				{
 					label: 'Appearance',
-					url: `/settings/appearance/`,
+					url: '/settings/appearance',
 				},
 				{
 					label: 'Servers',
-					url: '/settings/servers',
+					url: '/servers',
 				},
 			]}
 		>
@@ -49,6 +49,7 @@
 		display: flex;
 		margin-top: 2rem;
 	}
+
 	.main {
 		display: grid;
 		grid-template-rows: auto 1fr auto;

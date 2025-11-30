@@ -45,18 +45,18 @@ export function register(router: Router) {
 				'/appearance',
 				() => import('./settings/Appearance.svelte'),
 			);
-			r.register(
-				'/servers',
-				() => import('./settings/servers/Index.svelte'),
-			);
 		},
 	);
 	router.register(
-		'/settings/servers/create',
+		'/servers',
 		withLayout(
-			MainLayout,
-			() => import('./settings/servers/Create.svelte'),
+			() => import('../layout/SettingsLayout.svelte'),
+			() => import('./servers/Index.svelte'),
 		),
+	);
+	router.register(
+		'/servers/create',
+		withLayout(MainLayout, () => import('./servers/Create.svelte')),
 	);
 
 	router.register('/signin', () => import('./SignIn.svelte'));

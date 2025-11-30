@@ -26,7 +26,7 @@
 	>
 		{#snippet toolbar()}
 			<h1>Servers</h1>
-			<Button href="/settings/servers/create">add</Button>
+			<Button href="/servers/create">add</Button>
 		{/snippet}
 	</Table>
 </div>

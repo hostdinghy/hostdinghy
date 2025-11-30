@@ -184,6 +184,9 @@ impl AppMock {
 		let _compose = self.compose.as_ref().ok_or(Error::AppNotFound)?;
 		let mut rng = rand::rng();
 
+		// todo this should not be random but read the compose.yaml file
+		// and just have the routers or something random
+
 		let mut services = vec![];
 
 		if rng.random_bool(0.5) {

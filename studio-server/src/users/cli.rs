@@ -36,7 +36,7 @@ pub async fn create_user(
 		team_id: team.id,
 		username: cu.username.clone(),
 		name: cu.username,
-		password: bcrypt::hash(cu.password.as_str(), 10)
+		password: bcrypt::hash(cu.password.as_str(), bcrypt::DEFAULT_COST)
 			.expect("failed to hash password"),
 		rights: Rights {
 			admin: true,

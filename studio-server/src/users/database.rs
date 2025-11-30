@@ -3,13 +3,14 @@ use pg::{
 	db::Conn,
 	filter,
 	json::Json,
+	row,
 	table::{Table, table::TableWithConn},
 	time::{DateTime, Timeout},
 	whr,
 };
 use serde::{Deserialize, Serialize};
 
-use crate::users::data::{Rights, UnsafeUser};
+use crate::users::data::{Rights, UnsafeUser, UpdateUser};
 
 use super::data::{self, Session, Token, User, UsersBuilderTrait, UsersTrait};
 
@@ -181,6 +182,31 @@ impl UsersTrait for Users<'_> {
 		};
 
 		self.users.insert(&row).await
+	}
+
+	async fn update(&self, user: &UpdateUser) -> Result<()> {
+		let id = &user.id;
+
+		if let Some(pw) = &user.password {
+			self.users
+				.update(
+					row! {
+						"name": &user.name,
+						"password": pw,
+					},
+					whr!(id),
+				)
+				.await
+		} else {
+			self.users
+				.update(
+					row! {
+						"name": &user.name,
+					},
+					whr!(id),
+				)
+				.await
+		}
 	}
 
 	async fn new_session(&self, user_id: &UniqueId) -> Result<Session> {

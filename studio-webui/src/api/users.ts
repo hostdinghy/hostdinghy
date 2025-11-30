@@ -51,3 +51,12 @@ export async function tokenAuth(token: string): Promise<Authenticated> {
 
 	return new Authenticated(d);
 }
+
+export async function save(
+	name: string,
+	password: string | null,
+): Promise<Authenticated> {
+	const d = await api.post('/save', { name, password });
+
+	return new Authenticated(d);
+}

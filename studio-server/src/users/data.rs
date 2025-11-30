@@ -128,6 +128,13 @@ pub trait UsersBuilderTrait {
 	fn with_conn<'a>(&'a self, conn: Conn<'a>) -> UsersWithConn<'a>;
 }
 
+#[derive(Debug, Clone)]
+pub struct UpdateUser {
+	pub id: UniqueId,
+	pub name: String,
+	pub password: Option<String>,
+}
+
 #[async_trait::async_trait]
 pub trait UsersTrait {
 	async fn by_id(&self, id: &UniqueId) -> Result<Option<User>>;
@@ -135,6 +142,8 @@ pub trait UsersTrait {
 	async fn by_username(&self, username: &str) -> Result<Option<UnsafeUser>>;
 
 	async fn insert(&self, user: &UnsafeUser) -> Result<()>;
+
+	async fn update(&self, user: &UpdateUser) -> Result<()>;
 
 	async fn new_session(&self, user_id: &UniqueId) -> Result<Session>;
 

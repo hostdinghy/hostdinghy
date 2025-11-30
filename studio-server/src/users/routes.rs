@@ -6,7 +6,7 @@ use serde::{Deserialize, Serialize};
 use crate::AppState;
 use crate::error::{Error, Result};
 use crate::users::Users;
-use crate::users::data::{Session, User};
+use crate::users::data::{Session, UpdateUser, User};
 use crate::users::utils::RightsAny;
 use crate::utils::ConnOwned;
 
@@ -61,6 +61,44 @@ async fn token_auth(
 	}))
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SaveUserReq {
+	pub name: String,
+	pub password: Option<String>,
+}
+
+async fn save(
+	mut user: AuthedUser<RightsAny>,
+	State(users): State<Users>,
+	conn: ConnOwned,
+	Json(req): Json<SaveUserReq>,
+) -> Result<Json<Authenticated>> {
+	let users = users.with_conn(conn.conn());
+
+	let mut update_user = UpdateUser {
+		id: user.user.id,
+		name: req.name,
+		password: None,
+	};
+
+	if let Some(password) = req.password {
+		let hashed = bcrypt::hash(password.as_str(), bcrypt::DEFAULT_COST)
+			.map_err(|e| Error::Internal(e.to_string()))?;
+
+		update_user.password = Some(hashed);
+	}
+
+	users.update(&update_user).await?;
+
+	user.user.name = update_user.name;
+
+	Ok(Json(Authenticated {
+		user: user.user,
+		session: user.session,
+	}))
+}
+
 async fn logout(
 	State(users): State<Users>,
 	user: AuthedUser<RightsAny>,
@@ -77,5 +115,6 @@ pub fn routes() -> Router<AppState> {
 	Router::new()
 		.route("/login", post(login))
 		.route("/tokenauth", post(token_auth))
+		.route("/save", post(save))
 		.route("/logout", post(logout))
 }

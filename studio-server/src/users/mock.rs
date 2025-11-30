@@ -4,12 +4,12 @@ use std::{
 };
 
 use pg::{
-	Result, UniqueId,
+	Error, Result, UniqueId,
 	db::Conn,
 	time::{DateTime, Timeout},
 };
 
-use crate::users::data::UnsafeUser;
+use crate::users::data::{UnsafeUser, UpdateUser};
 
 use super::data::{
 	Session, Token, User, UsersBuilderTrait, UsersTrait, UsersWithConn,
@@ -85,6 +85,22 @@ impl UsersTrait for Arc<Users> {
 	async fn insert(&self, user: &UnsafeUser) -> Result<()> {
 		let mut inner = self.users.write().unwrap();
 		inner.insert(user.id, user.clone());
+
+		Ok(())
+	}
+
+	async fn update(&self, user: &UpdateUser) -> Result<()> {
+		let mut inner = self.users.write().unwrap();
+
+		let usr = inner
+			.get_mut(&user.id)
+			.ok_or_else(|| Error::ExpectedOneRow)?;
+
+		usr.name = user.name.clone();
+
+		if let Some(pw) = &user.password {
+			usr.password = pw.clone();
+		}
 
 		Ok(())
 	}

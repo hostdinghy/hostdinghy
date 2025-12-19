@@ -1,12 +1,15 @@
+mod apps;
+mod registry;
+
 use http::Method;
 use reqwest::{Certificate, RequestBuilder, Response};
 use serde::de::DeserializeOwned;
 
+pub use apps::ApiServerAppsClient;
+
 use crate::{
-	app_id::AppId,
-	apps::{AppInfoRes, ComposeCommand, GetComposeRes, SaveComposeReq},
+	client::registry::ApiServerRegistryClient,
 	error::{Error, WithMessage},
-	registry::{CreateUserReq, CreateUserRes},
 	requests::{ApiToken, InfoRes, PingRes},
 };
 
@@ -59,27 +62,27 @@ impl ApiServerClient {
 			.bearer_auth(&self.token)
 	}
 
-	fn get(&self, uri: &str) -> RequestBuilder {
+	pub(crate) fn get(&self, uri: &str) -> RequestBuilder {
 		self.request(Method::GET, uri)
 	}
 
 	#[allow(dead_code)]
-	fn post(&self, uri: &str) -> RequestBuilder {
+	pub(crate) fn post(&self, uri: &str) -> RequestBuilder {
 		self.request(Method::POST, uri)
 	}
 
 	#[allow(dead_code)]
-	fn put(&self, uri: &str) -> RequestBuilder {
+	pub(crate) fn put(&self, uri: &str) -> RequestBuilder {
 		self.request(Method::PUT, uri)
 	}
 
 	#[allow(dead_code)]
-	fn delete(&self, uri: &str) -> RequestBuilder {
+	pub(crate) fn delete(&self, uri: &str) -> RequestBuilder {
 		self.request(Method::DELETE, uri)
 	}
 
 	// todo should probably improve the errors
-	async fn send(&self, req: RequestBuilder) -> Result<Response> {
+	pub(crate) async fn send(&self, req: RequestBuilder) -> Result<Response> {
 		let response =
 			req.send().await.with_message("failed to send request")?;
 
@@ -94,7 +97,10 @@ impl ApiServerClient {
 	}
 
 	// todo should probably improve the errors
-	async fn send_json<Res>(&self, req: RequestBuilder) -> Result<Res>
+	pub(crate) async fn send_json<Res>(
+		&self,
+		req: RequestBuilder,
+	) -> Result<Res>
 	where
 		Res: DeserializeOwned,
 	{
@@ -114,83 +120,11 @@ impl ApiServerClient {
 		self.send_json(self.get("/info")).await
 	}
 
-	pub async fn app_info(&self, id: &AppId) -> Result<AppInfoRes> {
-		self.send_json(self.get(&format!("/apps/{id}"))).await
+	pub fn apps(&self) -> ApiServerAppsClient<'_> {
+		ApiServerAppsClient::new(&self)
 	}
 
-	pub async fn app_get_compose(&self, id: &AppId) -> Result<GetComposeRes> {
-		self.send_json(self.get(&format!("/apps/{id}/compose")))
-			.await
-	}
-
-	pub async fn app_set_compose(
-		&self,
-		id: &AppId,
-		req: &SaveComposeReq,
-	) -> Result<()> {
-		self.send(self.post(&format!("/apps/{id}/compose")).json(req))
-			.await
-			.map(|_| ())
-	}
-
-	pub async fn app_compose_command(
-		&self,
-		id: &AppId,
-		cmd: &ComposeCommand,
-	) -> Result<()> {
-		self.send(self.post(&format!("/apps/{id}/action/{cmd}")))
-			.await
-			.map(|_| ())
-	}
-
-	pub async fn app_compose_service_command(
-		&self,
-		id: &AppId,
-		service: &str,
-		cmd: &ComposeCommand,
-	) -> Result<()> {
-		self.send(
-			self.post(&format!("/apps/{id}/service/{service}/action/{cmd}")),
-		)
-		.await
-		.map(|_| ())
-	}
-
-	pub async fn app_logs(
-		&self,
-		id: &AppId,
-		lines: Option<u32>,
-	) -> Result<String> {
-		let mut uri = format!("/apps/{id}/logs");
-		if let Some(lines) = lines {
-			// todo could this be a query type?
-			uri.push_str(&format!("?lines={lines}"));
-		}
-
-		let response = self.send(self.get(&uri)).await?;
-
-		response
-			.text()
-			.await
-			.with_message("failed to parse logs response")
-	}
-
-	pub async fn registry_users(&self) -> Result<Vec<String>> {
-		self.send_json(self.get("/registry/users")).await
-	}
-
-	pub async fn registry_create_user(
-		&self,
-		username: &str,
-	) -> Result<CreateUserRes> {
-		self.send_json(self.post("/registry/users").json(&CreateUserReq {
-			username: username.into(),
-		}))
-		.await
-	}
-
-	pub async fn registry_delete_user(&self, username: &str) -> Result<()> {
-		self.send_json(self.delete(&format!("/registry/users/{username}")))
-			.await
+	pub fn registry(&self) -> ApiServerRegistryClient<'_> {
+		ApiServerRegistryClient::new(&self)
 	}
 }

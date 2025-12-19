@@ -30,7 +30,7 @@ pub async fn get_compose(
 	let AppWithServer { api, .. } =
 		app_with_server(&id, &user, &apps, &servers, &api_client).await?;
 
-	let compose = match api.app_get_compose(&id).await {
+	let compose = match api.apps().get_compose(&id).await {
 		Ok(a) => a.compose,
 		Err(ApiError::AppNotFound) => "".into(),
 		Err(e) => return Err(e.into()),
@@ -54,11 +54,13 @@ pub async fn set_compose(
 	let AppWithServer { api, .. } =
 		app_with_server(&id, &user, &apps, &servers, &api_client).await?;
 
-	api.app_set_compose(&id, &req).await?;
+	api.apps().set_compose(&id, &req).await?;
 
-	let gcompose = api.app_get_compose(&id).await?;
+	let gcompose = api.apps().get_compose(&id).await?;
 
-	api.app_compose_command(&id, &ApiComposeCommand::Up).await?;
+	api.apps()
+		.compose_command(&id, &ApiComposeCommand::Up)
+		.await?;
 
 	Ok(Json(gcompose.compose))
 }
@@ -100,7 +102,7 @@ pub async fn compose_command(
 	let AppWithServer { api, .. } =
 		app_with_server(&id, &user, &apps, &servers, &api_client).await?;
 
-	api.app_compose_command(&id, &cmd.into()).await?;
+	api.apps().compose_command(&id, &cmd.into()).await?;
 
 	Ok(Json(()))
 }
@@ -119,7 +121,8 @@ pub async fn compose_service_command(
 	let AppWithServer { api, .. } =
 		app_with_server(&id, &user, &apps, &servers, &api_client).await?;
 
-	api.app_compose_service_command(&id, &service, &cmd.into())
+	api.apps()
+		.compose_service_command(&id, &service, &cmd.into())
 		.await?;
 
 	Ok(Json(()))

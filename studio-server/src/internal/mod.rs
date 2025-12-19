@@ -107,23 +107,27 @@ pub trait ApiServerClientTrait {
 
 	async fn info(&self) -> Result<InfoRes>;
 
+	fn apps(&self) -> &dyn ApiServerAppsClientTrait;
+
+	fn registry(&self) -> &dyn ApiServerRegistryClientTrait;
+}
+
+#[async_trait::async_trait]
+pub trait ApiServerAppsClientTrait {
 	async fn app_info(&self, id: &AppId) -> Result<AppInfoRes>;
 
-	async fn app_get_compose(&self, id: &AppId) -> Result<GetComposeRes>;
+	async fn get_compose(&self, id: &AppId) -> Result<GetComposeRes>;
 
-	async fn app_set_compose(
-		&self,
-		id: &AppId,
-		req: &SaveComposeReq,
-	) -> Result<()>;
+	async fn set_compose(&self, id: &AppId, req: &SaveComposeReq)
+	-> Result<()>;
 
-	async fn app_compose_command(
+	async fn compose_command(
 		&self,
 		id: &AppId,
 		cmd: &ComposeCommand,
 	) -> Result<()>;
 
-	async fn app_compose_service_command(
+	async fn compose_service_command(
 		&self,
 		id: &AppId,
 		service: &str,
@@ -132,13 +136,13 @@ pub trait ApiServerClientTrait {
 
 	/// How many lines to return, if None all lines are returned
 	async fn app_logs(&self, id: &AppId, lines: Option<u32>) -> Result<String>;
+}
 
-	async fn registry_users(&self) -> Result<Vec<String>>;
+#[async_trait::async_trait]
+pub trait ApiServerRegistryClientTrait {
+	async fn users(&self) -> Result<Vec<String>>;
 
-	async fn registry_create_user(
-		&self,
-		username: &str,
-	) -> Result<CreateUserRes>;
+	async fn create_user(&self, username: &str) -> Result<CreateUserRes>;
 
-	async fn registry_delete_user(&self, username: &str) -> Result<()>;
+	async fn delete_user(&self, username: &str) -> Result<()>;
 }

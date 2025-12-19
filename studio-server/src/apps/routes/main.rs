@@ -77,7 +77,7 @@ pub async fn all(
 					None => return Ok(None),
 				};
 
-				let app_info = match api.app_info(&id).await {
+				let app_info = match api.apps().app_info(&id).await {
 					Ok(a) => a,
 					Err(ApiError::AppNotFound) => return Ok(None),
 					Err(e) => return Err(e.into()),
@@ -130,7 +130,7 @@ pub async fn by_id(
 	let AppWithServer { app, api, .. } =
 		app_with_server(&id, &user, &apps, &servers, &api_client).await?;
 
-	let services = match api.app_info(&app.id).await {
+	let services = match api.apps().app_info(&app.id).await {
 		Ok(a) => a.services,
 		Err(ApiError::AppNotFound) => vec![],
 		Err(e) => return Err(e.into()),
@@ -190,7 +190,7 @@ pub async fn logs(
 	let AppWithServer { app, api, .. } =
 		app_with_server(&id, &user, &apps, &servers, &api_client).await?;
 
-	match api.app_logs(&app.id, None).await {
+	match api.apps().app_logs(&app.id, None).await {
 		Ok(logs) => Ok(Json(logs)),
 		Err(ApiError::AppNotFound) => Ok(Json("".into())),
 		Err(e) => Err(e.into()),

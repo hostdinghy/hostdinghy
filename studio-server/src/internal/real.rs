@@ -6,7 +6,13 @@ use internal_api::{
 	requests::{InfoRes, PingRes},
 };
 
-use crate::{internal::ApiServerClientTrait, servers::data::Server};
+use crate::{
+	internal::{
+		ApiServerAppsClientTrait, ApiServerClientTrait,
+		ApiServerRegistryClientTrait,
+	},
+	servers::data::Server,
+};
 
 pub struct ApiServerClient {
 	inner: int::ApiServerClient,
@@ -30,57 +36,69 @@ impl ApiServerClientTrait for ApiServerClient {
 		self.inner.info().await
 	}
 
+	fn apps(&self) -> &dyn ApiServerAppsClientTrait {
+		self
+	}
+
+	fn registry(&self) -> &dyn ApiServerRegistryClientTrait {
+		self
+	}
+}
+
+#[async_trait::async_trait]
+impl ApiServerAppsClientTrait for ApiServerClient {
 	async fn app_info(&self, id: &AppId) -> Result<AppInfoRes> {
-		self.inner.app_info(id).await
+		self.inner.apps().app_info(id).await
 	}
 
-	async fn app_get_compose(&self, id: &AppId) -> Result<GetComposeRes> {
-		self.inner.app_get_compose(id).await
+	async fn get_compose(&self, id: &AppId) -> Result<GetComposeRes> {
+		self.inner.apps().get_compose(id).await
 	}
 
-	async fn app_set_compose(
+	async fn set_compose(
 		&self,
 		id: &AppId,
 		req: &SaveComposeReq,
 	) -> Result<()> {
-		self.inner.app_set_compose(id, req).await
+		self.inner.apps().set_compose(id, req).await
 	}
 
-	async fn app_compose_command(
+	async fn compose_command(
 		&self,
 		id: &AppId,
 		cmd: &ComposeCommand,
 	) -> Result<()> {
-		self.inner.app_compose_command(id, cmd).await
+		self.inner.apps().compose_command(id, cmd).await
 	}
 
-	async fn app_compose_service_command(
+	async fn compose_service_command(
 		&self,
 		id: &AppId,
 		service: &str,
 		cmd: &ComposeCommand,
 	) -> Result<()> {
 		self.inner
-			.app_compose_service_command(id, service, cmd)
+			.apps()
+			.compose_service_command(id, service, cmd)
 			.await
 	}
 
 	async fn app_logs(&self, id: &AppId, lines: Option<u32>) -> Result<String> {
-		self.inner.app_logs(id, lines).await
+		self.inner.apps().app_logs(id, lines).await
+	}
+}
+
+#[async_trait::async_trait]
+impl ApiServerRegistryClientTrait for ApiServerClient {
+	async fn users(&self) -> Result<Vec<String>> {
+		self.inner.registry().users().await
 	}
 
-	async fn registry_users(&self) -> Result<Vec<String>> {
-		self.inner.registry_users().await
+	async fn create_user(&self, username: &str) -> Result<CreateUserRes> {
+		self.inner.registry().create_user(username).await
 	}
 
-	async fn registry_create_user(
-		&self,
-		username: &str,
-	) -> Result<CreateUserRes> {
-		self.inner.registry_create_user(username).await
-	}
-
-	async fn registry_delete_user(&self, username: &str) -> Result<()> {
-		self.inner.registry_delete_user(username).await
+	async fn delete_user(&self, username: &str) -> Result<()> {
+		self.inner.registry().delete_user(username).await
 	}
 }

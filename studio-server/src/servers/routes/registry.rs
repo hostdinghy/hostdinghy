@@ -26,7 +26,7 @@ pub async fn all_users(
 	let LoadServer { api, .. } =
 		load_server(&id, &user, &servers, &api_client).await?;
 
-	api.registry_users().await.map(Json).map_err(Into::into)
+	api.registry().users().await.map(Json).map_err(Into::into)
 }
 
 pub async fn create_user(
@@ -42,7 +42,8 @@ pub async fn create_user(
 	let LoadServer { api, .. } =
 		load_server(&id, &user, &servers, &api_client).await?;
 
-	api.registry_create_user(&req.username)
+	api.registry()
+		.create_user(&req.username)
 		.await
 		.map(Json)
 		.map_err(Into::into)
@@ -60,7 +61,8 @@ pub async fn delete_user(
 	let LoadServer { api, .. } =
 		load_server(&id, &user, &servers, &api_client).await?;
 
-	api.registry_delete_user(&username)
+	api.registry()
+		.delete_user(&username)
 		.await
 		.map(Json)
 		.map_err(Into::into)

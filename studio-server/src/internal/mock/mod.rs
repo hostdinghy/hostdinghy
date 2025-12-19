@@ -5,7 +5,8 @@ use std::sync::{Arc, Mutex};
 use crate::{
 	AppState,
 	internal::{
-		ApiServerClientTrait,
+		ApiServerAppsClientTrait, ApiServerClientTrait,
+		ApiServerRegistryClientTrait,
 		mock::storage::{ServerMock, ServersMock},
 	},
 	servers::data::Server,
@@ -98,17 +99,28 @@ impl ApiServerClientTrait for ApiServerClient {
 		})
 	}
 
+	fn apps(&self) -> &dyn ApiServerAppsClientTrait {
+		self
+	}
+
+	fn registry(&self) -> &dyn ApiServerRegistryClientTrait {
+		self
+	}
+}
+
+#[async_trait::async_trait]
+impl ApiServerAppsClientTrait for ApiServerClient {
 	async fn app_info(&self, id: &AppId) -> Result<AppInfoRes> {
 		let server = self.server.lock().unwrap();
 		server.app_info(id)
 	}
 
-	async fn app_get_compose(&self, id: &AppId) -> Result<GetComposeRes> {
+	async fn get_compose(&self, id: &AppId) -> Result<GetComposeRes> {
 		let server = self.server.lock().unwrap();
 		server.app_get_compose(id)
 	}
 
-	async fn app_set_compose(
+	async fn set_compose(
 		&self,
 		id: &AppId,
 		req: &SaveComposeReq,
@@ -117,7 +129,7 @@ impl ApiServerClientTrait for ApiServerClient {
 		server.app_set_compose(id, req)
 	}
 
-	async fn app_compose_command(
+	async fn compose_command(
 		&self,
 		id: &AppId,
 		cmd: &ComposeCommand,
@@ -126,7 +138,7 @@ impl ApiServerClientTrait for ApiServerClient {
 		server.app_compose_command(id, cmd)
 	}
 
-	async fn app_compose_service_command(
+	async fn compose_service_command(
 		&self,
 		id: &AppId,
 		_service: &str,
@@ -140,21 +152,21 @@ impl ApiServerClientTrait for ApiServerClient {
 		let server = self.server.lock().unwrap();
 		server.app_logs(id, lines)
 	}
+}
 
-	async fn registry_users(&self) -> Result<Vec<String>> {
+#[async_trait::async_trait]
+impl ApiServerRegistryClientTrait for ApiServerClient {
+	async fn users(&self) -> Result<Vec<String>> {
 		let server = self.server.lock().unwrap();
 		server.registry_users()
 	}
 
-	async fn registry_create_user(
-		&self,
-		username: &str,
-	) -> Result<CreateUserRes> {
+	async fn create_user(&self, username: &str) -> Result<CreateUserRes> {
 		let mut server = self.server.lock().unwrap();
 		server.registry_create_user(username)
 	}
 
-	async fn registry_delete_user(&self, username: &str) -> Result<()> {
+	async fn delete_user(&self, username: &str) -> Result<()> {
 		let mut server = self.server.lock().unwrap();
 		server.registry_delete_user(username)
 	}

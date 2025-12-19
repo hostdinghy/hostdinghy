@@ -49,6 +49,7 @@
 					label: 'Registry',
 					url: `/apps/${app.id}/registry`,
 				},
+				{ label: 'Files', url: `/apps/${app.id}/files` },
 				{ label: 'Logs', url: `/apps/${app.id}/logs` },
 			]}
 		>

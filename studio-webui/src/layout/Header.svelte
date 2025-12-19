@@ -1,5 +1,6 @@
 <script>
 	import Button from '@/components/Button.svelte';
+	import Crumbs from '@/components/Crumbs.svelte';
 	import { getSession } from '@/lib/Session';
 	import { getRouter } from '@/main';
 
@@ -16,15 +17,7 @@
 </script>
 
 <header class="wrap">
-	<div class="crumbs">
-		{#each breadcrumbs as breadcrumb (breadcrumb.url)}
-			<a href={breadcrumb.url}>
-				<span class="hover:underline">
-					{breadcrumb.label}
-				</span>
-			</a>
-		{/each}
-	</div>
+	<Crumbs {breadcrumbs} />
 	{#if $session.isLoggedIn()}
 		<div class="user-group group">
 			<a href="/settings/account" class="hover:underline">
@@ -48,17 +41,6 @@
 		justify-content: space-between;
 		align-items: center;
 		margin-top: 2rem;
-	}
-
-	.crumbs {
-		display: flex;
-
-		a + a:before {
-			content: '/';
-			padding-left: 0.5rem;
-			padding-right: 0.5rem;
-			opacity: 0.4;
-		}
 	}
 
 	.group {

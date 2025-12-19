@@ -1,6 +1,6 @@
-<script module>
+<script module lang="ts">
 	export async function loadProps(
-		{ app, path = '' }: { path: string },
+		{ app, path = '' }: { path: string; app: AppLayoutProps },
 		route,
 	) {
 		function getRoot(path, separator = '/files/') {

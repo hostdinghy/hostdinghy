@@ -136,3 +136,41 @@ pub struct AppLogsReq;
 // #[derive(Debug, Clone, Serialize, Deserialize)]
 // #[serde(rename_all = "camelCase")]
 // pub struct DeleteAppReq;
+
+/// URL: `/apps/:id/fs/:path`
+/// Method: `PUT`
+/// Body: `Bytes` (file contents) or empty body with `Content-Type: application/x-directory`
+/// Authentication: Yes
+pub struct PutFsResourceRequest;
+
+/// URL: `/apps/:id/fs/:path`
+/// Method: `GET`
+/// ResponseBody:
+///   - File: `Bytes` (Content-Type: application/octet-stream)
+///   - Directory: `JSON` - array of entries (Content-Type: application/json)
+/// Authentication: Yes
+pub struct GetFsResourceRequest;
+
+/// URL: `/apps/:id/fs/:path`
+/// Method: `DELETE`
+/// Query: `?recursive=true` (only applies to directories)
+/// Authentication: Yes
+pub struct DeleteFsResourceRequest;
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Chown(pub u32, pub u32); // (uid, gid)
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Chmod(pub u32); // standard octal mode, e.g. 0o755
+
+/// URL: `/apps/:id/fs/:path`
+/// Method: `PATCH`
+/// Authentication: Yes
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct PatchFsResourceRequest {
+	pub chown: Option<Chown>,
+	pub chmod: Option<Chmod>,
+	#[serde(default)]
+	pub recursive: bool,
+}

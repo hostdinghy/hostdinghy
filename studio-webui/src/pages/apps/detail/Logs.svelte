@@ -19,7 +19,11 @@
 </svelte:head>
 
 <div class="logs">
-	<pre>{logs}</pre>
+	{#if logs}
+		<pre>{logs}</pre>
+	{:else}
+		<p>No logs available</p>
+	{/if}
 </div>
 
 <style lang="scss">

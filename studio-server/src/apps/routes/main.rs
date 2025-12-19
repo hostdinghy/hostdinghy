@@ -190,9 +190,11 @@ pub async fn logs(
 	let AppWithServer { app, api, .. } =
 		app_with_server(&id, &user, &apps, &servers, &api_client).await?;
 
-	let logs = api.app_logs(&app.id, None).await?;
-
-	Ok(Json(logs))
+	match api.app_logs(&app.id, None).await {
+		Ok(logs) => Ok(Json(logs)),
+		Err(ApiError::AppNotFound) => Ok(Json("".into())),
+		Err(e) => Err(e.into()),
+	}
 }
 
 pub fn routes() -> Router<AppState> {

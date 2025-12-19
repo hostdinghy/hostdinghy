@@ -173,7 +173,7 @@ async fn main() {
 		&db_cfg.password,
 	)
 	.await
-	.unwrap();
+	.expect("could not connect to the database");
 	let db = Db::from(database.clone());
 	let mut conn = db.get().await.unwrap();
 

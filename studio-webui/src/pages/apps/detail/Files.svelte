@@ -1,24 +1,25 @@
 <script module lang="ts">
-	export async function loadProps(
-		{ app, path = '' }: { path: string; app: AppLayoutProps },
-		route,
-	) {
-		function getRoot(path, separator = '/files/') {
-			const idx = path.indexOf(separator);
-			return idx === -1
-				? path
-				: path.slice(0, idx + separator.length - 1);
-		}
+	import type { Crumb } from '@/components/Crumbs.svelte';
 
+	export async function loadProps(
+		{ app, path = '' }: { path: string } & AppLayoutProps,
+		lp: LoadProps,
+	) {
 		const cwd = new FsDir(path, [
 			{
-				url: getRoot(route.req.url.pathname),
+				url: getRoot(lp.req.url.pathname),
 				label: app.name,
 			},
 		]);
+
 		return {
 			cwd,
 		};
+	}
+
+	function getRoot(path: string, separator = '/files/') {
+		const idx = path.indexOf(separator);
+		return idx === -1 ? path : path.slice(0, idx + separator.length - 1);
 	}
 
 	export class FsDir {
@@ -40,13 +41,12 @@
 					owner: number;
 					group: number;
 					modified: Date;
-					size?: undefined;
-					mime?: undefined;
 			  }
 		)[];
-		crumbs: any;
+		crumbs: Crumb[];
+		path: string;
 
-		constructor(path, rootSegment) {
+		constructor(path: string, rootSegments: Crumb[]) {
 			this.content = [
 				{
 					name: 'file1.txt',
@@ -70,19 +70,16 @@
 
 			this.path = path;
 
-			this.crumbs = path
-				.split('/')
-				.filter(Boolean)
-				.reduce(
-					(acc, label) => [
-						...acc,
-						{
-							url: acc.at(-1)?.url + '/' + label,
-							label,
-						},
-					],
-					rootSegment,
-				);
+			this.crumbs = rootSegments;
+
+			const segments = path.split('/').filter(Boolean);
+			for (let i = 0; i < segments.length; i++) {
+				const label = segments[i];
+				this.crumbs.push({
+					url: this.crumbs.at(-1)?.url + '/' + label,
+					label,
+				});
+			}
 		}
 
 		getAbsoluteUrl() {
@@ -106,8 +103,9 @@
 	import Crumbs from '@/components/Crumbs.svelte';
 	import DirectoryContent from '@/components/fs/DirectoryContent.svelte';
 	import type { AppLayoutProps } from '@/layout/AppLayout.svelte';
+	import type LoadProps from '@/lib/LoadProps';
 
-	let { app, cwd }: AppLayoutProps = $props();
+	let { cwd }: AppLayoutProps<typeof loadProps> = $props();
 </script>
 
 <svelte:head>

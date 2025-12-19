@@ -1,6 +1,10 @@
+<script lang="ts" module>
+	export type Crumb = { url: string; label: string };
+</script>
+
 <script lang="ts">
 	type Props = {
-		breadcrumbs: { url: string; label: string }[];
+		breadcrumbs: Crumb[];
 	};
 	let { breadcrumbs }: Props = $props();
 </script>

@@ -105,8 +105,6 @@
 <script lang="ts">
 	import Crumbs from '@/components/Crumbs.svelte';
 	import DirectoryContent from '@/components/fs/DirectoryContent.svelte';
-	import Status from '@/components/Status.svelte';
-	import Table from '@/components/Table.svelte';
 	import type { AppLayoutProps } from '@/layout/AppLayout.svelte';
 
 	let { app, cwd }: AppLayoutProps = $props();

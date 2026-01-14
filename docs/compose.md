@@ -1,3 +1,11 @@
+---
+outline: deep
+---
+
+# Compose
+
+WIP
+
 ## Structure of the compose.yml file
 
 ### Image

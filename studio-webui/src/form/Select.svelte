@@ -39,6 +39,7 @@
 		background-color: transparent;
 		border: none;
 		color: var(--c-text);
+		background-color: var(--c-bg);
 
 		&::placeholder {
 			color: var(--c-placeholder);

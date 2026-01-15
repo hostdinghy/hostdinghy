@@ -8,6 +8,7 @@ import { Writable } from 'chuchi/stores';
 import Session from './lib/Session';
 import LoadProps from './lib/LoadProps';
 import type { Router } from './lib';
+import { timeout } from 'chuchi-utils';
 
 async function main() {
 	const cache = new SsrCache();
@@ -22,9 +23,14 @@ async function main() {
 	context.set('session', session);
 
 	let mounted = false;
+	const loadingStore = new Writable<number>(0);
 	const pageStore = new Writable<any>(null);
 
+	const startLoading = () => loadingStore.set(loadingStore.get() + 1);
+	const stopLoading = () => loadingStore.set(loadingStore.get() - 1);
+
 	router.onRoute(async (req, route, routing) => {
+		startLoading();
 		const loadProps = new LoadProps({
 			router,
 			route,
@@ -33,22 +39,28 @@ async function main() {
 			session,
 		});
 		const { page, redirect } = await handleRoute(req, route, loadProps);
+		await timeout(500);
 
 		if (redirect) {
 			// todo handle the request?
 			router.open(redirect);
+			stopLoading();
 			return;
 		}
 
-		if (await routing.dataReady()) return;
+		if (await routing.dataReady()) {
+			stopLoading();
+			return;
+		}
 
 		pageStore.set(page);
+		stopLoading();
 
 		if (!mounted) {
 			mounted = true;
 			mount(App, {
 				target: document.body,
-				props: { page: pageStore },
+				props: { page: pageStore, loading: loadingStore },
 				context,
 			});
 		}

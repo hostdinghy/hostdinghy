@@ -2,28 +2,38 @@
 	import { Writable } from 'chuchi/stores';
 	import './app.scss';
 	import './lib/Editor'; // todo: we should probably only load this if a page uses the editor
+	import PageLoader from './layout/PageLoader.svelte';
 	import Toasts from './layout/Toasts.svelte';
 	import type { RoutePage } from './main';
-	import ModeWatcher from './components/ModeWatcher.svelte';
+	import { onMount } from 'svelte';
+	import { themeModeMount } from './lib/theme/themeMode';
 
 	// page is a private implementation detail of App (and client.ts) so it should not be exposed
 	// globally
-	const { page }: { page: Writable<RoutePage> } = $props();
+	const {
+		page,
+		loading,
+	}: { page: Writable<RoutePage>; loading: Writable<number> } = $props();
 
 	const LayoutComponent = $derived($page.layout);
 	const Component = $derived($page.component);
+	const pageProps = $derived($page.props);
+
+	onMount(() => {
+		themeModeMount();
+	});
 </script>
 
+<PageLoader {loading} />
 <Toasts />
-<ModeWatcher />
 
 <div id="app">
 	{#if LayoutComponent}
-		<LayoutComponent {...$page.props}>
-			<Component {...$page.props} />
+		<LayoutComponent {...pageProps}>
+			<Component {...pageProps} />
 		</LayoutComponent>
 	{:else}
-		<Component {...$page.props} />
+		<Component {...pageProps} />
 	{/if}
 </div>
 

@@ -22,7 +22,6 @@
 	import TableSearch from '@/components/table/TableSearch.svelte';
 	import Table from '@/components/table/Table.svelte';
 	import Add from '@/assets/icons/Add.svelte';
-	import ButtonGroup from '@/components/ButtonGroup.svelte';
 	import TableToolbar from '@/components/table/TableToolbar.svelte';
 
 	let { apps }: Props = $props();

@@ -1,4 +1,4 @@
-use internal_api::app_id::AppId;
+use internal_api::apps::AppId;
 
 use crate::{
 	apps::data::{self, AppsWithConn},

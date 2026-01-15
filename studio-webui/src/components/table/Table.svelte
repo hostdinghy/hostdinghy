@@ -67,6 +67,11 @@
 				border: var(--border);
 				padding: 1rem;
 			}
+
+			// reduce padding for button groups
+			td:has(.button-group) {
+				padding: 0.5rem 1rem;
+			}
 		}
 	}
 

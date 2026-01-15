@@ -1,8 +1,9 @@
 use axum::extract::{Path, State};
 use axum::routing::{get, post};
 use axum::{Json, Router};
-use internal_api::app_id::AppId;
-use internal_api::apps::{ComposeCommand as ApiComposeCommand, SaveComposeReq};
+use internal_api::apps::{
+	AppId, ComposeCommand as ApiComposeCommand, SaveComposeReq,
+};
 use internal_api::error::Error as ApiError;
 use serde::{Deserialize, Serialize};
 

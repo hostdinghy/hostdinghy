@@ -1,15 +1,17 @@
+use bytes::Bytes;
+use futures::stream::BoxStream;
 use internal_api::{
-	app_id::AppId,
-	apps::{AppInfoRes, ComposeCommand, GetComposeRes, SaveComposeReq},
+	apps::{AppId, AppInfoRes, ComposeCommand, GetComposeRes, SaveComposeReq},
 	client::{self as int, Result},
-	registry::CreateUserRes,
+	postgres::{CreateDatabaseRes, DatabaseName},
+	registry::{CreateUserRes, RegistryUsername},
 	requests::{InfoRes, PingRes},
 };
 
 use crate::{
 	internal::{
 		ApiServerAppsClientTrait, ApiServerClientTrait,
-		ApiServerRegistryClientTrait,
+		ApiServerPostgresClientTrait, ApiServerRegistryClientTrait,
 	},
 	servers::data::Server,
 };
@@ -41,6 +43,10 @@ impl ApiServerClientTrait for ApiServerClient {
 	}
 
 	fn registry(&self) -> &dyn ApiServerRegistryClientTrait {
+		self
+	}
+
+	fn postgres(&self) -> &dyn ApiServerPostgresClientTrait {
 		self
 	}
 }
@@ -94,11 +100,43 @@ impl ApiServerRegistryClientTrait for ApiServerClient {
 		self.inner.registry().users().await
 	}
 
-	async fn create_user(&self, username: &str) -> Result<CreateUserRes> {
+	async fn create_user(
+		&self,
+		username: &RegistryUsername,
+	) -> Result<CreateUserRes> {
 		self.inner.registry().create_user(username).await
 	}
 
-	async fn delete_user(&self, username: &str) -> Result<()> {
+	async fn delete_user(&self, username: &RegistryUsername) -> Result<()> {
 		self.inner.registry().delete_user(username).await
+	}
+}
+
+#[async_trait::async_trait]
+impl ApiServerPostgresClientTrait for ApiServerClient {
+	async fn databases(&self) -> Result<Vec<String>> {
+		self.inner.postgres().databases().await
+	}
+
+	async fn create_database(
+		&self,
+		name: &DatabaseName,
+	) -> Result<CreateDatabaseRes> {
+		self.inner.postgres().create_database(name).await
+	}
+
+	async fn restore_database(
+		&self,
+		name: &DatabaseName,
+		bytes: BoxStream<'static, Result<Bytes>>,
+	) -> Result<()> {
+		self.inner.postgres().restore_database(name, bytes).await
+	}
+
+	async fn dump_database(
+		&self,
+		name: &DatabaseName,
+	) -> Result<BoxStream<'static, Result<Bytes>>> {
+		self.inner.postgres().dump_database(name).await
 	}
 }

@@ -1,8 +1,8 @@
 use std::{collections::HashSet, sync::Arc};
 
 use api::{
-	app_id::AppId,
-	error::Error,
+	Error,
+	apps::AppId,
 	registry::{CreateUserReq, CreateUserRes, RegistryUsersRes},
 };
 use axum::{
@@ -153,7 +153,7 @@ async fn create_user(
 	Json(req): Json<CreateUserReq>,
 ) -> Result<Json<CreateUserRes>, Error> {
 	let mut au = AddUser {
-		username: req.username,
+		username: req.username.into(),
 		password: None,
 	};
 	add_user(&mut au).await?;

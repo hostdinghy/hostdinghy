@@ -9,7 +9,7 @@ use crate::utils::cli::CliError;
 pub use client::Client;
 
 #[derive(Debug, Parser)]
-pub struct Postgresql {
+pub struct Postgres {
 	#[clap(subcommand)]
 	cmd: SubCommand,
 }
@@ -24,16 +24,16 @@ enum SubCommand {
 	ListUsers,
 }
 
-pub async fn postgresql(postgresql: Postgresql) {
-	let res = inner_postgresql(postgresql).await;
+pub async fn postgres(postgres: Postgres) {
+	let res = inner_postgres(postgres).await;
 
 	if let Err(e) = res {
 		tracing::error!("PostgreSQL command failed: {e}");
 	}
 }
 
-pub async fn inner_postgresql(postgresql: Postgresql) -> Result<(), CliError> {
-	match postgresql.cmd {
+pub async fn inner_postgres(postgres: Postgres) -> Result<(), CliError> {
+	match postgres.cmd {
 		SubCommand::CreateUser(mut cu) => {
 			let tell_pw = cu.password.is_none();
 			create_user(&mut cu).await?;

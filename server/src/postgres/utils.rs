@@ -16,7 +16,7 @@ pub async fn cli_execute_sql(sql: &str) -> Result<String, CliError> {
 		})
 }
 
-pub async fn start_postgresql() -> Result<(), CliError> {
+pub async fn start_postgres() -> Result<(), CliError> {
 	cmd(&["systemctl", "start", "postgresql"])
 		.run()
 		.await
@@ -24,7 +24,7 @@ pub async fn start_postgresql() -> Result<(), CliError> {
 		.map_err(Into::into)
 }
 
-pub async fn stop_postgresql() -> Result<(), CliError> {
+pub async fn stop_postgres() -> Result<(), CliError> {
 	cmd(&["systemctl", "stop", "postgresql"])
 		.run()
 		.await

@@ -8,7 +8,7 @@ use tokio::{fs, time::sleep};
 
 use crate::{
 	config::Config,
-	postgresql::Client,
+	postgres::Client,
 	server::read_cert,
 	utils::{
 		cli::{CliError, WithMessage},

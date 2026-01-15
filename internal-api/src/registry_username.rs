@@ -8,45 +8,35 @@ use serde::{Deserialize, Deserializer, Serialize, Serializer};
 /// needs to be an an alphanumeric string with dashes and underscores
 /// at least 2 characters long
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub struct AppId(String);
+pub struct RegistryUsername(String);
 
-impl fmt::Display for AppId {
+impl fmt::Display for RegistryUsername {
 	fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
 		fmt::Display::fmt(&self.0, f)
 	}
 }
 
-impl AsRef<str> for AppId {
+impl AsRef<str> for RegistryUsername {
 	fn as_ref(&self) -> &str {
 		&self.0
 	}
 }
 
-impl From<AppId> for String {
-	fn from(app_id: AppId) -> Self {
-		app_id.0
+impl From<RegistryUsername> for String {
+	fn from(name: RegistryUsername) -> Self {
+		name.0
 	}
 }
 
 const BLACKLIST: &[&str] = &[
-	// create is not allowed because the webui uses /app/create
-	"create",
-	// since we wan't to use AppId as prefix sometimes
-	// we need to have our own values not tied to an App
-	// ex registry users (which get prefixed with the AppId)
+	// create is not allowed because the webui might want use /users/create
+	"create", // -
+	// used for the server itself to login
 	"internal",
-	// the default postgres database and folder
-	"postgres",
-	"postgresql",
-	//
-	// default apps
-	"hostdinghy",
-	"registry",
-	"traefik",
 ];
 
-impl FromStr for AppId {
-	type Err = InvalidAppId;
+impl FromStr for RegistryUsername {
+	type Err = InvalidRegistryUsername;
 
 	fn from_str(s: &str) -> Result<Self, Self::Err> {
 		let last_idx = s.len().saturating_sub(1);
@@ -62,19 +52,21 @@ impl FromStr for AppId {
 			}) // -
 			&& !BLACKLIST.contains(&s);
 
-		valid.then(|| Self(s.into())).ok_or(InvalidAppId {})
+		valid
+			.then(|| Self(s.into()))
+			.ok_or(InvalidRegistryUsername {})
 	}
 }
 
 #[derive(Debug, thiserror::Error)]
 #[error(
-	"Invalid app id - must be at least 2 characters long and contain \
-	only alphanumeric characters, dashes, and underscores (`create` is \
+	"Invalid registry username - must be at least 2 characters long and contain \
+	only lowercase alphanumeric characters, dashes, and underscores (`create` is \
 	not allowed)"
 )]
-pub struct InvalidAppId {}
+pub struct InvalidRegistryUsername {}
 
-impl Serialize for AppId {
+impl Serialize for RegistryUsername {
 	fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
 	where
 		S: Serializer,
@@ -83,7 +75,7 @@ impl Serialize for AppId {
 	}
 }
 
-impl<'de> Deserialize<'de> for AppId {
+impl<'de> Deserialize<'de> for RegistryUsername {
 	fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
 	where
 		D: Deserializer<'de>,
@@ -100,7 +92,7 @@ mod impl_postgres {
 	use chuchi_postgres::filter::ParamData;
 	use postgres_types::{FromSql, IsNull, ToSql, Type, to_sql_checked};
 
-	impl ToSql for AppId {
+	impl ToSql for RegistryUsername {
 		fn to_sql(
 			&self,
 			ty: &Type,
@@ -122,7 +114,7 @@ mod impl_postgres {
 		to_sql_checked!();
 	}
 
-	impl<'r> FromSql<'r> for AppId {
+	impl<'r> FromSql<'r> for RegistryUsername {
 		fn from_sql(
 			ty: &Type,
 			raw: &'r [u8],
@@ -136,7 +128,7 @@ mod impl_postgres {
 		}
 	}
 
-	impl ParamData for AppId {
+	impl ParamData for RegistryUsername {
 		fn is_null(&self) -> bool {
 			false
 		}

@@ -3,7 +3,7 @@ use std::{
 	sync::{Arc, RwLock},
 };
 
-use internal_api::app_id::AppId;
+use internal_api::apps::AppId;
 use pg::{Error, Result, UniqueId, db::Conn, try2};
 
 use super::{App, AppsBuilderTrait, AppsTrait, AppsWithConn};

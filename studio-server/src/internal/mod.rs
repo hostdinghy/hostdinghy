@@ -7,11 +7,13 @@ use std::{
 	sync::{Arc, RwLock},
 };
 
+use bytes::Bytes;
+use futures::stream::BoxStream;
 use internal_api::{
-	app_id::AppId,
-	apps::{AppInfoRes, ComposeCommand, GetComposeRes, SaveComposeReq},
+	apps::{AppId, AppInfoRes, ComposeCommand, GetComposeRes, SaveComposeReq},
 	client::{self as int, Result},
-	registry::CreateUserRes,
+	postgres::{CreateDatabaseRes, DatabaseName},
+	registry::{CreateUserRes, RegistryUsername},
 	requests::{InfoRes, PingRes},
 };
 use pg::{UniqueId, db::ConnOwned};
@@ -110,6 +112,8 @@ pub trait ApiServerClientTrait {
 	fn apps(&self) -> &dyn ApiServerAppsClientTrait;
 
 	fn registry(&self) -> &dyn ApiServerRegistryClientTrait;
+
+	fn postgres(&self) -> &dyn ApiServerPostgresClientTrait;
 }
 
 #[async_trait::async_trait]
@@ -142,7 +146,31 @@ pub trait ApiServerAppsClientTrait {
 pub trait ApiServerRegistryClientTrait {
 	async fn users(&self) -> Result<Vec<String>>;
 
-	async fn create_user(&self, username: &str) -> Result<CreateUserRes>;
+	async fn create_user(
+		&self,
+		username: &RegistryUsername,
+	) -> Result<CreateUserRes>;
 
-	async fn delete_user(&self, username: &str) -> Result<()>;
+	async fn delete_user(&self, username: &RegistryUsername) -> Result<()>;
+}
+
+#[async_trait::async_trait]
+pub trait ApiServerPostgresClientTrait {
+	async fn databases(&self) -> Result<Vec<String>>;
+
+	async fn create_database(
+		&self,
+		name: &DatabaseName,
+	) -> Result<CreateDatabaseRes>;
+
+	async fn restore_database(
+		&self,
+		name: &DatabaseName,
+		bytes: BoxStream<'static, Result<Bytes>>,
+	) -> Result<()>;
+
+	async fn dump_database(
+		&self,
+		name: &DatabaseName,
+	) -> Result<BoxStream<'static, Result<Bytes>>>;
 }

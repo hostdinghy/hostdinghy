@@ -1,4 +1,4 @@
-mod postgresql;
+mod postgres;
 mod registry;
 mod server;
 mod studio;
@@ -36,7 +36,7 @@ enum SubCommand {
 	Docker,
 	Traefik(traefik::Traefik),
 	Registry(registry::Registry),
-	Postgresql(postgresql::Postgresql),
+	Postgres(postgres::Postgres),
 	Server,
 	Studio(studio::Studio),
 }
@@ -78,9 +78,9 @@ pub async fn inner_setup(setup: Setup) -> Result<(), CliError> {
 
 			info!("Registry setup completed successfully.");
 		}
-		SubCommand::Postgresql(postgresql) => {
+		SubCommand::Postgres(postgres) => {
 			verify_root().await?;
-			postgresql::setup(postgresql).await?;
+			postgres::setup(postgres).await?;
 
 			info!("PostgreSQL setup completed successfully.");
 		}

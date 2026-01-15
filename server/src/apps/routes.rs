@@ -1,10 +1,9 @@
 use std::{io::ErrorKind, sync::Arc};
 
 use api::{
-	app_id::AppId,
 	apps::{
-		AppInfoRes, AppService, ComposeCommand, GetComposeRes, SaveComposeReq,
-		ServiceState,
+		AppId, AppInfoRes, AppService, ComposeCommand, GetComposeRes,
+		SaveComposeReq, ServiceState,
 	},
 	error::{Error, WithMessage},
 };
@@ -25,7 +24,7 @@ use crate::{
 	},
 	config::{Config, SecretToken},
 	docker::Docker,
-	postgresql::Client,
+	postgres::Client,
 	server::{Authenticated, router::AppState},
 	traefik::client::Traefik,
 	utils::{compose, hostdinghy_dir, is_dir, is_file},
@@ -151,13 +150,10 @@ async fn get_compose(
 			))?;
 
 	// lets check the db
-	let client = Client::new().await?;
-	let database_exists = client.database_exists(id.as_ref()).await?;
+	// let client = Client::new().await?;
+	// let database_exists = client.database_exists(id.as_ref()).await?;
 
-	Ok(Json(GetComposeRes {
-		compose,
-		database: database_exists,
-	}))
+	Ok(Json(GetComposeRes { compose }))
 }
 
 fn generate_db_password(id: &AppId, secret: &SecretToken) -> String {
@@ -177,23 +173,23 @@ async fn save_compose(
 	let parsed = req.compose.parse::<Compose>()?;
 	parsed.validate_for(&config.registry.domain, id.as_ref())?;
 
-	let mut db_password: Option<String> = None;
+	// let mut db_password: Option<String> = None;
 
-	if req.create_database {
-		let password = generate_db_password(&id, &config.secret);
+	// if req.create_database {
+	// 	let password = generate_db_password(&id, &config.secret);
 
-		let client = Client::new().await?;
-		// lets first check if the database exists
-		let database_exists = client.database_exists(id.as_ref()).await?;
-		if !database_exists {
-			// if the database does not exist we assume the user was not
-			// created password is also not set
-			client.create_user(id.as_ref(), &password).await?;
-			client.create_database(id.as_ref(), id.as_ref()).await?;
-		}
+	// 	let client = Client::new().await?;
+	// 	// lets first check if the database exists
+	// 	let database_exists = client.database_exists(id.as_ref()).await?;
+	// 	if !database_exists {
+	// 		// if the database does not exist we assume the user was not
+	// 		// created password is also not set
+	// 		client.create_user(id.as_ref(), &password).await?;
+	// 		client.create_database(id.as_ref(), id.as_ref()).await?;
+	// 	}
 
-		db_password = Some(password);
-	}
+	// 	db_password = Some(password);
+	// }
 
 	let app_dir = hostdinghy_dir()?.join(id.as_ref());
 	match fs::create_dir(&app_dir).await {
@@ -204,14 +200,14 @@ async fn save_compose(
 		}
 	}
 
-	let compose = match db_password {
-		Some(password) => req.compose.replace("{DB_PASSWORD}", &password),
-		None => req.compose,
-	};
+	// let compose = match db_password {
+	// 	Some(password) => req.compose.replace("{DB_PASSWORD}", &password),
+	// 	None => req.compose,
+	// };
 
 	// let's write the file
 	let compose_path = app_dir.join("compose.yml");
-	fs::write(&compose_path, compose)
+	fs::write(&compose_path, req.compose)
 		.await
 		.with_message(format!(
 			"Failed to write compose file to {}",

@@ -1,4 +1,5 @@
 pub mod main;
+pub mod postgres;
 pub mod registry;
 pub mod utils;
 
@@ -10,4 +11,5 @@ pub fn routes() -> Router<AppState> {
 	Router::new()
 		.merge(main::routes())
 		.merge(registry::routes())
+		.merge(postgres::routes())
 }

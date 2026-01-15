@@ -1,5 +1,5 @@
 use std::path::Path;
-use std::sync::Arc;
+use std::sync::{Arc, LazyLock};
 
 use aho_corasick::AhoCorasick;
 use axum::body::Body;
@@ -35,14 +35,16 @@ async fn index(
 	};
 
 	// replace multiple values
-	let ac = AhoCorasick::new(&[
-		"window.ENVIRONMENT = 'debug';",
-		"window.VERSION = 'debug';",
-		"window.API_ADDR = 'http://localhost:3030/';",
-	])
-	.unwrap();
+	static AC: LazyLock<AhoCorasick> = LazyLock::new(|| {
+		AhoCorasick::new(&[
+			"window.ENVIRONMENT = 'debug';",
+			"window.VERSION = 'debug';",
+			"window.API_ADDR = 'http://localhost:3030/';",
+		])
+		.unwrap()
+	});
 
-	let html = ac.replace_all(
+	let html = AC.replace_all(
 		&html,
 		&[
 			&*format!("window.ENVIRONMENT = '{}';", cfg.environment),

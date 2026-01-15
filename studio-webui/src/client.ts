@@ -39,7 +39,6 @@ async function main() {
 			session,
 		});
 		const { page, redirect } = await handleRoute(req, route, loadProps);
-		await timeout(500);
 
 		if (redirect) {
 			// todo handle the request?

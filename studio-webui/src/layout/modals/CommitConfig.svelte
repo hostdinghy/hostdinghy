@@ -1,7 +1,8 @@
 <script>
 	import Button from '@/components/Button.svelte';
 	import DiffViewer from '@/components/DiffViewer.svelte';
-	import Modal from '@/components/Modal.svelte';
+	import Modal from '@/components/modal/Modal.svelte';
+	import CloseModal from '@/components/modal/CloseModal.svelte';
 
 	let {
 		open = $bindable(),
@@ -15,7 +16,7 @@
 <Modal bind:open class="commit-config" fillScreen>
 	<header>
 		<h2>Commit Changes</h2>
-		<Button onclick={() => (open = false)}>&times;</Button>
+		<CloseModal onclick={() => (open = false)} />
 	</header>
 
 	<DiffViewer bind:original bind:modified />

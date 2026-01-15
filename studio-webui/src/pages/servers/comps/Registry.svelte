@@ -17,7 +17,7 @@
 </script>
 
 <script lang="ts">
-	import Modal from '@/components/Modal.svelte';
+	import Modal from '@/components/modal/Modal.svelte';
 	import Input from '@/form/Input.svelte';
 	import { errorToStr } from '@/api/lib';
 	import { toast } from '@/layout/Toasts.svelte';
@@ -28,6 +28,7 @@
 	import TableToolbar from '@/components/table/TableToolbar.svelte';
 	import Add from '@/assets/icons/Add.svelte';
 	import Header from '@/components/Header.svelte';
+	import CloseModal from '@/components/modal/CloseModal.svelte';
 
 	let { server, users = $bindable() }: { server: Server; users: Users } =
 		$props();
@@ -134,7 +135,7 @@
 	<Modal open={openCreateModal} onclose={resetCreateModal}>
 		<header>
 			<h2 class="h2-mod">Create User</h2>
-			<Button onclick={resetCreateModal}>&times;</Button>
+			<CloseModal onclick={resetCreateModal} />
 		</header>
 
 		{#if newPassword}
@@ -156,6 +157,7 @@
 					placeholder="Enter username..."
 					bind:value={newUsername}
 					required
+					bx={false}
 				/>
 
 				{#if error}
@@ -192,7 +194,6 @@
 		padding: 1rem;
 		justify-content: space-between;
 		align-items: center;
-		border-bottom: 1px solid var(--c-border);
 	}
 
 	.new-password {

@@ -13,7 +13,7 @@ use internal_api::{
 	},
 	client::Result,
 	error::Error,
-	postgres::CreateDatabaseRes,
+	postgres::{CreateDatabaseRes, NewPasswordRes},
 	registry::CreateUserRes,
 };
 use pg::UniqueId;
@@ -176,6 +176,22 @@ impl ServerMock {
 			.insert(name.to_string(), Bytes::new());
 
 		Ok(CreateDatabaseRes {
+			name: name.to_string(),
+			password,
+		})
+	}
+
+	pub fn postgres_new_password(
+		&mut self,
+		name: &str,
+	) -> Result<NewPasswordRes> {
+		if !self.postgres_databases.contains_key(name) {
+			return Err(Error::DatabaseNotFound);
+		}
+
+		let password = Token::<32>::new().to_string();
+
+		Ok(NewPasswordRes {
 			name: name.to_string(),
 			password,
 		})

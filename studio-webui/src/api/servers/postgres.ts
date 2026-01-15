@@ -3,16 +3,26 @@
 
 import { api } from '.';
 
-// export async function loadRegistryUsers(serverId: string): Promise<string[]> {
-// 	return await api.get(`/${serverId}/registry/users`);
-// }
+export async function loadDatabases(serverId: string): Promise<string[]> {
+	return await api.get(`/${serverId}/postgres/databases`);
+}
 
-// export async function createRegistryUser(
-// 	serverId: string,
-// 	username: string,
-// ): Promise<{ username: string; password: string }> {
-// 	return await api.post(`/${serverId}/registry/users`, { username });
-// }
+export async function createDatabase(
+	serverId: string,
+	name: string,
+): Promise<{ name: string; password: string }> {
+	return await api.post(`/${serverId}/postgres/databases`, { name });
+}
+
+export async function newPassword(
+	serverId: string,
+	database: string,
+): Promise<{ name: string; password: string }> {
+	return await api.post(
+		`/${serverId}/postgres/databases/${database}/password`,
+		{},
+	);
+}
 
 // export async function deleteRegistryUser(
 // 	serverId: string,

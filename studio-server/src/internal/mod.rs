@@ -12,7 +12,7 @@ use futures::stream::BoxStream;
 use internal_api::{
 	apps::{AppId, AppInfoRes, ComposeCommand, GetComposeRes, SaveComposeReq},
 	client::{self as int, Result},
-	postgres::{CreateDatabaseRes, DatabaseName},
+	postgres::{CreateDatabaseRes, DatabaseName, NewPasswordRes},
 	registry::{CreateUserRes, RegistryUsername},
 	requests::{InfoRes, PingRes},
 };
@@ -162,6 +162,9 @@ pub trait ApiServerPostgresClientTrait {
 		&self,
 		name: &DatabaseName,
 	) -> Result<CreateDatabaseRes>;
+
+	async fn new_password(&self, name: &DatabaseName)
+	-> Result<NewPasswordRes>;
 
 	async fn restore_database(
 		&self,

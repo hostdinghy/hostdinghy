@@ -3,7 +3,6 @@
 	import Add from '@/assets/icons/Add.svelte';
 	import Button from '@/components/Button.svelte';
 	import Table from '@/components/table/Table.svelte';
-	import TableToolbar from '@/components/table/TableToolbar.svelte';
 	import type LoadProps from '@/lib/LoadProps';
 	import type { ResolvedProps } from '@/lib/LoadProps';
 

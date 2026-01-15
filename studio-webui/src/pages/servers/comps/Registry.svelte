@@ -134,7 +134,7 @@
 
 	<Modal open={openCreateModal} onclose={resetCreateModal}>
 		<header>
-			<h2 class="h2-mod">Create User</h2>
+			<h2 class="h2-mod">Create user</h2>
 			<CloseModal onclick={resetCreateModal} />
 		</header>
 
@@ -165,7 +165,7 @@
 				{/if}
 
 				<div class="btns">
-					<Button type="submit" class="btn">submit</Button>
+					<Button>submit</Button>
 				</div>
 			</form>
 		{/if}

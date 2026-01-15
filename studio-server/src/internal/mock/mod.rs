@@ -21,7 +21,7 @@ use internal_api::{
 	apps::{AppId, AppInfoRes, ComposeCommand, GetComposeRes, SaveComposeReq},
 	client::Result,
 	error::Error,
-	postgres::{CreateDatabaseRes, DatabaseName},
+	postgres::{CreateDatabaseRes, DatabaseName, NewPasswordRes},
 	registry::{CreateUserRes, RegistryUsername},
 	requests::{InfoRes, PingRes},
 };
@@ -197,6 +197,14 @@ impl ApiServerPostgresClientTrait for ApiServerClient {
 	) -> Result<CreateDatabaseRes> {
 		let mut server = self.server.lock().unwrap();
 		server.postgres_create_database(name.as_ref())
+	}
+
+	async fn new_password(
+		&self,
+		name: &DatabaseName,
+	) -> Result<NewPasswordRes> {
+		let mut server = self.server.lock().unwrap();
+		server.postgres_new_password(name.as_ref())
 	}
 
 	async fn restore_database(

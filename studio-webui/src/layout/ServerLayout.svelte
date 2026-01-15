@@ -46,6 +46,10 @@
 					label: 'Registry',
 					url: `/servers/${server.id}/registry`,
 				},
+				{
+					label: 'Postgres',
+					url: `/servers/${server.id}/postgres`,
+				},
 			]}
 		>
 			{@render children()}
@@ -59,6 +63,7 @@
 		display: flex;
 		margin-top: 2rem;
 	}
+
 	.main {
 		display: grid;
 		grid-template-rows: auto 1fr auto;

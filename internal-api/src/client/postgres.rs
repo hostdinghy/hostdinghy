@@ -1,5 +1,5 @@
 use bytes::Bytes;
-use futures::{Stream, StreamExt as _, TryStream, stream::BoxStream};
+use futures::{StreamExt as _, TryStream, stream::BoxStream};
 use reqwest::Body;
 
 use crate::{
@@ -7,7 +7,7 @@ use crate::{
 	client::{ApiServerClient, Result},
 	database_name::DatabaseName,
 	error::WithMessage,
-	postgres::{CreateDatabaseReq, CreateDatabaseRes},
+	postgres::{CreateDatabaseReq, CreateDatabaseRes, NewPasswordRes},
 };
 
 #[derive(Debug, Clone)]
@@ -35,6 +35,18 @@ impl<'a> ApiServerPostgresClient<'a> {
 				self.inner
 					.post("/postgres/databases")
 					.json(&CreateDatabaseReq { name: name.clone() }),
+			)
+			.await
+	}
+
+	pub async fn new_password(
+		&self,
+		name: &DatabaseName,
+	) -> Result<NewPasswordRes> {
+		self.inner
+			.send_json(
+				self.inner
+					.post(&format!("/postgres/databases/{name}/password")),
 			)
 			.await
 	}

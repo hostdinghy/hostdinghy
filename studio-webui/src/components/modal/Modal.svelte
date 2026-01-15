@@ -1,45 +1,44 @@
 <script lang="ts">
-	import { onDestroy, type Snippet } from 'svelte';
-	import { on } from 'svelte/events';
+	import { type Snippet } from 'svelte';
 
 	let {
-		open = $bindable(),
+		open,
+		// not bindable, because almost always you wan't to do some
+		// cleanup when closing the modal
+		// so this forces you to think about that
+		children,
+		onclose,
 		/** if the modal should fill the screen */
 		fillScreen = false,
-		children,
 		class: cls,
-		onclose = () => (open = false),
 		...rest
 	}: {
 		open: boolean;
-		fillScreen?: boolean;
 		children: Snippet;
+		onclose: () => void;
+		fillScreen?: boolean;
 		class?: string;
-		onclose?: () => void;
 		[key: string]: any;
 	} = $props();
 
-	const removeHandler = on(window, 'keydown', ({ key }) => {
-		if (key === 'Escape') {
-			open = false;
-		}
-	});
-
-	onDestroy(() => {
-		removeHandler();
-	});
+	function onkeydown(e: KeyboardEvent) {
+		if (e.key === 'Escape') onclose();
+	}
 </script>
+
+<svelte:window on:keydown={onkeydown} />
 
 {#if open}
 	<div class="modal-layer">
+		<!-- svelte-ignore a11y_click_events_have_key_events -->
+		<!-- svelte-ignore a11y_no_static_element_interactions -->
+		<div onclick={onclose} class="background"></div>
+
 		<div class="wrap">
 			<div class="modal {cls}" class:fill-screen={fillScreen} {...rest}>
 				{@render children()}
 			</div>
 		</div>
-		<!-- svelte-ignore a11y_click_events_have_key_events -->
-		<!-- svelte-ignore a11y_no_static_element_interactions -->
-		<div onclick={onclose} class="background"></div>
 	</div>
 {/if}
 
@@ -76,6 +75,5 @@
 		inset: 0;
 		background: var(--c-bg);
 		opacity: 0.8;
-		z-index: 0;
 	}
 </style>

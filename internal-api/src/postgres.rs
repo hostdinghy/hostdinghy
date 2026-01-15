@@ -48,6 +48,7 @@ pub struct NewPasswordReq;
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct NewPasswordRes {
+	/// user has the same name
 	pub name: String,
 	pub password: String,
 }

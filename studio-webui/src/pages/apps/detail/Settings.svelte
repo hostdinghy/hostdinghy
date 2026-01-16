@@ -13,47 +13,43 @@
 	import Button from '@/components/Button.svelte';
 	import Editor from '@/components/Editor.svelte';
 	import CommitConfigModal from '@/layout/modals/CommitConfig.svelte';
-	import { toast, type ToastRef } from '@/layout/Toasts.svelte';
+	import { createToastHandler } from '@/layout/Toasts.svelte';
 	import { errorToStr } from '@/api/lib';
 	import Header from '@/components/Header.svelte';
 
 	let { app, compose }: AppLayoutProps<typeof loadProps> = $props();
+
+	let toast = createToastHandler();
 
 	let editor: Editor;
 	let commitConfigOpen = $state(false);
 	let original = $state(compose);
 	let modified = $state(compose);
 
-	let toastRef: ToastRef | null = null;
-
 	function onsave(newValue: string) {
-		toastRef?.remove();
+		toast.remove();
 
 		modified = newValue;
 		commitConfigOpen = true;
 	}
 
 	async function oncommit() {
-		toastRef?.remove();
+		toast.remove();
 
 		try {
 			original = await createCompose(app.id, modified);
 			modified = original;
 			editor.setValue(original);
+			commitConfigOpen = false;
 
-			toastRef = toast({
-				status: 'success',
-				message: 'new Config saved',
-			});
+			toast.success('new Config saved');
 		} catch (e: any) {
-			toastRef = toast({
-				status: 'error',
-				message: errorToStr(e),
-			});
+			toast.error(errorToStr(e));
 		}
 	}
 
 	function onreset() {
+		commitConfigOpen = false;
 		modified = original;
 		editor.setValue(original);
 	}
@@ -79,9 +75,9 @@
 </div>
 
 <CommitConfigModal
-	bind:open={commitConfigOpen}
-	bind:original
-	bind:modified
+	open={commitConfigOpen}
+	{original}
+	{modified}
 	{oncommit}
 	{onreset}
 />
@@ -91,14 +87,6 @@
 		flex: 1;
 		display: flex;
 		flex-direction: column;
-	}
-
-	header {
-		padding: 1rem;
-		border-bottom: 1px solid var(--c-border);
-		display: flex;
-		justify-content: space-between;
-		align-items: center;
 	}
 
 	.title {

@@ -1,9 +1,9 @@
 @use './sass/resets.scss';
-@use './sass/form.scss';
 @use './sass/typography.scss';
 
 /*
 Z-Index Map
+1100: Toasts
 1000: Modal
 */
 
@@ -56,6 +56,10 @@ html {
 body {
 	background-color: var(--c-bg);
 	color: var(--c-text);
+
+	&.disable-scroll {
+		overflow: hidden;
+	}
 }
 
 .wrap {
@@ -65,6 +69,17 @@ body {
 	margin-right: auto;
 	padding-left: var(--sx-body);
 	padding-right: var(--sx-body);
+}
+
+.sr-only {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	padding: 0;
+	margin: -1px;
+	overflow: hidden;
+	clip: rect(0, 0, 0, 0);
+	border: 0;
 }
 
 .underline,

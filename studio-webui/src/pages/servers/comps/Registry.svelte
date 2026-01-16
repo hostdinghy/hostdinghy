@@ -28,7 +28,7 @@
 	import TableToolbar from '@/components/table/TableToolbar.svelte';
 	import Add from '@/assets/icons/Add.svelte';
 	import Header from '@/components/Header.svelte';
-	import CloseModal from '@/components/modal/CloseModal.svelte';
+	import NewPasswordModal from '@/components/modal/NewPasswordModal.svelte';
 
 	let { server, users = $bindable() }: { server: Server; users: Users } =
 		$props();
@@ -132,44 +132,35 @@
 		{/snippet}
 	</Table>
 
-	<Modal open={openCreateModal} onclose={resetCreateModal}>
-		<header>
-			<h2 class="h2-mod">Create user</h2>
-			<CloseModal onclick={resetCreateModal} />
-		</header>
+	<Modal
+		open={openCreateModal}
+		title="Create user"
+		onclose={resetCreateModal}
+		size="small"
+	>
+		<form onsubmit={onCreateSubmit}>
+			<Input
+				id="username"
+				name="username"
+				type="text"
+				label="username"
+				placeholder="Enter username..."
+				bind:value={newUsername}
+				required
+				bx={false}
+			/>
 
-		{#if newPassword}
-			<div class="new-password">
-				<p>
-					<strong>Your new password:</strong>
-					<span class="pw">{newPassword}</span>
-				</p>
+			{#if error}
+				<div class="error">{error}</div>
+			{/if}
 
-				<p>!This will only be display once!</p>
+			<div class="btns">
+				<Button>submit</Button>
 			</div>
-		{:else}
-			<form onsubmit={onCreateSubmit}>
-				<Input
-					id="username"
-					name="username"
-					type="text"
-					label="username"
-					placeholder="Enter username..."
-					bind:value={newUsername}
-					required
-					bx={false}
-				/>
-
-				{#if error}
-					<div class="error">{error}</div>
-				{/if}
-
-				<div class="btns">
-					<Button>submit</Button>
-				</div>
-			</form>
-		{/if}
+		</form>
 	</Modal>
+
+	<NewPasswordModal title="Create user" bind:password={newPassword} />
 </div>
 
 <style lang="scss">
@@ -181,37 +172,6 @@
 
 	.actions {
 		width: 10%;
-	}
-
-	// modal
-	#registry :global .modal {
-		width: 100%;
-		max-width: 28rem;
-	}
-
-	header {
-		display: flex;
-		padding: 1rem;
-		justify-content: space-between;
-		align-items: center;
-	}
-
-	.new-password {
-		padding: 1rem;
-
-		strong {
-			display: block;
-			margin-bottom: 0.3rem;
-			color: var(--c-label);
-		}
-
-		.pw {
-			word-break: break-all;
-		}
-
-		p:not(:last-child) {
-			margin-bottom: 1.5rem;
-		}
 	}
 
 	.error {

@@ -35,7 +35,7 @@
 		left: 0;
 		height: 3px;
 		width: 100%;
-		transform: translateY(-100%);
+		transform: translateY(calc(-100% - 1px));
 		transition: transform 0.5s ease;
 
 		&::before {

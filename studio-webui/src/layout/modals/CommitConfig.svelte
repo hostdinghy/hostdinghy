@@ -2,42 +2,22 @@
 	import Button from '@/components/Button.svelte';
 	import DiffViewer from '@/components/DiffViewer.svelte';
 	import Modal from '@/components/modal/Modal.svelte';
-	import CloseModal from '@/components/modal/CloseModal.svelte';
 
-	let {
-		open = $bindable(),
-		original = $bindable(),
-		modified = $bindable(),
-		oncommit,
-		onreset,
-	} = $props();
+	let { open, original, modified, oncommit, onreset } = $props();
 </script>
 
-<Modal bind:open class="commit-config" fillScreen>
-	<header>
-		<h2>Commit Changes</h2>
-		<CloseModal onclick={() => (open = false)} />
-	</header>
-
-	<DiffViewer bind:original bind:modified />
+<Modal
+	{open}
+	title="Commit changes"
+	class="commit-config"
+	size="fill-screen"
+	onclose={onreset}
+>
+	<DiffViewer {original} {modified} />
 
 	<footer>
-		<Button
-			onclick={() => {
-				open = false;
-				onreset();
-			}}
-		>
-			Reset
-		</Button>
-		<Button
-			onclick={() => {
-				open = false;
-				oncommit();
-			}}
-		>
-			Commit
-		</Button>
+		<Button onclick={onreset}>Reset</Button>
+		<Button onclick={oncommit}>Commit</Button>
 	</footer>
 </Modal>
 
@@ -48,19 +28,11 @@
 		.commit-config.modal {
 			display: grid;
 			grid-template-rows: auto 1fr auto;
+
+			header {
+				border-bottom: 1px solid var(--c-border);
+			}
 		}
-	}
-
-	header {
-		padding: 1rem;
-		border-bottom: 1px solid var(--c-border);
-		display: flex;
-		justify-content: space-between;
-		align-items: center;
-	}
-
-	h2 {
-		font-size: 1.25rem;
 	}
 
 	footer {

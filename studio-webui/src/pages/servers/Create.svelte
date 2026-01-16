@@ -4,6 +4,7 @@
 	import { getRouter } from '@/main';
 	import { errorToStr } from '@/api/lib';
 	import Textarea from '@/form/Textarea.svelte';
+	import Button from '@/components/Button.svelte';
 
 	const router = getRouter();
 
@@ -84,7 +85,7 @@
 				<div class="error">{error}</div>
 			{/if}
 
-			<button type="submit" class="btn mt">submit</button>
+			<Button mt>submit</Button>
 		</form>
 	</div>
 </div>

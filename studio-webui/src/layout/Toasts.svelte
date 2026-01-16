@@ -1,10 +1,12 @@
 <script module lang="ts">
+	import { onDestroy } from 'svelte';
+
 	export type Toast = {
 		message: string;
 		status: ToastStatus;
 	};
 
-	export type ToastStatus = 'success' | 'error';
+	export type ToastStatus = 'success' | 'info' | 'error';
 
 	export type ToastRef = {
 		id: number;
@@ -18,53 +20,84 @@
 		// @ts-ignore
 		return window.NEW_TOAST(obj);
 	}
+
+	export type ToastHandler = {
+		/** Shows a success toast message */
+		success: (message: string) => void;
+		/** Shows an info toast message */
+		info: (message: string) => void;
+		/** Shows an error toast message */
+		error: (message: string) => void;
+		/** Updates the current toast message */
+		update: (message: string) => void;
+		/** Removes the current toast message */
+		remove: () => void;
+	};
+
+	/** Creates a possible toast instance useful in svelte components */
+	export function createToastHandler(): ToastHandler {
+		let toastRef: ToastRef | null = null;
+
+		const destroy = () => {
+			toastRef?.remove();
+			toastRef = null;
+		};
+		onDestroy(destroy);
+
+		const newToast = (message: string, status: ToastStatus) => {
+			toastRef?.remove();
+			toastRef = toast({ message, status });
+		};
+
+		return {
+			success: (message: string) => newToast(message, 'success'),
+			info: (message: string) => newToast(message, 'info'),
+			error: (message: string) => newToast(message, 'error'),
+			update: (message: string) => toastRef?.update({ message }),
+			remove: () => destroy(),
+		};
+	}
 </script>
 
 <script lang="ts">
 	let toasts = $state<({ ref: ToastRef } & Toast)[]>([]);
 	let counter = 0;
 
-	function init() {
-		if (import.meta.env.SSR) return;
+	// @ts-ignore
+	window.NEW_TOAST = d => {
+		const id = ++counter;
 
-		// @ts-ignore
-		window.NEW_TOAST = d => {
-			const id = (counter = counter + 1);
-			const ref: ToastRef = {
-				id,
-				update: obj => {
-					const toast = toasts.findIndex(t => t.ref.id === id);
-					if (toast === -1) return;
+		const ref: ToastRef = {
+			id,
+			update: obj => {
+				// probably because of reactivity, taking the idx
+				const idx = toasts.findIndex(t => t.ref.id === id);
+				if (idx === -1) return;
 
-					if (typeof obj.message === 'string') {
-						toasts[toast].message = obj.message;
-					}
+				if (typeof obj.message === 'string') {
+					toasts[idx].message = obj.message;
+				}
 
-					if (typeof obj.status === 'string') {
-						toasts[toast].status = obj.status;
-					}
-				},
-				remove: () => {
-					toasts = toasts.filter(t => t.ref.id !== id);
-				},
-			};
-
-			toasts = [...toasts, { ref, ...d }];
-
-			return ref;
+				if (typeof obj.status === 'string') {
+					toasts[idx].status = obj.status;
+				}
+			},
+			remove: () => {
+				toasts = toasts.filter(t => t.ref.id !== id);
+			},
 		};
-	}
-	init();
+
+		toasts = [...toasts, { ref, ...d }];
+
+		return ref;
+	};
 </script>
 
 {#if toasts.length}
 	<div class="toasts">
-		<!-- todo maybe can i use toast.ref? as key -->
-		{#each toasts as toast, i (i)}
+		{#each toasts as toast (toast.ref.id)}
 			<div class="toast status-{toast.status}">
-				<p>
-					{toast.message}
-				</p>
+				<p>{toast.message}</p>
 
 				<button class="close" onclick={() => toast.ref.remove()}>
 					Close
@@ -80,13 +113,13 @@
 		display: flex;
 		bottom: 1rem;
 		left: 50%;
-		z-index: 1000;
 		max-width: 38rem;
 		width: 100%;
+		padding: 0 var(--sx-body);
+		z-index: 1100;
 		flex-direction: column;
 		gap: 1rem;
 		transform: translateX(-50%);
-		padding: 0 var(--sx-body);
 	}
 
 	.toast {
@@ -95,6 +128,12 @@
 		padding: 1.25rem 1.5rem;
 
 		&.status-success {
+			background-color: var(--blue);
+			color: var(--white);
+		}
+
+		&.status-info {
+			// todo find a color for this
 			background-color: var(--blue);
 			color: var(--white);
 		}

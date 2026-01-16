@@ -3,6 +3,8 @@
 		newPassword as pgNewPw,
 		createDatabase,
 		loadDatabases,
+		restoreDatabase,
+		dumpDatabase,
 	} from '@/api/servers/postgres';
 
 	export type Databases = string[];
@@ -21,11 +23,17 @@
 	import Table from '@/components/table/Table.svelte';
 	import Modal from '@/components/modal/Modal.svelte';
 	import { errorToStr } from '@/api/lib';
-	import CloseModal from '@/components/modal/CloseModal.svelte';
 	import Input from '@/form/Input.svelte';
+	import FileUpload from '@/form/FileUpload.svelte';
 	import type { Server } from '@/api/servers';
 	import ButtonGroup from '@/components/ButtonGroup.svelte';
-	import Refresh from '@/assets/icons/Refresh.svelte';
+	import KeyAlert from '@/assets/icons/KeyAlert.svelte';
+	import Upload from '@/assets/icons/Upload.svelte';
+	import NewPasswordModal from '@/components/modal/NewPasswordModal.svelte';
+	import Download from '@/assets/icons/Download.svelte';
+	import ProgressBar from '@/form/ProgressBar.svelte';
+	import { createToastHandler } from '@/layout/Toasts.svelte';
+	import { browserDateTimePathSafe } from '@/lib/time';
 
 	let { server, dbs = $bindable() }: { server: Server; dbs: Databases } =
 		$props();
@@ -34,6 +42,12 @@
 	let newName = $state('');
 	let newPassword = $state('');
 	let error = $state('');
+	let toast = createToastHandler();
+
+	function resetErrors() {
+		error = '';
+		toast.remove();
+	}
 
 	function resetCreateModal() {
 		openCreateModal = false;
@@ -43,7 +57,7 @@
 
 	async function onCreateSubmit(e: Event) {
 		e.preventDefault();
-		error = '';
+		resetErrors();
 
 		try {
 			const { name, password } = await createDatabase(server.id, newName);
@@ -66,8 +80,115 @@
 
 			newPassword = password;
 		} catch (e) {
-			alert(errorToStr(e));
+			toast.error(errorToStr(e));
 		}
+	}
+
+	// contains the databasename if the modal is open
+	let openRestoreModal: string | null = $state(null);
+	let restoreFile: File | null = $state(null);
+	let uploadProgress: number = $state(0);
+
+	async function onRestoreSubmit(e: Event) {
+		e.preventDefault();
+		resetErrors();
+		uploadProgress = 0;
+
+		if (!restoreFile) {
+			error = 'Please select a file to restore.';
+			return;
+		}
+
+		if (
+			!confirm(
+				'Restoring will overwrite the existing database. Continue?',
+			)
+		)
+			return;
+
+		try {
+			await restoreDatabase(
+				server.id,
+				openRestoreModal!,
+				restoreFile,
+				prog => (uploadProgress = prog),
+			);
+			resetRestoreModal();
+		} catch (e) {
+			error = errorToStr(e);
+		}
+	}
+
+	function resetRestoreModal() {
+		openRestoreModal = null;
+		restoreFile = null;
+		error = '';
+		uploadProgress = 0;
+	}
+
+	async function onDumpDb(name: string) {
+		let resp: Response;
+		try {
+			resp = await dumpDatabase(server.id, name);
+		} catch (e) {
+			toast.error(errorToStr(e));
+			return;
+		}
+
+		const filename = `${name}-${browserDateTimePathSafe(new Date())}.sql`;
+
+		toast.info(`Downloading "${filename}"`);
+
+		try {
+			// @ts-ignore
+			if (typeof window.showSaveFilePicker === 'function') {
+				const downloaded = await downloadStream(resp, filename);
+				if (!downloaded) {
+					toast.remove();
+					return;
+				}
+			} else {
+				await downloadBlob(resp, filename);
+			}
+
+			toast.success('Database dump downloaded.');
+		} catch (e) {
+			toast.error(errorToStr(e));
+		}
+	}
+
+	async function downloadStream(
+		resp: Response,
+		filename: string,
+	): Promise<boolean> {
+		let fileHandle;
+		try {
+			// @ts-ignore
+			fileHandle = await window.showSaveFilePicker({
+				suggestedName: filename,
+			});
+		} catch (e) {
+			if ((e as DOMException)?.name === 'AbortError') return false;
+			throw e;
+		}
+
+		const writable = await fileHandle.createWritable();
+		await resp.body!.pipeTo(writable);
+
+		return true;
+	}
+
+	async function downloadBlob(resp: Response, filename: string) {
+		const blob = await resp.blob();
+
+		const el = document.createElement('a');
+		const url = URL.createObjectURL(blob);
+		document.body.appendChild(el);
+		el.href = url;
+		el.download = filename;
+		el.click();
+		el.remove();
+		window.URL.revokeObjectURL(url);
 	}
 </script>
 
@@ -100,19 +221,33 @@
 						aria-label="new password"
 						onclick={() => onGenNewPw(row.name)}
 					>
-						<Refresh />
+						<KeyAlert />
+					</Button>
+					<Button
+						title="restore"
+						aria-label="restore"
+						onclick={() => (openRestoreModal = row.name)}
+					>
+						<Upload />
+					</Button>
+					<Button
+						title="dump"
+						aria-label="dump"
+						onclick={() => onDumpDb(row.name)}
+					>
+						<Download />
 					</Button>
 				</ButtonGroup>
 			</td>
 		{/snippet}
 	</Table>
 
-	<Modal open={openCreateModal} onclose={resetCreateModal}>
-		<header>
-			<h2 class="h2-mod">Create database</h2>
-			<CloseModal onclick={resetCreateModal} />
-		</header>
-
+	<Modal
+		open={openCreateModal}
+		title="Create database"
+		size="small"
+		onclose={resetCreateModal}
+	>
 		<form onsubmit={onCreateSubmit}>
 			<Input
 				id="name"
@@ -135,57 +270,39 @@
 		</form>
 	</Modal>
 
-	<Modal open={!!newPassword} onclose={() => (newPassword = '')}>
-		<header>
-			<h2 class="h2-mod">Database password</h2>
-			<CloseModal onclick={() => (newPassword = '')} />
-		</header>
+	<NewPasswordModal title="Database password" bind:password={newPassword} />
 
-		<div class="new-password">
-			<p>
-				<strong>Your new password:</strong>
-				<span class="pw">{newPassword}</span>
-			</p>
+	<Modal
+		open={!!openRestoreModal}
+		title="Restore database"
+		size="medium"
+		onclose={resetRestoreModal}
+	>
+		<form onsubmit={onRestoreSubmit}>
+			<FileUpload
+				id="restore-file"
+				name="restore-file"
+				label="sql file"
+				bx={false}
+				bind:file={restoreFile}
+			/>
 
-			<p>!This will only be display once!</p>
-		</div>
+			{#if error}
+				<div class="error">{error}</div>
+			{/if}
+
+			<ProgressBar progress={uploadProgress} mt />
+
+			<div class="btns">
+				<Button>submit</Button>
+			</div>
+		</form>
 	</Modal>
 </div>
 
 <style lang="scss">
 	.actions {
-		width: 10%;
-	}
-
-	// modal
-	#postgres :global .modal {
-		width: 100%;
-		max-width: 28rem;
-	}
-
-	header {
-		display: flex;
-		padding: 1rem;
-		justify-content: space-between;
-		align-items: center;
-	}
-
-	.new-password {
-		padding: 1rem;
-
-		strong {
-			display: block;
-			margin-bottom: 0.3rem;
-			color: var(--c-label);
-		}
-
-		.pw {
-			word-break: break-all;
-		}
-
-		p:not(:last-child) {
-			margin-bottom: 1.5rem;
-		}
+		width: 20%;
 	}
 
 	.error {

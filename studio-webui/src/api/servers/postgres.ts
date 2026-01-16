@@ -24,6 +24,30 @@ export async function newPassword(
 	);
 }
 
+export async function restoreDatabase(
+	serverId: string,
+	database: string,
+	file: File,
+	progress: (percent: number) => void,
+): Promise<void> {
+	return await api.requestWithFile(
+		'PUT',
+		`/${serverId}/postgres/databases/${database}/restore`,
+		file,
+		progress,
+	);
+}
+
+export async function dumpDatabase(
+	serverId: string,
+	database: string,
+): Promise<Response> {
+	return await api.requestRaw(
+		'GET',
+		`/${serverId}/postgres/databases/${database}/dump`,
+	);
+}
+
 // export async function deleteRegistryUser(
 // 	serverId: string,
 // 	username: string,

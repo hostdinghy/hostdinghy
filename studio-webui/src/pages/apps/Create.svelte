@@ -15,6 +15,7 @@
 	import { getRouter } from '@/main';
 	import type { ResolvedProps } from '@/lib/LoadProps';
 	import { errorToStr } from '@/api/lib';
+	import Button from '@/components/Button.svelte';
 
 	const router = getRouter();
 
@@ -84,7 +85,7 @@
 				<div class="error">{error}</div>
 			{/if}
 
-			<button type="submit" class="btn mt">submit</button>
+			<Button mt>submit</Button>
 		</form>
 	</div>
 </div>

@@ -22,7 +22,7 @@
 	{#if logs}
 		<pre>{logs}</pre>
 	{:else}
-		<p>No logs available</p>
+		<p class="msg">No logs available</p>
 	{/if}
 </div>
 
@@ -34,5 +34,13 @@
 	pre {
 		white-space: pre-wrap;
 		word-break: break-word;
+	}
+
+	.msg {
+		color: rgb(from var(--c-text) r g b / 70%);
+
+		.underline {
+			color: var(--c-text);
+		}
 	}
 </style>

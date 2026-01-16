@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { byId, Service } from '@/api/apps';
 	import { composeCommand, type ComposeCommand } from '@/api/apps/compose';
+	import Download from '@/assets/icons/Download.svelte';
 	import PlayArrow from '@/assets/icons/PlayArrow.svelte';
 	import Refresh from '@/assets/icons/Refresh.svelte';
 	import Stop from '@/assets/icons/Stop.svelte';
@@ -74,7 +75,7 @@
 			aria-label="pull"
 			onclick={e => onComposeCommand(e, null, 'up')}
 		>
-			<Sync />
+			<Download />
 		</Button>
 	</ButtonGroup>
 </Header>
@@ -155,7 +156,7 @@
 						aria-label="pull"
 						onclick={e => onComposeCommand(e, service.name, 'up')}
 					>
-						<Sync />
+						<Download />
 					</Button>
 				</ButtonGroup>
 			</td>

@@ -9,7 +9,7 @@
 	}
 </script>
 
-<Modal open={!!password} {title} size="small" {onclose}>
+<Modal open={!!password} {title} size="small" headerBb {onclose}>
 	<div class="new-password">
 		<p>
 			<strong>Your new password:</strong>

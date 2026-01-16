@@ -11,6 +11,7 @@
 	title="Commit changes"
 	class="commit-config"
 	size="fill-screen"
+	headerBb
 	onclose={onreset}
 >
 	<DiffViewer {original} {modified} />
@@ -28,10 +29,6 @@
 		.commit-config.modal {
 			display: grid;
 			grid-template-rows: auto 1fr auto;
-
-			header {
-				border-bottom: 1px solid var(--c-border);
-			}
 		}
 	}
 

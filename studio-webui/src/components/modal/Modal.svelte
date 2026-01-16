@@ -17,6 +17,7 @@
 		children,
 		onclose,
 		size = undefined,
+		headerBb = false,
 		class: cls,
 		...rest
 	}: {
@@ -26,6 +27,8 @@
 		onclose: () => void;
 		fillScreen?: boolean;
 		size?: ModalSize;
+		/** header border bottom */
+		headerBb?: boolean;
 		class?: string;
 		[key: string]: any;
 	} = $props();
@@ -55,7 +58,7 @@
 		<div class="wrap" onclick={oncloseclick}>
 			<div class="modal {cls} size-{size ?? ''}" {...rest}>
 				{#if title}
-					<header>
+					<header class:bb={headerBb}>
 						<h2>{title}</h2>
 
 						<Button
@@ -118,6 +121,10 @@
 		padding: 1rem;
 		justify-content: space-between;
 		align-items: center;
+
+		&.bb {
+			border-bottom: 1px solid var(--c-border);
+		}
 
 		h2 {
 			font-size: 1.125rem;

@@ -1,6 +1,6 @@
 use crate::utils::{
 	cli::CliError,
-	cmd::{CmdError, cmd},
+	cmd::{ChildReadableStdout, CmdError, cmd},
 };
 
 pub async fn cli_execute_sql(sql: &str) -> Result<String, CliError> {
@@ -30,4 +30,17 @@ pub async fn stop_postgres() -> Result<(), CliError> {
 		.await
 		.map(|_| ())
 		.map_err(Into::into)
+}
+
+pub async fn dump_database(
+	name: &str,
+) -> Result<ChildReadableStdout, CliError> {
+	cmd(&[
+		"sudo", "-u", "postgres", "pg_dump", "-Fc", // custom format
+		"-d", name,
+	])
+	.as_root()
+	.spawn_readable_stdout()
+	.await
+	.map_err(Into::into)
 }

@@ -3,9 +3,10 @@ pub mod utils;
 
 use chuchi_crypto::token::Token;
 use clap::Parser;
+use tokio::{fs::File, io};
 use tracing::info;
 
-use crate::utils::cli::CliError;
+use crate::utils::cli::{CliError, WithMessage};
 pub use client::Client;
 
 #[derive(Debug, Parser)]
@@ -22,6 +23,7 @@ enum SubCommand {
 	DropDatabase(DropDatabase),
 	ListDatabases,
 	ListUsers,
+	DumpDatabase(DumpDatabase),
 }
 
 pub async fn postgres(postgres: Postgres) {
@@ -76,6 +78,10 @@ pub async fn inner_postgres(postgres: Postgres) -> Result<(), CliError> {
 					info!("- {}", user);
 				}
 			}
+		}
+		SubCommand::DumpDatabase(dd) => {
+			dump_database(dd).await?;
+			info!("Database dumped successfully.");
 		}
 	}
 
@@ -163,4 +169,24 @@ async fn list_users() -> Result<Vec<String>, CliError> {
 	let client = Client::new().await?;
 
 	client.list_users().await
+}
+
+#[derive(Debug, Parser)]
+pub struct DumpDatabase {
+	database_name: String,
+	output_file: String,
+}
+
+async fn dump_database(dump_database: DumpDatabase) -> Result<(), CliError> {
+	let mut file = File::create(&dump_database.output_file)
+		.await
+		.with_message("failed to create output file")?;
+
+	let mut child = utils::dump_database(&dump_database.database_name).await?;
+
+	io::copy(&mut child, &mut file)
+		.await
+		.with_message("failed to write database dump to file")?;
+
+	Ok(())
 }

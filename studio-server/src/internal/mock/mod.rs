@@ -6,18 +6,23 @@ use crate::{
 	AppState,
 	internal::{
 		ApiServerAppsClientTrait, ApiServerClientTrait,
-		ApiServerRegistryClientTrait,
+		ApiServerPostgresClientTrait, ApiServerRegistryClientTrait,
 		mock::storage::{ServerMock, ServersMock},
 	},
 	servers::data::Server,
 };
 
+use bytes::{Bytes, BytesMut};
+use futures::{
+	StreamExt,
+	stream::{self, BoxStream},
+};
 use internal_api::{
-	app_id::AppId,
-	apps::{AppInfoRes, ComposeCommand, GetComposeRes, SaveComposeReq},
+	apps::{AppId, AppInfoRes, ComposeCommand, GetComposeRes, SaveComposeReq},
 	client::Result,
 	error::Error,
-	registry::CreateUserRes,
+	postgres::{CreateDatabaseRes, DatabaseName, NewPasswordRes},
+	registry::{CreateUserRes, RegistryUsername},
 	requests::{InfoRes, PingRes},
 };
 use pg::{UniqueId, db::ConnOwned, time::DateTime};
@@ -106,6 +111,10 @@ impl ApiServerClientTrait for ApiServerClient {
 	fn registry(&self) -> &dyn ApiServerRegistryClientTrait {
 		self
 	}
+
+	fn postgres(&self) -> &dyn ApiServerPostgresClientTrait {
+		self
+	}
 }
 
 #[async_trait::async_trait]
@@ -161,13 +170,64 @@ impl ApiServerRegistryClientTrait for ApiServerClient {
 		server.registry_users()
 	}
 
-	async fn create_user(&self, username: &str) -> Result<CreateUserRes> {
+	async fn create_user(
+		&self,
+		username: &RegistryUsername,
+	) -> Result<CreateUserRes> {
 		let mut server = self.server.lock().unwrap();
-		server.registry_create_user(username)
+		server.registry_create_user(username.as_ref())
 	}
 
-	async fn delete_user(&self, username: &str) -> Result<()> {
+	async fn delete_user(&self, username: &RegistryUsername) -> Result<()> {
 		let mut server = self.server.lock().unwrap();
-		server.registry_delete_user(username)
+		server.registry_delete_user(username.as_ref())
+	}
+}
+
+#[async_trait::async_trait]
+impl ApiServerPostgresClientTrait for ApiServerClient {
+	async fn databases(&self) -> Result<Vec<String>> {
+		let server = self.server.lock().unwrap();
+		server.postgres_databases()
+	}
+
+	async fn create_database(
+		&self,
+		name: &DatabaseName,
+	) -> Result<CreateDatabaseRes> {
+		let mut server = self.server.lock().unwrap();
+		server.postgres_create_database(name.as_ref())
+	}
+
+	async fn new_password(
+		&self,
+		name: &DatabaseName,
+	) -> Result<NewPasswordRes> {
+		let mut server = self.server.lock().unwrap();
+		server.postgres_new_password(name.as_ref())
+	}
+
+	async fn restore_database(
+		&self,
+		name: &DatabaseName,
+		mut bytes_stream: BoxStream<'static, Result<Bytes>>,
+	) -> Result<()> {
+		let mut bytes = BytesMut::new();
+		while let Some(b) = bytes_stream.next().await {
+			bytes.extend_from_slice(b?.as_ref());
+		}
+
+		let mut server = self.server.lock().unwrap();
+		server.postgres_restore_database(name.as_ref(), bytes.into())
+	}
+
+	async fn dump_database(
+		&self,
+		name: &DatabaseName,
+	) -> Result<BoxStream<'static, Result<Bytes>>> {
+		let server = self.server.lock().unwrap();
+		let bytes = server.postgres_dump_database(name.as_ref())?;
+
+		Ok(stream::once(async move { Ok(bytes) }).boxed())
 	}
 }

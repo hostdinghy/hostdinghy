@@ -21,6 +21,7 @@ export function registerServers(router: Router) {
 		r => {
 			r.register('', () => import('./detail/Index.svelte'));
 			r.register('/registry', () => import('./detail/Registry.svelte'));
+			r.register('/postgres', () => import('./detail/Postgres.svelte'));
 		},
 	);
 }

@@ -3,16 +3,17 @@ use std::{
 	sync::{Arc, Mutex},
 };
 
+use bytes::Bytes;
 use compose_yml::Compose;
 use crypto::token::Token;
 use internal_api::{
-	app_id::AppId,
 	apps::{
-		AppInfoRes, AppService, ComposeCommand, GetComposeRes, SaveComposeReq,
-		ServiceRoute, ServiceState,
+		AppId, AppInfoRes, AppService, ComposeCommand, GetComposeRes,
+		SaveComposeReq, ServiceRoute, ServiceState,
 	},
 	client::Result,
 	error::Error,
+	postgres::{CreateDatabaseRes, NewPasswordRes},
 	registry::CreateUserRes,
 };
 use pg::UniqueId;
@@ -73,6 +74,7 @@ pub struct ServerMock {
 	pub version: Version,
 	apps: HashMap<AppId, AppMock>,
 	registry_users: HashSet<String>,
+	postgres_databases: HashMap<String, Bytes>,
 }
 
 impl ServerMock {
@@ -83,6 +85,7 @@ impl ServerMock {
 			version: "0.0.0-debug.0".parse().unwrap(),
 			apps: HashMap::new(),
 			registry_users: HashSet::new(),
+			postgres_databases: HashMap::new(),
 		}
 	}
 
@@ -155,6 +158,66 @@ impl ServerMock {
 
 		Ok(())
 	}
+
+	pub fn postgres_databases(&self) -> Result<Vec<String>> {
+		Ok(self.postgres_databases.keys().cloned().collect())
+	}
+
+	pub fn postgres_create_database(
+		&mut self,
+		name: &str,
+	) -> Result<CreateDatabaseRes> {
+		if self.postgres_databases.contains_key(name) {
+			return Err(Error::DatabaseAlreadyExists);
+		}
+
+		let password = Token::<32>::new().to_string();
+		self.postgres_databases
+			.insert(name.to_string(), Bytes::new());
+
+		Ok(CreateDatabaseRes {
+			name: name.to_string(),
+			password,
+		})
+	}
+
+	pub fn postgres_new_password(
+		&mut self,
+		name: &str,
+	) -> Result<NewPasswordRes> {
+		if !self.postgres_databases.contains_key(name) {
+			return Err(Error::DatabaseNotFound);
+		}
+
+		let password = Token::<32>::new().to_string();
+
+		Ok(NewPasswordRes {
+			name: name.to_string(),
+			password,
+		})
+	}
+
+	pub fn postgres_restore_database(
+		&mut self,
+		name: &str,
+		bytes: Bytes,
+	) -> Result<()> {
+		if !self.postgres_databases.contains_key(name) {
+			return Err(Error::DatabaseNotFound);
+		}
+
+		self.postgres_databases
+			.insert(name.to_string(), bytes.into());
+
+		Ok(())
+	}
+
+	pub fn postgres_dump_database(&self, name: &str) -> Result<Bytes> {
+		self.postgres_databases
+			.get(name)
+			.cloned()
+			.ok_or(Error::DatabaseNotFound)
+	}
 }
 
 const MOCK_COMPOSE: &str = include_str!("./mock_compose.yml");
@@ -165,7 +228,6 @@ pub struct AppMock {
 	id: AppId,
 	compose: Option<String>,
 	started: Option<bool>,
-	database: bool,
 }
 
 impl AppMock {
@@ -176,7 +238,6 @@ impl AppMock {
 			id,
 			compose: rng.random_bool(0.5).then(|| MOCK_COMPOSE.to_string()),
 			started: None,
-			database: rng.random_bool(0.5),
 		}
 	}
 
@@ -223,18 +284,11 @@ impl AppMock {
 	pub fn app_get_compose(&self) -> Result<GetComposeRes> {
 		let compose = self.compose.clone().ok_or(Error::AppNotFound)?;
 
-		Ok(GetComposeRes {
-			compose,
-			database: self.database,
-		})
+		Ok(GetComposeRes { compose })
 	}
 
 	pub fn app_set_compose(&mut self, req: &SaveComposeReq) -> Result<()> {
 		self.compose = Some(req.compose.clone());
-		if req.create_database {
-			// database does never get deleted
-			self.database = req.create_database;
-		}
 
 		Ok(())
 	}

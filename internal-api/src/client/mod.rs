@@ -1,4 +1,5 @@
 mod apps;
+mod postgres;
 mod registry;
 
 use http::Method;
@@ -8,7 +9,9 @@ use serde::de::DeserializeOwned;
 pub use apps::ApiServerAppsClient;
 
 use crate::{
-	client::registry::ApiServerRegistryClient,
+	client::{
+		postgres::ApiServerPostgresClient, registry::ApiServerRegistryClient,
+	},
 	error::{Error, WithMessage},
 	requests::{ApiToken, InfoRes, PingRes},
 };
@@ -126,5 +129,9 @@ impl ApiServerClient {
 
 	pub fn registry(&self) -> ApiServerRegistryClient<'_> {
 		ApiServerRegistryClient::new(&self)
+	}
+
+	pub fn postgres(&self) -> ApiServerPostgresClient<'_> {
+		ApiServerPostgresClient::new(&self)
 	}
 }

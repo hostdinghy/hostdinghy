@@ -31,21 +31,14 @@ export class Api {
 	 *
 	 * @throws - If the request fails
 	 */
-	async request(
+	async requestRaw(
 		method: string,
 		path: string,
 		data: object | null = null,
 		headers: object = {},
 		opts: any = {},
-	): Promise<any> {
-		const validPath =
-			path === '' || (path.startsWith('/') && !path.endsWith('/'));
-		if (!validPath) {
-			console.log('path', path);
-			throw new Error(
-				'path needs to either be empty or start with / and not end with /',
-			);
-		}
+	): Promise<Response> {
+		assertValidPath(path);
 
 		let err: ApiError;
 
@@ -93,7 +86,7 @@ export class Api {
 			opts.responseHeaders = resp.headers;
 
 			if (resp.ok) {
-				return await resp.json();
+				return resp;
 			} else {
 				// we've got and error
 				// todo we need to replace the Json type in axum
@@ -108,6 +101,31 @@ export class Api {
 
 		console.error('request error', err);
 		throw err;
+	}
+
+	/**
+	 * Send a request to the server
+	 *
+	 * @param method - The method of the request
+	 * @param path - The path of the request
+	 * @param data - The data to be sent if the method is get the data will
+	 * be sent as query params
+	 * @param headers - The headers to be sent
+	 * @param opts - The additional options to be sent to fetch
+	 *
+	 * @returns The response of the request
+	 *
+	 * @throws - If the request fails
+	 */
+	async request(
+		method: string,
+		path: string,
+		data: object | null = null,
+		headers: object = {},
+		opts: any = {},
+	): Promise<any> {
+		const resp = await this.requestRaw(method, path, data, headers, opts);
+		return await resp.json();
 	}
 
 	async get(
@@ -144,6 +162,95 @@ export class Api {
 		opts: any = {},
 	): Promise<any> {
 		return this.request('DELETE', path, data, headers, opts);
+	}
+
+	/**
+	 * Send a request to the server with a file
+	 *
+	 * @param method - The method of the request
+	 * @param path - The path of the request
+	 * @param file - The file to be sent
+	 * @param progress - The progress callback
+	 * @param headers - The headers to be sent
+	 *
+	 * @throws {ApiError} - If the request fails
+	 */
+	async requestWithFile(
+		method: string,
+		path: string,
+		file: File,
+		progress: ((percent: number) => void) | null = null,
+		headers: Record<string, string> = {},
+	): Promise<any> {
+		assertValidPath(path);
+
+		const prog = progress ?? ((_percent: number) => {});
+
+		const session = getSession();
+		// session might not be defined
+		if (session?.inner?.isValid()) {
+			headers['session-token'] = session.inner.token;
+		}
+
+		return new Promise((res, err) => {
+			// use XMLHttpRequest since with fetch we cannot track the upload
+			const req = new XMLHttpRequest();
+
+			req.responseType = 'json';
+
+			req.addEventListener('load', () => {
+				prog(100);
+
+				// should probably be a json object now
+				if (req.status === 200) {
+					res(req.response);
+				} else {
+					try {
+						err(ApiError.fromJson(req.response));
+					} catch (e: any) {
+						err(ApiError.fromAny(e));
+					}
+				}
+			});
+
+			req.addEventListener('error', () => {
+				console.error('requestWithFile network failure');
+				err(ApiError.newRequest('requestWithFile network failure'));
+			});
+
+			// to manually 'estimate the progress';
+			let prevProgress = 0;
+			req.upload.addEventListener('progress', e => {
+				if (e.lengthComputable) {
+					prog(Math.min((e.loaded / e.total) * 100, 99));
+				} else {
+					prevProgress += prevProgress >= 75 ? 5 : 25;
+					prog(Math.min(prevProgress, 99));
+				}
+			});
+
+			// open request
+			req.open(method, this.addr + path);
+
+			// add headers
+			Object.entries(headers).forEach(([k, v]) => {
+				req.setRequestHeader(k, v);
+			});
+
+			// send request
+			req.send(file);
+		});
+	}
+}
+
+function assertValidPath(path: string) {
+	const validPath =
+		path === '' || (path.startsWith('/') && !path.endsWith('/'));
+	if (!validPath) {
+		console.log('path', path);
+		throw new Error(
+			'path needs to either be empty or start with / and not end with /',
+		);
 	}
 }
 
@@ -217,6 +324,10 @@ export class ApiError extends Error {
 	static fromAny(err: any) {
 		// todo better
 		return new ApiError(err.message);
+	}
+
+	static newRequest(message: string) {
+		return new ApiError(message, { type: 'REQUEST', detail: message });
 	}
 }
 

@@ -5,7 +5,7 @@ pub mod mock;
 use std::sync::Arc;
 
 use axum::extract::FromRef;
-use internal_api::app_id::AppId;
+use internal_api::apps::AppId;
 use pg::{Result, UniqueId, db::Conn, time::DateTime};
 use serde::{Deserialize, Serialize};
 

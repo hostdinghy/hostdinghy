@@ -1,5 +1,7 @@
 use serde::{Deserialize, Serialize};
 
+pub use crate::registry_username::RegistryUsername;
+
 /// A request to get a list of all registry users.
 ///
 /// URL: `/registry/users`
@@ -19,7 +21,7 @@ pub struct RegistryUsersRes(pub Vec<String>);
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct CreateUserReq {
-	pub username: String,
+	pub username: RegistryUsername,
 	// password is automatically generated
 }
 

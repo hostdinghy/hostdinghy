@@ -45,11 +45,16 @@
 					label: 'Settings',
 					url: `/apps/${app.id}/settings`,
 				},
+				{ label: 'Logs', url: `/apps/${app.id}/logs` },
+				{ label: '', url: 'line1' },
 				{
 					label: 'Registry',
 					url: `/apps/${app.id}/registry`,
 				},
-				{ label: 'Logs', url: `/apps/${app.id}/logs` },
+				{
+					label: 'Postgres',
+					url: `/apps/${app.id}/postgres`,
+				},
 			]}
 		>
 			{@render children()}

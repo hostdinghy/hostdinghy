@@ -7,9 +7,9 @@ use tokio::{
 	time::sleep,
 };
 
-use crate::postgresql::utils::{cli_execute_sql, start_postgresql};
+use crate::postgres::utils::{cli_execute_sql, start_postgres};
 use crate::{
-	postgresql::utils::stop_postgresql,
+	postgres::utils::stop_postgres,
 	utils::{
 		cli::{CliError, WithMessage as _},
 		cmd::cmd,
@@ -19,11 +19,11 @@ use crate::{
 use super::hostdinghy_dir;
 
 #[derive(Debug, Parser)]
-pub struct Postgresql {
+pub struct Postgres {
 	// domain: String,
 }
 
-pub async fn setup(_registry: Postgresql) -> Result<(), CliError> {
+pub async fn setup(_registry: Postgres) -> Result<(), CliError> {
 	let hostdinghy_dir = hostdinghy_dir()?;
 	let postgresql_dir = hostdinghy_dir.join("postgresql");
 	let data_dir = postgresql_dir.join("data");
@@ -44,7 +44,7 @@ pub async fn setup(_registry: Postgresql) -> Result<(), CliError> {
 	sleep(Duration::from_secs(5)).await;
 
 	// change the data folder
-	stop_postgresql().await?;
+	stop_postgres().await?;
 
 	sleep(Duration::from_secs(5)).await;
 
@@ -118,7 +118,7 @@ pub async fn setup(_registry: Postgresql) -> Result<(), CliError> {
 		.await
 		.with_message("Failed to append to pg_hba.conf file")?;
 
-	start_postgresql().await?;
+	start_postgres().await?;
 
 	sleep(Duration::from_secs(5)).await;
 

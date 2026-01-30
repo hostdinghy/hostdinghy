@@ -9,7 +9,7 @@ How to install this
 mod apps;
 mod config;
 mod docker;
-mod postgresql;
+mod postgres;
 mod registry;
 #[cfg(debug_assertions)]
 mod runtime_test;
@@ -33,7 +33,7 @@ struct Args {
 enum SubCommand {
 	Setup(setup::Setup),
 	Registry(registry::Registry),
-	Postgresql(postgresql::Postgresql),
+	Postgres(postgres::Postgres),
 	Serve,
 	#[cfg(debug_assertions)]
 	Test(runtime_test::Test),
@@ -54,8 +54,8 @@ async fn main() {
 		SubCommand::Registry(registry) => {
 			registry::registry(registry).await;
 		}
-		SubCommand::Postgresql(postgresql) => {
-			postgresql::postgresql(postgresql).await;
+		SubCommand::Postgres(postgres) => {
+			postgres::postgres(postgres).await;
 		}
 		SubCommand::Serve => {
 			server::serve().await;

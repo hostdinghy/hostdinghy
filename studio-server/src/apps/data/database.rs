@@ -1,4 +1,4 @@
-use internal_api::app_id::AppId;
+use internal_api::apps::AppId;
 use pg::{
 	Connection, Database, FromRow, Result, ToRow, UniqueId,
 	db::Conn,

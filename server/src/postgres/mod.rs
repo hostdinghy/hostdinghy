@@ -1,15 +1,20 @@
 pub mod client;
+pub mod routes;
 pub mod utils;
 
 use chuchi_crypto::token::Token;
 use clap::Parser;
+use tokio::{fs::File, io};
 use tracing::info;
 
-use crate::utils::cli::CliError;
+use crate::utils::{
+	cli::{CliError, WithMessage},
+	verify_root,
+};
 pub use client::Client;
 
 #[derive(Debug, Parser)]
-pub struct Postgresql {
+pub struct Postgres {
 	#[clap(subcommand)]
 	cmd: SubCommand,
 }
@@ -22,18 +27,22 @@ enum SubCommand {
 	DropDatabase(DropDatabase),
 	ListDatabases,
 	ListUsers,
+	DumpDatabase(DumpDatabase),
+	RestoreDatabase(RestoreDatabase),
 }
 
-pub async fn postgresql(postgresql: Postgresql) {
-	let res = inner_postgresql(postgresql).await;
+pub async fn postgres(postgres: Postgres) {
+	let res = inner_postgres(postgres).await;
 
 	if let Err(e) = res {
-		tracing::error!("PostgreSQL command failed: {e}");
+		tracing::error!("Postgres command failed: {e}");
 	}
 }
 
-pub async fn inner_postgresql(postgresql: Postgresql) -> Result<(), CliError> {
-	match postgresql.cmd {
+pub async fn inner_postgres(postgres: Postgres) -> Result<(), CliError> {
+	verify_root().await?;
+
+	match postgres.cmd {
 		SubCommand::CreateUser(mut cu) => {
 			let tell_pw = cu.password.is_none();
 			create_user(&mut cu).await?;
@@ -76,6 +85,14 @@ pub async fn inner_postgresql(postgresql: Postgresql) -> Result<(), CliError> {
 					info!("- {}", user);
 				}
 			}
+		}
+		SubCommand::DumpDatabase(dd) => {
+			dump_database(dd).await?;
+			info!("Database dumped successfully.");
+		}
+		SubCommand::RestoreDatabase(rd) => {
+			restore_database(rd).await?;
+			info!("Database restored successfully.");
 		}
 	}
 
@@ -163,4 +180,53 @@ async fn list_users() -> Result<Vec<String>, CliError> {
 	let client = Client::new().await?;
 
 	client.list_users().await
+}
+
+#[derive(Debug, Parser)]
+pub struct DumpDatabase {
+	database_name: String,
+	output_file: String,
+}
+
+async fn dump_database(dump_database: DumpDatabase) -> Result<(), CliError> {
+	let mut file = File::create(&dump_database.output_file)
+		.await
+		.with_message("failed to create output file")?;
+
+	let mut child = utils::dump_database(&dump_database.database_name).await?;
+
+	let bytes = io::copy(&mut child, &mut file)
+		.await
+		.with_message("failed to write database dump to file")?;
+
+	eprintln!("copy {bytes} bytes");
+
+	child.wait().await?;
+
+	Ok(())
+}
+
+#[derive(Debug, Parser)]
+pub struct RestoreDatabase {
+	database_name: String,
+	input_file: String,
+}
+
+async fn restore_database(
+	restore_database: RestoreDatabase,
+) -> Result<(), CliError> {
+	let mut file = File::open(&restore_database.input_file)
+		.await
+		.with_message("failed to open input file")?;
+
+	let mut child =
+		utils::restore_database(&restore_database.database_name).await?;
+
+	io::copy(&mut file, &mut child)
+		.await
+		.with_message("failed to restore database from file")?;
+
+	child.wait().await?;
+
+	Ok(())
 }

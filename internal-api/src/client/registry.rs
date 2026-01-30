@@ -1,6 +1,7 @@
 use crate::{
 	client::{ApiServerClient, Result},
 	registry::{CreateUserReq, CreateUserRes},
+	registry_username::RegistryUsername,
 };
 
 #[derive(Debug, Clone)]
@@ -19,17 +20,20 @@ impl<'a> ApiServerRegistryClient<'a> {
 			.await
 	}
 
-	pub async fn create_user(&self, username: &str) -> Result<CreateUserRes> {
+	pub async fn create_user(
+		&self,
+		username: &RegistryUsername,
+	) -> Result<CreateUserRes> {
 		self.inner
 			.send_json(self.inner.post("/registry/users").json(
 				&CreateUserReq {
-					username: username.into(),
+					username: username.clone(),
 				},
 			))
 			.await
 	}
 
-	pub async fn delete_user(&self, username: &str) -> Result<()> {
+	pub async fn delete_user(&self, username: &RegistryUsername) -> Result<()> {
 		self.inner
 			.send_json(
 				self.inner.delete(&format!("/registry/users/{username}")),

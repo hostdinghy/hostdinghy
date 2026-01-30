@@ -11,6 +11,10 @@ use serde::{Deserialize, Serialize};
 pub enum Error {
 	#[error("User already exists")]
 	UserAlreadyExists,
+	#[error("Database already exists")]
+	DatabaseAlreadyExists,
+	#[error("Database not found")]
+	DatabaseNotFound,
 	#[error("Compose file not valid: {0}")]
 	Compose(#[from] ComposeError),
 	#[error("Invalid certificate provided")]
@@ -48,9 +52,10 @@ impl Error {
 	pub fn status_code(&self) -> StatusCode {
 		match self {
 			Self::UserAlreadyExists
+			| Self::DatabaseAlreadyExists
 			| Self::Compose(_)
 			| Self::InvalidCertificate => StatusCode::BAD_REQUEST,
-			Self::AppNotFound => StatusCode::NOT_FOUND,
+			Self::DatabaseNotFound | Self::AppNotFound => StatusCode::NOT_FOUND,
 			Self::MissingApiToken => StatusCode::UNAUTHORIZED,
 			Self::InvalidApiToken => StatusCode::FORBIDDEN,
 			Self::Command { .. }

@@ -1,4 +1,3 @@
-use internal_api::app_id::AppId;
 use pg::UniqueId;
 
 use crate::{

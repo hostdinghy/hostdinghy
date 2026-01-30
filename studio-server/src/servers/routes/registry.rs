@@ -1,7 +1,7 @@
 use axum::extract::{Path, State};
 use axum::routing::{delete, get};
 use axum::{Json, Router};
-use internal_api::registry::{CreateUserReq, CreateUserRes};
+use internal_api::registry::{CreateUserReq, CreateUserRes, RegistryUsername};
 use pg::UniqueId;
 
 use crate::AppState;
@@ -54,7 +54,7 @@ pub async fn delete_user(
 	State(servers): State<Servers>,
 	State(api_client): State<ApiClient>,
 	conn: ConnOwned,
-	Path((id, username)): Path<(UniqueId, String)>,
+	Path((id, username)): Path<(UniqueId, RegistryUsername)>,
 ) -> Result<Json<()>> {
 	let servers = servers.with_conn(conn.conn());
 

@@ -1,6 +1,8 @@
 use serde::{Deserialize, Serialize};
 use serde_plain::derive_display_from_serialize;
 
+pub use crate::app_id::AppId;
+
 /// A request to get information about the application.
 ///
 /// URL: `/apps/:id`
@@ -67,10 +69,6 @@ pub struct GetComposeReq;
 #[serde(rename_all = "camelCase")]
 pub struct GetComposeRes {
 	pub compose: String,
-	/// Returns true if a database was created once
-	///
-	/// Todo this is deprecated
-	pub database: bool,
 }
 
 /// Save compose.yml
@@ -85,12 +83,6 @@ pub struct GetComposeRes {
 #[serde(rename_all = "camelCase")]
 pub struct SaveComposeReq {
 	pub compose: String,
-	/// Setting this to false will not delete the database
-	/// it is only possible to delete the database
-	/// when deleteing the app
-	///
-	/// Todo this is deprecated
-	pub create_database: bool,
 }
 
 /// A request to execute a composer command.

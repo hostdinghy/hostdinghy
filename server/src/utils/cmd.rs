@@ -105,7 +105,7 @@ impl CmdBuilder {
 		Ok(ChildReadableStdout {
 			display: self.display,
 			stdout: child.stdout.take().unwrap(),
-			stderr: StderrReader::new(child.stderr.take().unwrap()),
+			stderr: StdioReader::new(child.stderr.take().unwrap()),
 			child,
 			poll_child_exit: false,
 		})
@@ -125,51 +125,51 @@ impl CmdBuilder {
 		Ok(ChildWritableStdin {
 			display: self.display,
 			stdin: child.stdin.take().unwrap(),
-			stdout: child.stdout.take().unwrap(),
-			stderr: StderrReader::new(child.stderr.take().unwrap()),
+			stdout: StdioReader::new(child.stdout.take().unwrap()),
+			stderr: StdioReader::new(child.stderr.take().unwrap()),
 			child,
 		})
 	}
 }
 
 #[derive(Debug)]
-pub struct StderrReader {
-	stderr: ChildStderr,
-	stderr_buf: BytesOwned,
+struct StdioReader<R> {
+	stdio: R,
+	stdio_buf: BytesOwned,
 }
 
-impl StderrReader {
-	fn new(stderr: ChildStderr) -> Self {
+impl<R: AsyncRead + Unpin> StdioReader<R> {
+	fn new(stdio: R) -> Self {
 		Self {
-			stderr,
-			stderr_buf: BytesOwned::new(),
+			stdio,
+			stdio_buf: BytesOwned::new(),
 		}
 	}
 
 	async fn read(&mut self) -> io::Result<String> {
-		poll_fn(|cx| self.read_stderr(cx)).await
+		poll_fn(|cx| self.poll_read(cx)).await
 	}
 
-	fn read_stderr(
+	fn poll_read(
 		&mut self,
 		cx: &mut task::Context<'_>,
 	) -> Poll<io::Result<String>> {
 		const BUF_LEN: usize = 1024;
 
 		// we need to read the stderr and then output it as error
-		if self.stderr_buf.remaining().len() < BUF_LEN / 2 {
-			let buf_len = self.stderr_buf.len();
-			self.stderr_buf.resize(buf_len + BUF_LEN);
+		if self.stdio_buf.remaining().len() < BUF_LEN / 2 {
+			let buf_len = self.stdio_buf.len();
+			self.stdio_buf.resize(buf_len + BUF_LEN);
 		}
 
 		// read until EOF
 		loop {
-			let mut read_buf = ReadBuf::new(self.stderr_buf.remaining_mut());
+			let mut read_buf = ReadBuf::new(self.stdio_buf.remaining_mut());
 
-			match Pin::new(&mut self.stderr).poll_read(cx, &mut read_buf) {
+			match Pin::new(&mut self.stdio).poll_read(cx, &mut read_buf) {
 				Poll::Ready(Ok(())) => {
 					let read = read_buf.filled().len();
-					self.stderr_buf.advance(read);
+					self.stdio_buf.advance(read);
 
 					if read > 0 {
 						continue;
@@ -177,8 +177,7 @@ impl StderrReader {
 
 					// read the entire stderr now output
 					let err_msg = String::from_utf8_lossy(
-						&self.stderr_buf.as_slice()
-							[..self.stderr_buf.position()],
+						&self.stdio_buf.as_slice()[..self.stdio_buf.position()],
 					);
 					break Poll::Ready(Ok(err_msg.into_owned()));
 				}
@@ -194,7 +193,7 @@ pub struct ChildReadableStdout {
 	display: String,
 	child: Child,
 	stdout: ChildStdout,
-	stderr: StderrReader,
+	stderr: StdioReader<ChildStderr>,
 	poll_child_exit: bool,
 }
 
@@ -234,7 +233,7 @@ impl ChildReadableStdout {
 		match self.child.try_wait() {
 			// if the status was not success we need to read stderr
 			Ok(Some(status)) if !status.success() => {
-				return Some(match self.stderr.read_stderr(cx) {
+				return Some(match self.stderr.poll_read(cx) {
 					Poll::Ready(Ok(err_msg)) => Poll::Ready(io::Error::new(
 						io::ErrorKind::Other,
 						format!(
@@ -313,9 +312,8 @@ pub struct ChildWritableStdin {
 	display: String,
 	child: Child,
 	stdin: ChildStdin,
-	#[allow(dead_code)]
-	stdout: ChildStdout,
-	stderr: StderrReader,
+	stdout: StdioReader<ChildStdout>,
+	stderr: StdioReader<ChildStderr>,
 }
 
 impl ChildWritableStdin {
@@ -328,8 +326,6 @@ impl ChildWritableStdin {
 			.wait()
 			.await
 			.map_err(|e| CmdError::cmd(&self.display, e))?;
-
-		eprintln!("child exited with status: {status}");
 
 		if !status.success() {
 			return Err(CmdError::cmd(self.display.clone(), stderr));
@@ -348,7 +344,7 @@ impl AsyncWrite for ChildWritableStdin {
 		match self.child.try_wait() {
 			// if the status was not success we need to read stderr
 			Ok(Some(status)) if !status.success() => {
-				return match self.stderr.read_stderr(cx) {
+				return match self.stderr.poll_read(cx) {
 					Poll::Ready(Ok(err_msg)) => {
 						Poll::Ready(Err(io::Error::new(
 							io::ErrorKind::Other,
@@ -364,6 +360,11 @@ impl AsyncWrite for ChildWritableStdin {
 			Err(e) => return Poll::Ready(Err(e)),
 			_ => {}
 		}
+
+		// todo maybe this could be done better
+		// without needing to poll on each write
+		let _ = Pin::new(&mut self.stdout).poll_read(cx);
+		let _ = Pin::new(&mut self.stderr).poll_read(cx);
 
 		Pin::new(&mut self.stdin).poll_write(cx, buf)
 	}

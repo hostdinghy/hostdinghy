@@ -52,6 +52,7 @@ pub async fn restore_database(
 		"postgres",
 		"pg_restore",
 		"--clean",
+		"--if-exists",
 		"--no-owner",
 		"--no-privileges",
 		"--role",

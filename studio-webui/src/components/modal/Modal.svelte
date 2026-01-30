@@ -1,45 +1,79 @@
+<script module lang="ts">
+	export type ModalSize = undefined | 'fill-screen' | 'small' | 'medium';
+</script>
+
 <script lang="ts">
-	import { onDestroy, type Snippet } from 'svelte';
-	import { on } from 'svelte/events';
+	import { type Snippet } from 'svelte';
+	import Button from '../Button.svelte';
+	import Close from '@/assets/icons/Close.svelte';
+	import { disableScroll, enableScroll } from '@/lib/body';
 
 	let {
-		open = $bindable(),
-		/** if the modal should fill the screen */
-		fillScreen = false,
+		// not bindable, because almost always you wan't to do some
+		// cleanup when closing the modal
+		// so this forces you to think about that
+		open,
+		title,
 		children,
+		onclose,
+		size = undefined,
+		headerBb = false,
 		class: cls,
-		onclose = () => (open = false),
 		...rest
 	}: {
 		open: boolean;
-		fillScreen?: boolean;
+		title?: string;
 		children: Snippet;
+		onclose: () => void;
+		fillScreen?: boolean;
+		size?: ModalSize;
+		/** header border bottom */
+		headerBb?: boolean;
 		class?: string;
-		onclose?: () => void;
 		[key: string]: any;
 	} = $props();
 
-	const removeHandler = on(window, 'keydown', ({ key }) => {
-		if (key === 'Escape') {
-			open = false;
-		}
-	});
+	function onkeydown(e: KeyboardEvent) {
+		if (e.key === 'Escape') onclose();
+	}
 
-	onDestroy(() => {
-		removeHandler();
+	function oncloseclick(e: MouseEvent) {
+		// i dont really like that we have to use two onclick handlers
+		// but using pointer-events: none is not much nicer
+		if (e.target === e.currentTarget) onclose();
+	}
+
+	$effect(() => {
+		if (open) disableScroll();
+		else enableScroll();
 	});
 </script>
 
+<svelte:window on:keydown={onkeydown} />
+
 {#if open}
-	<div class="modal-layer">
-		<div class="wrap">
-			<div class="modal {cls}" class:fill-screen={fillScreen} {...rest}>
+	<!-- svelte-ignore a11y_click_events_have_key_events -->
+	<!-- svelte-ignore a11y_no_static_element_interactions -->
+	<div class="modal-layer" onclick={oncloseclick}>
+		<div class="wrap" onclick={oncloseclick}>
+			<div class="modal {cls} size-{size ?? ''}" {...rest}>
+				{#if title}
+					<header class:bb={headerBb}>
+						<h2>{title}</h2>
+
+						<Button
+							onclick={onclose}
+							title="close modal"
+							aria-label="close modal"
+						>
+							<Close />
+						</Button>
+					</header>
+				{/if}
+
 				{@render children()}
 			</div>
 		</div>
-		<!-- svelte-ignore a11y_click_events_have_key_events -->
-		<!-- svelte-ignore a11y_no_static_element_interactions -->
-		<div onclick={onclose} class="background"></div>
 	</div>
 {/if}
 
@@ -50,6 +84,7 @@
 		// see app.scss (z-index map)
 		z-index: 1000;
 		overflow-y: auto;
+		background-color: rgb(from var(--c-bg) r g b / 80%);
 	}
 
 	.wrap {
@@ -60,22 +95,39 @@
 	}
 
 	.modal {
+		position: relative;
 		border: 1px solid var(--c-border);
 		background: var(--c-bg);
-		z-index: 1;
 		overflow: hidden;
 
-		&.fill-screen {
+		&.size-fill-screen {
 			width: 100%;
 			min-height: 80vh;
 		}
+
+		&.size-small {
+			width: 100%;
+			max-width: 28rem;
+		}
+
+		&.size-medium {
+			width: 100%;
+			max-width: 38rem;
+		}
 	}
 
-	.background {
-		position: absolute;
-		inset: 0;
-		background: var(--c-bg);
-		opacity: 0.8;
-		z-index: 0;
+	header {
+		display: flex;
+		padding: 1rem;
+		justify-content: space-between;
+		align-items: center;
+
+		&.bb {
+			border-bottom: 1px solid var(--c-border);
+		}
+
+		h2 {
+			font-size: 1.125rem;
+		}
 	}
 </style>

@@ -11,6 +11,7 @@
 <script lang="ts">
 	import { errorToStr } from '@/api/lib';
 	import { login } from '@/api/users';
+	import Button from '@/components/Button.svelte';
 	import Input from '@/form/Input.svelte';
 	import type { LoadPropsFn } from '@/lib/LoadProps';
 	import { getSession } from '@/lib/Session';
@@ -70,7 +71,7 @@
 				<div class="error">{error}</div>
 			{/if}
 
-			<button type="submit" class="btn mt">submit</button>
+			<Button mt>submit</Button>
 		</form>
 	</div>
 </div>

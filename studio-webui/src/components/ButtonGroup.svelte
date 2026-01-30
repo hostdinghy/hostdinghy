@@ -1,3 +1,9 @@
+<script module lang="ts">
+	// check with Button as well
+	export type Style = 'accent' | 'text';
+	export type Align = 'left' | 'right';
+</script>
+
 <script lang="ts">
 	import type { Snippet } from 'svelte';
 
@@ -7,8 +13,8 @@
 		align = 'left',
 	}: {
 		children: Snippet;
-		style?: 'accent' | 'text';
-		align?: 'left' | 'right';
+		style?: Style;
+		align?: Align;
 	} = $props();
 </script>
 

@@ -1,6 +1,6 @@
 import NotFound from './NotFound.svelte';
 import Error from './Error.svelte';
-import { layoutGroup, withLayout } from '@/lib/layout';
+import { withLayout } from '@/lib/layout';
 import type { Router } from '@/lib';
 import { registerApps } from './apps/routes';
 import { registerSettings } from './settings/routes';
@@ -15,11 +15,9 @@ export function register(router: Router) {
 		'/',
 		withLayout(MainLayout, () => import('./Index.svelte')),
 	);
-	registerApps(router);
-
-	registerSettings(router);
-
-	registerServers(router);
-
 	router.register('/signin', () => import('./SignIn.svelte'));
+
+	registerApps(router);
+	registerSettings(router);
+	registerServers(router);
 }

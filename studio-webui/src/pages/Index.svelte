@@ -45,13 +45,11 @@
 			{ key: 'name', value: 'Name' },
 			{ key: 'serverName', value: 'Server' },
 			{ key: 'status', value: 'Status' },
-			{ key: 'actions', value: 'Actions' },
 		]}
 		rows={apps.map(a => ({
 			...a,
 			serverName: a.server?.name,
 			status: null,
-			actions: null,
 		}))}
 	>
 		{#snippet name(row)}

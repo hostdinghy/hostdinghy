@@ -8,7 +8,6 @@ import { Writable } from 'chuchi/stores';
 import Session from './lib/Session';
 import LoadProps from './lib/LoadProps';
 import type { Router } from './lib';
-import { timeout } from 'chuchi-utils';
 
 async function main() {
 	const cache = new SsrCache();

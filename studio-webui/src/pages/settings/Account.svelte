@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { errorToStr } from '@/api/lib';
 	import { save } from '@/api/users';
+	import Button from '@/components/Button.svelte';
 	import Header from '@/components/Header.svelte';
 	import Input from '@/form/Input.svelte';
 	import { toast } from '@/layout/Toasts.svelte';
@@ -91,7 +92,7 @@
 		{/if}
 
 		<div class="btns">
-			<button type="submit" class="btn mt">save</button>
+			<Button mt>save</Button>
 		</div>
 	</form>
 </div>

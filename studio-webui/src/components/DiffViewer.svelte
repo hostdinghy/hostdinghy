@@ -3,7 +3,7 @@
 	import * as monaco from 'monaco-editor/esm/vs/editor/editor.api';
 	import { get } from 'svelte/store';
 
-	let { original = $bindable(), modified = $bindable() } = $props();
+	let { original, modified } = $props();
 
 	const originalModel = monaco.editor.createModel('', 'yaml');
 	const modifiedModel = monaco.editor.createModel('', 'yaml');

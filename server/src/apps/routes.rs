@@ -12,7 +12,6 @@ use axum::{
 	extract::{Path, Query, State},
 	routing::{get, post},
 };
-use chuchi_crypto::hash::Hasher;
 use compose_yml::Compose;
 use serde::{Deserialize, Serialize};
 use tokio::fs;
@@ -22,9 +21,8 @@ use crate::{
 		cont_sum_state_enum_to_service_state, container_names_to_service_name,
 		traefik_route_to_service_route,
 	},
-	config::{Config, SecretToken},
+	config::Config,
 	docker::Docker,
-	postgres::Client,
 	server::{Authenticated, router::AppState},
 	traefik::client::Traefik,
 	utils::{compose, hostdinghy_dir, is_dir, is_file},
@@ -149,20 +147,8 @@ async fn get_compose(
 				compose_path.display()
 			))?;
 
-	// lets check the db
-	// let client = Client::new().await?;
-	// let database_exists = client.database_exists(id.as_ref()).await?;
-
 	Ok(Json(GetComposeRes { compose }))
 }
-
-fn generate_db_password(id: &AppId, secret: &SecretToken) -> String {
-	let mut hasher = Hasher::new();
-	hasher.update(id.as_ref());
-	hasher.update(secret.as_ref());
-	hasher.finalize().to_string()
-}
-
 async fn save_compose(
 	_auth: Authenticated,
 	State(config): State<Arc<Config>>,
@@ -173,24 +159,6 @@ async fn save_compose(
 	let parsed = req.compose.parse::<Compose>()?;
 	parsed.validate_for(&config.registry.domain, id.as_ref())?;
 
-	// let mut db_password: Option<String> = None;
-
-	// if req.create_database {
-	// 	let password = generate_db_password(&id, &config.secret);
-
-	// 	let client = Client::new().await?;
-	// 	// lets first check if the database exists
-	// 	let database_exists = client.database_exists(id.as_ref()).await?;
-	// 	if !database_exists {
-	// 		// if the database does not exist we assume the user was not
-	// 		// created password is also not set
-	// 		client.create_user(id.as_ref(), &password).await?;
-	// 		client.create_database(id.as_ref(), id.as_ref()).await?;
-	// 	}
-
-	// 	db_password = Some(password);
-	// }
-
 	let app_dir = hostdinghy_dir()?.join(id.as_ref());
 	match fs::create_dir(&app_dir).await {
 		Ok(()) => {}
@@ -199,11 +167,6 @@ async fn save_compose(
 			return Err(Error::any("Failed to create app directory", e));
 		}
 	}
-
-	// let compose = match db_password {
-	// 	Some(password) => req.compose.replace("{DB_PASSWORD}", &password),
-	// 	None => req.compose,
-	// };
 
 	// let's write the file
 	let compose_path = app_dir.join("compose.yml");

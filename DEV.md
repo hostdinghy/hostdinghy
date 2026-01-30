@@ -4,14 +4,14 @@ rustup target add x86_64-unknown-linux-musl
 rsync ../target/release/hostdinghy smadmin@p1.goodserver.ch:/usr/local/bin
 
 cargo build --release --target=x86_64-unknown-linux-musl
-rsync ../target/x86_64-unknown-linux-musl/release/hostdinghy smadmin@p1.goodserver.ch:/tmp/hostdinghy
-ssh -t smadmin@p1.goodserver.ch 'sudo mv /tmp/hostdinghy /usr/local/bin/hostdinghy'
+rsync ../target/x86_64-unknown-linux-musl/release/hostdinghy smadmin@s2.goodserver.ch:/tmp/hostdinghy
+ssh -t smadmin@s2.goodserver.ch 'sudo mv /tmp/hostdinghy /usr/local/bin/hostdinghy'
 ```
 
 ## Deploy webui
 ```bash
-docker build -t registry.p1.goodserver.ch/hostdinghy/studio -f dockerfiles/Dockerfile .
-docker push registry.p1.goodserver.ch/hostdinghy/studio
+docker build -t registry.s2.goodserver.ch/hostdinghy/studio -f dockerfiles/Dockerfile .
+docker push registry.s2.goodserver.ch/hostdinghy/studio
 ```
 
 ## Remove postgresql

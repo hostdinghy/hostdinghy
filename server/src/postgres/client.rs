@@ -66,6 +66,21 @@ impl Client {
 		Ok(())
 	}
 
+	pub async fn update_password(
+		&self,
+		name: &str,
+		new_password: &str,
+	) -> Result<(), CliError> {
+		let sql =
+			format!("ALTER USER {} WITH PASSWORD '{}'", name, new_password);
+
+		self.client.execute(&sql, &[]).await.with_message(format!(
+			"Failed to update password for user {name}"
+		))?;
+
+		Ok(())
+	}
+
 	pub async fn drop_user(&self, name: &str) -> Result<(), CliError> {
 		let sql = format!("DROP USER IF EXISTS {}", name);
 

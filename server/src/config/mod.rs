@@ -26,6 +26,15 @@ pub struct Config {
 	pub registry: RegistryConfig,
 }
 
+/*
+fn generate_db_password(id: &AppId, secret: &SecretToken) -> String {
+	let mut hasher = Hasher::new();
+	hasher.update(id.as_ref());
+	hasher.update(secret.as_ref());
+	hasher.finalize().to_string()
+}
+*/
+
 impl Config {
 	pub async fn try_read(
 		hostdinghy_dir: impl AsRef<Path>,

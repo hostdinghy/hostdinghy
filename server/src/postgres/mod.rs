@@ -1,4 +1,5 @@
 pub mod client;
+pub mod routes;
 pub mod utils;
 
 use chuchi_crypto::token::Token;
@@ -6,7 +7,10 @@ use clap::Parser;
 use tokio::{fs::File, io};
 use tracing::info;
 
-use crate::utils::cli::{CliError, WithMessage};
+use crate::utils::{
+	cli::{CliError, WithMessage},
+	verify_root,
+};
 pub use client::Client;
 
 #[derive(Debug, Parser)]
@@ -24,17 +28,20 @@ enum SubCommand {
 	ListDatabases,
 	ListUsers,
 	DumpDatabase(DumpDatabase),
+	RestoreDatabase(RestoreDatabase),
 }
 
 pub async fn postgres(postgres: Postgres) {
 	let res = inner_postgres(postgres).await;
 
 	if let Err(e) = res {
-		tracing::error!("PostgreSQL command failed: {e}");
+		tracing::error!("Postgres command failed: {e}");
 	}
 }
 
 pub async fn inner_postgres(postgres: Postgres) -> Result<(), CliError> {
+	verify_root().await?;
+
 	match postgres.cmd {
 		SubCommand::CreateUser(mut cu) => {
 			let tell_pw = cu.password.is_none();
@@ -82,6 +89,10 @@ pub async fn inner_postgres(postgres: Postgres) -> Result<(), CliError> {
 		SubCommand::DumpDatabase(dd) => {
 			dump_database(dd).await?;
 			info!("Database dumped successfully.");
+		}
+		SubCommand::RestoreDatabase(rd) => {
+			restore_database(rd).await?;
+			info!("Database restored successfully.");
 		}
 	}
 
@@ -184,9 +195,38 @@ async fn dump_database(dump_database: DumpDatabase) -> Result<(), CliError> {
 
 	let mut child = utils::dump_database(&dump_database.database_name).await?;
 
-	io::copy(&mut child, &mut file)
+	let bytes = io::copy(&mut child, &mut file)
 		.await
 		.with_message("failed to write database dump to file")?;
+
+	eprintln!("copy {bytes} bytes");
+
+	child.wait().await?;
+
+	Ok(())
+}
+
+#[derive(Debug, Parser)]
+pub struct RestoreDatabase {
+	database_name: String,
+	input_file: String,
+}
+
+async fn restore_database(
+	restore_database: RestoreDatabase,
+) -> Result<(), CliError> {
+	let mut file = File::open(&restore_database.input_file)
+		.await
+		.with_message("failed to open input file")?;
+
+	let mut child =
+		utils::restore_database(&restore_database.database_name).await?;
+
+	io::copy(&mut file, &mut child)
+		.await
+		.with_message("failed to restore database from file")?;
+
+	child.wait().await?;
 
 	Ok(())
 }

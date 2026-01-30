@@ -1,6 +1,6 @@
 use crate::utils::{
 	cli::CliError,
-	cmd::{ChildReadableStdout, CmdError, cmd},
+	cmd::{ChildReadableStdout, ChildWritableStdin, CmdError, cmd},
 };
 
 pub async fn cli_execute_sql(sql: &str) -> Result<String, CliError> {
@@ -35,12 +35,35 @@ pub async fn stop_postgres() -> Result<(), CliError> {
 pub async fn dump_database(
 	name: &str,
 ) -> Result<ChildReadableStdout, CliError> {
+	// -Fc = custom format
+	cmd(&["sudo", "-u", "postgres", "pg_dump", "-Fc", "-d", name])
+		.as_root()
+		.spawn_readable_stdout()
+		.await
+		.map_err(Into::into)
+}
+
+pub async fn restore_database(
+	name: &str,
+) -> Result<ChildWritableStdin, CliError> {
 	cmd(&[
-		"sudo", "-u", "postgres", "pg_dump", "-Fc", // custom format
-		"-d", name,
+		"sudo",
+		"-u",
+		"postgres",
+		"pg_restore",
+		"--clean",
+		"--no-owner",
+		"--no-privileges",
+		"--role",
+		name,
+		"-d",
+		name,
 	])
 	.as_root()
-	.spawn_readable_stdout()
+	.spawn_writable_stdin()
 	.await
 	.map_err(Into::into)
 }
+
+// to test errors
+// just do pg_restore -d test

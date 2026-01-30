@@ -117,7 +117,7 @@ impl CmdBuilder {
 		let mut child = self
 			.inner
 			.stdin(Stdio::piped())
-			.stdout(Stdio::null())
+			.stdout(Stdio::piped())
 			.stderr(Stdio::piped())
 			.spawn()
 			.map_err(|e| CmdError::cmd(&self.display, e))?;
@@ -125,6 +125,7 @@ impl CmdBuilder {
 		Ok(ChildWritableStdin {
 			display: self.display,
 			stdin: child.stdin.take().unwrap(),
+			stdout: child.stdout.take().unwrap(),
 			stderr: StderrReader::new(child.stderr.take().unwrap()),
 			child,
 		})
@@ -312,11 +313,16 @@ pub struct ChildWritableStdin {
 	display: String,
 	child: Child,
 	stdin: ChildStdin,
+	#[allow(dead_code)]
+	stdout: ChildStdout,
 	stderr: StderrReader,
 }
 
 impl ChildWritableStdin {
 	pub async fn wait(mut self) -> Result<(), CmdError> {
+		// read stderr to drive status progress
+		let stderr = self.stderr.read().await.unwrap_or_else(|e| e.to_string());
+
 		let status = self
 			.child
 			.wait()
@@ -326,9 +332,7 @@ impl ChildWritableStdin {
 		eprintln!("child exited with status: {status}");
 
 		if !status.success() {
-			let err =
-				self.stderr.read().await.unwrap_or_else(|e| e.to_string());
-			return Err(CmdError::cmd(self.display.clone(), err));
+			return Err(CmdError::cmd(self.display.clone(), stderr));
 		}
 
 		Ok(())

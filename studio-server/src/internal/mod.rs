@@ -78,10 +78,10 @@ impl ApiClient {
 
 		let api_server_client: ApiServerClient = match &self.inner {
 			Inner::Real(real) => {
-				Arc::new(Box::new(real::ApiServerClient::new(real, server)?))
+				Arc::new(real::ApiServerClient::new(real, server)?)
 			}
 			Inner::Mock(mock) => {
-				Arc::new(Box::new(mock::ApiServerClient::new(mock, server)?))
+				Arc::new(mock::ApiServerClient::new(mock, server)?)
 			}
 		};
 
@@ -100,7 +100,7 @@ impl fmt::Debug for ApiClient {
 	}
 }
 
-pub type ApiServerClient = Arc<Box<dyn ApiServerClientTrait + Send + Sync>>;
+pub type ApiServerClient = Arc<dyn ApiServerClientTrait + Send + Sync>;
 
 #[async_trait::async_trait]
 pub trait ApiServerClientTrait {

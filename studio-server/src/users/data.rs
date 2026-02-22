@@ -115,7 +115,7 @@ impl Session {
 	}
 }
 
-pub type Users = Arc<Box<dyn UsersBuilderTrait + Send + Sync>>;
+pub type Users = Arc<dyn UsersBuilderTrait + Send + Sync>;
 pub type UsersWithConn<'a> = Box<dyn UsersTrait + Send + Sync + 'a>;
 
 impl FromRef<AppState> for Users {

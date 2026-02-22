@@ -21,7 +21,7 @@ pub struct App {
 	pub created_on: DateTime,
 }
 
-pub type Apps = Arc<Box<dyn AppsBuilderTrait + Send + Sync>>;
+pub type Apps = Arc<dyn AppsBuilderTrait + Send + Sync>;
 pub type AppsWithConn<'a> = Box<dyn AppsTrait + Send + Sync + 'a>;
 
 impl FromRef<AppState> for Apps {

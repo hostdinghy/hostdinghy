@@ -19,7 +19,7 @@ pub struct Server {
 	pub created_on: DateTime,
 }
 
-pub type Servers = Arc<Box<dyn ServersBuilderTrait + Send + Sync>>;
+pub type Servers = Arc<dyn ServersBuilderTrait + Send + Sync>;
 pub type ServersWithConn<'a> = Box<dyn ServersTrait + Send + Sync + 'a>;
 
 impl FromRef<AppState> for Servers {

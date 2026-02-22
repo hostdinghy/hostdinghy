@@ -14,7 +14,7 @@ pub struct Team {
 	pub created_on: DateTime,
 }
 
-pub type Teams = Arc<Box<dyn TeamsBuilderTrait + Send + Sync>>;
+pub type Teams = Arc<dyn TeamsBuilderTrait + Send + Sync>;
 pub type TeamsWithConn<'a> = Box<dyn TeamsTrait + Send + Sync + 'a>;
 
 impl FromRef<AppState> for Teams {

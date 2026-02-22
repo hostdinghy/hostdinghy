@@ -186,10 +186,10 @@ async fn main() {
 	);
 
 	let state = AppState {
-		teams: Arc::new(Box::new(teams)),
-		users: Arc::new(Box::new(users)),
-		servers: Arc::new(Box::new(servers)),
-		apps: Arc::new(Box::new(apps)),
+		teams: Arc::new(teams),
+		users: Arc::new(users),
+		servers: Arc::new(servers),
+		apps: Arc::new(apps),
 		api_client: api_client.clone(),
 		db,
 		dist_dir: DistDir(args.dist_dir),

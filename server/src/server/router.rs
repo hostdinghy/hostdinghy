@@ -15,7 +15,8 @@ use tower_http::trace::TraceLayer;
 use crate::{
 	apps,
 	docker::Docker,
-	postgres, registry,
+	postgres,
+	registry::{self, routes::Redeploys},
 	server::{Config, utils::Authenticated},
 	traefik::client::Traefik,
 };
@@ -25,6 +26,7 @@ pub struct AppState {
 	pub docker: Docker,
 	pub traefik: Traefik,
 	pub cfg: Arc<Config>,
+	pub redeploys: Redeploys,
 }
 
 impl FromRef<AppState> for Docker {
@@ -39,6 +41,12 @@ impl FromRef<AppState> for Traefik {
 	}
 }
 
+impl FromRef<AppState> for Redeploys {
+	fn from_ref(state: &AppState) -> Self {
+		state.redeploys.clone()
+	}
+}
+
 impl FromRef<AppState> for Arc<Config> {
 	fn from_ref(state: &AppState) -> Self {
 		state.cfg.clone()
@@ -50,6 +58,7 @@ pub async fn app(cfg: Config) -> Result<Router<()>, Error> {
 		docker: Docker::new()?,
 		traefik: Traefik::new(cfg.traefik.clone()),
 		cfg: Arc::new(cfg),
+		redeploys: Redeploys::default(),
 	};
 
 	let router = Router::new()

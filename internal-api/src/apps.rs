@@ -109,6 +109,20 @@ pub enum ComposeCommand {
 
 derive_display_from_serialize!(ComposeCommand);
 
+/// The response of a compose command is a stream of events, one json object
+/// per line (`application/x-ndjson`). The command continues if the
+/// connection is closed. The last event is either `done` or `error`.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(tag = "type", rename_all = "camelCase")]
+pub enum CommandEvent {
+	/// A line printed by the command, stdout and stderr mixed
+	Output { line: String },
+	/// The command exited successfully
+	Done,
+	/// The command failed
+	Error { message: String },
+}
+
 /// A request to get the logs of a compose.
 ///
 /// URL: `/apps/:id/logs?lines=<lines>`

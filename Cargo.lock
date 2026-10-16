@@ -1509,6 +1509,7 @@ dependencies = [
  "reqwest",
  "semver",
  "serde",
+ "serde_json",
  "serde_plain",
  "serde_yaml",
  "thiserror 2.0.12",

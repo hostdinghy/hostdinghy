@@ -1,18 +1,22 @@
-use std::{io::ErrorKind, sync::Arc};
+use std::{convert::Infallible, io::ErrorKind, sync::Arc};
 
 use api::{
 	apps::{
-		AppId, AppInfoRes, AppService, ComposeCommand, GetComposeRes,
-		SaveComposeReq, ServiceState,
+		AppId, AppInfoRes, AppService, CommandEvent, ComposeCommand,
+		GetComposeRes, SaveComposeReq, ServiceState,
 	},
 	error::{Error, WithMessage},
 };
 use axum::{
 	Json, Router,
+	body::Body,
 	extract::{Path, Query, State},
+	http::header::CONTENT_TYPE,
+	response::{IntoResponse, Response},
 	routing::{get, post},
 };
 use compose_yml::Compose;
+use futures::{Stream, StreamExt as _};
 use serde::{Deserialize, Serialize};
 use tokio::fs;
 
@@ -183,31 +187,22 @@ async fn save_compose(
 async fn compose_action(
 	_auth: Authenticated,
 	Path((id, command)): Path<(AppId, ComposeCommand)>,
-) -> Result<(), Error> {
-	let app_dir = hostdinghy_dir()?.join(id.as_ref());
-	if !is_dir(&app_dir).await {
-		return Err(Error::AppNotFound);
-	}
-
-	let compose_path = app_dir.join("compose.yml");
-	if !is_file(&compose_path).await {
-		return Err(Error::AppNotFound);
-	}
-
-	match command {
-		ComposeCommand::Start => compose::start(&compose_path, None).await,
-		ComposeCommand::Up => compose::up(&compose_path, None).await,
-		ComposeCommand::Restart => compose::restart(&compose_path, None).await,
-		ComposeCommand::Stop => compose::stop(&compose_path, None).await,
-	}?;
-
-	Ok(())
+) -> Result<Response, Error> {
+	run_compose_command(id, command, None).await
 }
 
 async fn compose_service_action(
 	_auth: Authenticated,
 	Path((id, service, command)): Path<(AppId, String, ComposeCommand)>,
-) -> Result<(), Error> {
+) -> Result<Response, Error> {
+	run_compose_command(id, command, Some(service)).await
+}
+
+async fn run_compose_command(
+	id: AppId,
+	command: ComposeCommand,
+	service: Option<String>,
+) -> Result<Response, Error> {
 	let app_dir = hostdinghy_dir()?.join(id.as_ref());
 	if !is_dir(&app_dir).await {
 		return Err(Error::AppNotFound);
@@ -218,20 +213,23 @@ async fn compose_service_action(
 		return Err(Error::AppNotFound);
 	}
 
-	match command {
-		ComposeCommand::Start => {
-			compose::start(&compose_path, Some(&service)).await
-		}
-		ComposeCommand::Up => compose::up(&compose_path, Some(&service)).await,
-		ComposeCommand::Restart => {
-			compose::restart(&compose_path, Some(&service)).await
-		}
-		ComposeCommand::Stop => {
-			compose::stop(&compose_path, Some(&service)).await
-		}
-	}?;
+	let events = compose::command(&compose_path, &command, service.as_deref())
+		.spawn_events()?;
 
-	Ok(())
+	Ok(ndjson(events))
+}
+
+/// one json object per line
+fn ndjson(
+	events: impl Stream<Item = CommandEvent> + Send + 'static,
+) -> Response {
+	let body = Body::from_stream(events.map(|event| {
+		let mut line = serde_json::to_vec(&event).unwrap();
+		line.push(b'\n');
+		Ok::<_, Infallible>(line)
+	}));
+
+	([(CONTENT_TYPE, "application/x-ndjson")], body).into_response()
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

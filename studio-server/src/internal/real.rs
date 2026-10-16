@@ -72,20 +72,21 @@ impl ApiServerAppsClientTrait for ApiServerClient {
 	async fn compose_command(
 		&self,
 		id: &AppId,
+		service: Option<&str>,
 		cmd: &ComposeCommand,
 	) -> Result<()> {
-		self.inner.apps().compose_command(id, cmd).await
+		self.inner.apps().compose_command(id, service, cmd).await
 	}
 
-	async fn compose_service_command(
+	async fn compose_command_stream(
 		&self,
 		id: &AppId,
-		service: &str,
+		service: Option<&str>,
 		cmd: &ComposeCommand,
-	) -> Result<()> {
+	) -> Result<BoxStream<'static, Result<Bytes>>> {
 		self.inner
 			.apps()
-			.compose_service_command(id, service, cmd)
+			.compose_command_stream(id, service, cmd)
 			.await
 	}
 

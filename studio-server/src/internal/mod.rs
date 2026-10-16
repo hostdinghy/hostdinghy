@@ -125,18 +125,22 @@ pub trait ApiServerAppsClientTrait {
 	async fn set_compose(&self, id: &AppId, req: &SaveComposeReq)
 	-> Result<()>;
 
+	/// Runs the command (for one service if set) and waits until it is done
 	async fn compose_command(
 		&self,
 		id: &AppId,
+		service: Option<&str>,
 		cmd: &ComposeCommand,
 	) -> Result<()>;
 
-	async fn compose_service_command(
+	/// Runs the command and streams its events as json lines
+	/// (see [`internal_api::apps::CommandEvent`])
+	async fn compose_command_stream(
 		&self,
 		id: &AppId,
-		service: &str,
+		service: Option<&str>,
 		cmd: &ComposeCommand,
-	) -> Result<()>;
+	) -> Result<BoxStream<'static, Result<Bytes>>>;
 
 	/// How many lines to return, if None all lines are returned
 	async fn app_logs(&self, id: &AppId, lines: Option<u32>) -> Result<String>;

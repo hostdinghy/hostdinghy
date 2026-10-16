@@ -56,6 +56,11 @@
 			opacity: 0.7;
 		}
 
+		&:disabled {
+			opacity: 0.4;
+			cursor: default;
+		}
+
 		// has only an icon
 		&:global(:has(svg:first-child:last-child)) {
 			padding: 0.3rem;

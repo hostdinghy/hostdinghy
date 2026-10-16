@@ -1,6 +1,38 @@
 use std::path::Path;
 
-use crate::utils::cmd::{CmdError, cmd};
+use api::apps::ComposeCommand;
+
+use crate::utils::cmd::{CmdBuilder, CmdError, cmd};
+
+/// A compose command with plain output, to stream it with
+/// [`CmdBuilder::spawn_events`]
+pub fn command(
+	file: impl AsRef<Path>,
+	command: &ComposeCommand,
+	service: Option<&str>,
+) -> CmdBuilder {
+	let file = file.as_ref().to_string_lossy();
+	let mut args = vec![
+		"docker",
+		"compose",
+		"--ansi",
+		"never",
+		"--progress",
+		"plain",
+		"-f",
+		&file,
+	];
+	args.extend_from_slice(match command {
+		ComposeCommand::Start => &["start"],
+		ComposeCommand::Up => {
+			&["up", "-d", "--pull", "always", "--remove-orphans"]
+		}
+		ComposeCommand::Restart => &["restart"],
+		ComposeCommand::Stop => &["stop"],
+	});
+
+	cmd(&args).arg_opt(service)
+}
 
 pub async fn up(
 	file: impl AsRef<Path>,
@@ -23,23 +55,6 @@ pub async fn up(
 	.map(|_| ())
 }
 
-pub async fn start(
-	file: impl AsRef<Path>,
-	service: Option<&str>,
-) -> Result<(), CmdError> {
-	cmd(&[
-		"docker",
-		"compose",
-		"-f",
-		&file.as_ref().to_string_lossy(),
-		"start",
-	])
-	.arg_opt(service)
-	.run()
-	.await
-	.map(|_| ())
-}
-
 pub async fn restart(
 	file: impl AsRef<Path>,
 	service: Option<&str>,
@@ -50,23 +65,6 @@ pub async fn restart(
 		"-f",
 		&file.as_ref().to_string_lossy(),
 		"restart",
-	])
-	.arg_opt(service)
-	.run()
-	.await
-	.map(|_| ())
-}
-
-pub async fn stop(
-	file: impl AsRef<Path>,
-	service: Option<&str>,
-) -> Result<(), CmdError> {
-	cmd(&[
-		"docker",
-		"compose",
-		"-f",
-		&file.as_ref().to_string_lossy(),
-		"stop",
 	])
 	.arg_opt(service)
 	.run()

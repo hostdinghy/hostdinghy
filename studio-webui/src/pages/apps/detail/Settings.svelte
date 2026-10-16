@@ -1,6 +1,11 @@
 <script module lang="ts">
 	import type { AppLayoutProps } from '@/layout/AppLayout.svelte';
-	import { createCompose, loadCompose } from '@/api/apps/compose';
+	import {
+		COMMAND_TITLES,
+		composeCommand,
+		createCompose,
+		loadCompose,
+	} from '@/api/apps/compose';
 
 	export async function loadProps({ app }: AppLayoutProps) {
 		return {
@@ -16,6 +21,9 @@
 	import { createToastHandler } from '@/layout/Toasts.svelte';
 	import { errorToStr } from '@/api/lib';
 	import Header from '@/components/Header.svelte';
+	import CommandOutput, {
+		type CommandRun,
+	} from '@/components/CommandOutput.svelte';
 
 	let { app, compose }: AppLayoutProps<typeof loadProps> = $props();
 
@@ -33,7 +41,10 @@
 		commitConfigOpen = true;
 	}
 
+	let run = $state<CommandRun | null>(null);
+
 	async function oncommit() {
+		if (run?.status === 'running') return;
 		toast.remove();
 
 		try {
@@ -41,10 +52,31 @@
 			modified = original;
 			editor.setValue(original);
 			commitConfigOpen = false;
-
-			toast.success('new Config saved');
 		} catch (e: any) {
 			toast.error(errorToStr(e));
+			return;
+		}
+
+		// apply the new config
+		const title = `Config saved, ${COMMAND_TITLES.up.toLowerCase()} ${app.name}`;
+		const r: CommandRun = $state({
+			title,
+			lines: [],
+			status: 'running',
+			error: '',
+		});
+		run = r;
+
+		try {
+			await composeCommand(app.id, null, 'up', line =>
+				r.lines.push(line),
+			);
+			r.status = 'done';
+			toast.success('New config saved and applied');
+		} catch (e) {
+			r.status = 'error';
+			r.error = errorToStr(e);
+			toast.error('New config saved, but applying it failed');
 		}
 	}
 
@@ -68,8 +100,17 @@
 			{/if}
 		</div>
 
-		<Button onclick={() => editor.save()}>save</Button>
+		<Button
+			disabled={run?.status === 'running'}
+			onclick={() => editor.save()}
+		>
+			save
+		</Button>
 	</Header>
+
+	{#if run}
+		<CommandOutput {run} onclose={() => (run = null)} />
+	{/if}
 
 	<Editor value={compose} {onsave} bind:this={editor} />
 </div>

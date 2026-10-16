@@ -7,9 +7,11 @@ use std::{
 	task::{self, Poll},
 };
 
+use api::apps::CommandEvent;
+use futures::channel::mpsc;
 use simple_bytes::{BytesOwned, BytesRead, BytesSeek, BytesWrite};
 use tokio::{
-	io::{AsyncRead, AsyncWrite, ReadBuf},
+	io::{AsyncBufReadExt as _, AsyncRead, AsyncWrite, BufReader, ReadBuf},
 	process::{Child, ChildStderr, ChildStdin, ChildStdout, Command},
 };
 
@@ -52,14 +54,16 @@ impl CmdBuilder {
 	#[allow(dead_code)]
 	pub fn arg(mut self, arg: &str) -> Self {
 		self.inner.arg(arg);
+		self.display.push(' ');
+		self.display.push_str(arg);
 		self
 	}
 
-	pub fn arg_opt(mut self, arg: Option<&str>) -> Self {
-		if let Some(a) = arg {
-			self.inner.arg(a);
+	pub fn arg_opt(self, arg: Option<&str>) -> Self {
+		match arg {
+			Some(a) => self.arg(a),
+			None => self,
 		}
-		self
 	}
 
 	#[allow(dead_code)]
@@ -89,6 +93,48 @@ impl CmdBuilder {
 		}
 
 		Ok(String::from_utf8_lossy(&output.stdout).to_string())
+	}
+
+	/// Runs the command in a background task and sends its output lines
+	/// and finally its result. It keeps running if the receiver is dropped,
+	/// e.g. when the client closes the connection.
+	pub fn spawn_events(
+		mut self,
+	) -> Result<mpsc::UnboundedReceiver<CommandEvent>, CmdError> {
+		let mut child = self
+			.inner
+			.stdin(Stdio::null())
+			.stdout(Stdio::piped())
+			.stderr(Stdio::piped())
+			.spawn()
+			.map_err(|e| CmdError::cmd(&self.display, e))?;
+
+		let stdout = child.stdout.take().unwrap();
+		let stderr = child.stderr.take().unwrap();
+		let (tx, rx) = mpsc::unbounded();
+		let display = self.display;
+
+		tokio::spawn(async move {
+			let (_, _, status) = tokio::join!(
+				send_lines(stdout, &tx),
+				send_lines(stderr, &tx),
+				child.wait()
+			);
+
+			let event = match status {
+				Ok(status) if status.success() => CommandEvent::Done,
+				Ok(status) => CommandEvent::Error {
+					message: format!("{display} failed with {status}"),
+				},
+				Err(e) => CommandEvent::Error {
+					message: format!("{display} failed: {e}"),
+				},
+			};
+			// the receiver might be gone
+			let _ = tx.unbounded_send(event);
+		});
+
+		Ok(rx)
 	}
 
 	pub async fn spawn_readable_stdout(
@@ -129,6 +175,17 @@ impl CmdBuilder {
 			stderr: StdioReader::new(child.stderr.take().unwrap()),
 			child,
 		})
+	}
+}
+
+async fn send_lines(
+	reader: impl AsyncRead + Unpin,
+	tx: &mpsc::UnboundedSender<CommandEvent>,
+) {
+	let mut lines = BufReader::new(reader).lines();
+	// stop at the end or an invalid line, the exit status tells what happened
+	while let Ok(Some(line)) = lines.next_line().await {
+		let _ = tx.unbounded_send(CommandEvent::Output { line });
 	}
 }
 

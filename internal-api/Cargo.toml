@@ -5,7 +5,7 @@ edition = "2024"
 
 [features]
 postgres = ["dep:postgres-types", "dep:bytes"]
-client = ["dep:reqwest", "dep:futures"]
+client = ["dep:reqwest", "dep:futures", "dep:serde_json", "dep:bytes"]
 
 [dependencies]
 tracing = "0.1"
@@ -25,3 +25,4 @@ serde_plain = "1.0.2"
 serde_yaml = "0.9.34"
 compose-yml = { path = "../compose-yml" }
 futures = { version = "0.3.31", optional = true }
+serde_json = { version = "1.0.142", optional = true }

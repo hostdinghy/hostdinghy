@@ -1,6 +1,12 @@
+use bytes::Bytes;
+use futures::{StreamExt as _, stream::BoxStream};
+
 use crate::{
+	Error,
 	app_id::AppId,
-	apps::{AppInfoRes, ComposeCommand, GetComposeRes, SaveComposeReq},
+	apps::{
+		AppInfoRes, CommandEvent, ComposeCommand, GetComposeRes, SaveComposeReq,
+	},
 	client::{ApiServerClient, Result},
 	error::WithMessage,
 };
@@ -38,31 +44,53 @@ impl<'a> ApiServerAppsClient<'a> {
 			.map(|_| ())
 	}
 
+	/// Runs the command and waits until it is done
 	pub async fn compose_command(
 		&self,
 		id: &AppId,
+		service: Option<&str>,
 		cmd: &ComposeCommand,
 	) -> Result<()> {
-		self.inner
-			.send(self.inner.post(&format!("/apps/{id}/action/{cmd}")))
+		let output = self
+			.inner
+			.send(self.inner.post(&compose_command_path(id, service, cmd)))
+			.await?
+			.text()
 			.await
-			.map(|_| ())
+			.with_message("failed to read the command output")?;
+
+		// the last event is the result
+		let last = output
+			.lines()
+			.filter_map(|l| serde_json::from_str::<CommandEvent>(l).ok())
+			.last();
+		match last {
+			Some(CommandEvent::Done) => Ok(()),
+			Some(CommandEvent::Error { message }) => {
+				Err(Error::any("compose command failed", message))
+			}
+			_ => Err(Error::any(
+				"compose command failed",
+				"the output ended without a result",
+			)),
+		}
 	}
 
-	pub async fn compose_service_command(
+	/// Returns the events of the command as json lines, see [`CommandEvent`]
+	pub async fn compose_command_stream(
 		&self,
 		id: &AppId,
-		service: &str,
+		service: Option<&str>,
 		cmd: &ComposeCommand,
-	) -> Result<()> {
+	) -> Result<BoxStream<'static, Result<Bytes>>> {
 		self.inner
-			.send(
-				self.inner.post(&format!(
-					"/apps/{id}/service/{service}/action/{cmd}"
-				)),
-			)
+			.send(self.inner.post(&compose_command_path(id, service, cmd)))
 			.await
-			.map(|_| ())
+			.map(|res| {
+				res.bytes_stream()
+					.map(|r| r.with_message("compose command failed"))
+					.boxed()
+			})
 	}
 
 	pub async fn app_logs(
@@ -82,5 +110,16 @@ impl<'a> ApiServerAppsClient<'a> {
 			.text()
 			.await
 			.with_message("failed to parse logs response")
+	}
+}
+
+fn compose_command_path(
+	id: &AppId,
+	service: Option<&str>,
+	cmd: &ComposeCommand,
+) -> String {
+	match service {
+		Some(service) => format!("/apps/{id}/service/{service}/action/{cmd}"),
+		None => format!("/apps/{id}/action/{cmd}"),
 	}
 }

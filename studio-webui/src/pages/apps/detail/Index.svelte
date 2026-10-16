@@ -1,6 +1,15 @@
 <script lang="ts">
 	import { byId, Service } from '@/api/apps';
-	import { composeCommand, type ComposeCommand } from '@/api/apps/compose';
+	import {
+		COMMAND_TITLES,
+		composeCommand,
+		type ComposeCommand,
+	} from '@/api/apps/compose';
+	import { errorToStr } from '@/api/lib';
+	import CommandOutput, {
+		type CommandRun,
+	} from '@/components/CommandOutput.svelte';
+	import { createToastHandler } from '@/layout/Toasts.svelte';
 	import Download from '@/assets/icons/Download.svelte';
 	import PlayArrow from '@/assets/icons/PlayArrow.svelte';
 	import Refresh from '@/assets/icons/Refresh.svelte';
@@ -30,18 +39,41 @@
 		loading = false;
 	}
 
+	let toast = createToastHandler();
+	let run = $state<CommandRun | null>(null);
+	let running = $derived(run?.status === 'running');
+
 	async function onComposeCommand(
 		e: Event,
 		service: string | null,
 		command: ComposeCommand,
 	) {
 		e.preventDefault();
+		if (running) return;
+		toast.remove();
+
+		const title = `${COMMAND_TITLES[command]} ${service ?? app.name}`;
+		const r: CommandRun = $state({
+			title,
+			lines: [],
+			status: 'running',
+			error: '',
+		});
+		run = r;
 
 		try {
-			await composeCommand(app.id, service, command);
+			await composeCommand(app.id, service, command, line =>
+				r.lines.push(line),
+			);
+			r.status = 'done';
+			toast.success(`${title}: done`);
 		} catch (e) {
-			alert('Failed to execute command: ' + e);
+			r.status = 'error';
+			r.error = errorToStr(e);
+			toast.error(`${title} failed`);
 		}
+
+		reloadApp();
 	}
 
 	onMount(() => {
@@ -65,6 +97,7 @@
 		<Button
 			title="restart"
 			aria-label="restart"
+			disabled={running}
 			onclick={e => onComposeCommand(e, null, 'restart')}
 		>
 			<Refresh />
@@ -73,12 +106,17 @@
 		<Button
 			title="pull"
 			aria-label="pull"
+			disabled={running}
 			onclick={e => onComposeCommand(e, null, 'up')}
 		>
 			<Download />
 		</Button>
 	</ButtonGroup>
 </Header>
+
+{#if run}
+	<CommandOutput {run} onclose={() => (run = null)} />
+{/if}
 
 {#if app.services.length > 0}
 	<!-- the type shenanigangs for domains is not that nice -->
@@ -125,6 +163,7 @@
 						<Button
 							title="start"
 							aria-label="start"
+							disabled={running}
 							onclick={e =>
 								onComposeCommand(e, service.name, 'start')}
 						>
@@ -135,6 +174,7 @@
 						<Button
 							title="restart"
 							aria-label="restart"
+							disabled={running}
 							onclick={e =>
 								onComposeCommand(e, service.name, 'restart')}
 						>
@@ -145,6 +185,7 @@
 						<Button
 							title="stop"
 							aria-label="stop"
+							disabled={running}
 							onclick={e =>
 								onComposeCommand(e, service.name, 'stop')}
 						>
@@ -154,6 +195,7 @@
 					<Button
 						title="pull"
 						aria-label="pull"
+						disabled={running}
 						onclick={e => onComposeCommand(e, service.name, 'up')}
 					>
 						<Download />

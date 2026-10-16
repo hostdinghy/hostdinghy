@@ -18,7 +18,10 @@ use futures::{
 	stream::{self, BoxStream},
 };
 use internal_api::{
-	apps::{AppId, AppInfoRes, ComposeCommand, GetComposeRes, SaveComposeReq},
+	apps::{
+		AppId, AppInfoRes, CommandEvent, ComposeCommand, GetComposeRes,
+		SaveComposeReq,
+	},
 	client::Result,
 	error::Error,
 	postgres::{CreateDatabaseRes, DatabaseName, NewPasswordRes},
@@ -141,20 +144,34 @@ impl ApiServerAppsClientTrait for ApiServerClient {
 	async fn compose_command(
 		&self,
 		id: &AppId,
+		_service: Option<&str>,
 		cmd: &ComposeCommand,
 	) -> Result<()> {
 		let mut server = self.server.lock().unwrap();
 		server.app_compose_command(id, cmd)
 	}
 
-	async fn compose_service_command(
+	async fn compose_command_stream(
 		&self,
 		id: &AppId,
-		_service: &str,
+		service: Option<&str>,
 		cmd: &ComposeCommand,
-	) -> Result<()> {
-		let mut server = self.server.lock().unwrap();
-		server.app_compose_command(id, cmd)
+	) -> Result<BoxStream<'static, Result<Bytes>>> {
+		self.compose_command(id, service, cmd).await?;
+
+		let events = [
+			CommandEvent::Output {
+				line: format!("mock: {cmd}"),
+			},
+			CommandEvent::Done,
+		];
+		let lines = events.map(|e| {
+			let mut line = serde_json::to_vec(&e).unwrap();
+			line.push(b'\n');
+			Ok(Bytes::from(line))
+		});
+
+		Ok(stream::iter(lines).boxed())
 	}
 
 	async fn app_logs(&self, id: &AppId, lines: Option<u32>) -> Result<String> {

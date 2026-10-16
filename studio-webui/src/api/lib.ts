@@ -331,6 +331,34 @@ export class ApiError extends Error {
 	}
 }
 
+/**
+ * Calls `onObj` for each json object of a response with one object per line
+ * (`application/x-ndjson`), as they arrive.
+ */
+export async function readJsonLines(
+	resp: Response,
+	onObj: (obj: any) => void,
+): Promise<void> {
+	const reader = resp.body!.pipeThrough(new TextDecoderStream()).getReader();
+	let buf = '';
+
+	while (true) {
+		const { done, value } = await reader.read();
+		if (done) break;
+
+		buf += value;
+		const lines = buf.split('\n');
+		// the last part is not complete yet
+		buf = lines.pop()!;
+
+		for (const line of lines) {
+			if (line.trim()) onObj(JSON.parse(line));
+		}
+	}
+
+	if (buf.trim()) onObj(JSON.parse(buf));
+}
+
 export function errorToStr(err: any): string {
 	if (!(err instanceof ApiError)) return err.message;
 

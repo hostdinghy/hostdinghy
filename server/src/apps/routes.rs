@@ -2,8 +2,8 @@ use std::{convert::Infallible, io::ErrorKind, sync::Arc};
 
 use api::{
 	apps::{
-		AppId, AppInfoRes, AppService, CommandEvent, ComposeCommand,
-		GetComposeRes, SaveComposeReq, ServiceState,
+		AppId, AppInfoRes, AppLogsReq, AppService, ComposeCommand,
+		GetComposeRes, LogLine, SaveComposeReq, ServiceState,
 	},
 	error::{Error, WithMessage},
 };
@@ -16,9 +16,13 @@ use axum::{
 	routing::{get, post},
 };
 use compose_yml::Compose;
-use futures::{Stream, StreamExt as _};
-use serde::{Deserialize, Serialize};
-use tokio::fs;
+use futures::{Stream, StreamExt as _, stream};
+use serde::Serialize;
+use tokio::{
+	fs,
+	io::{AsyncBufReadExt as _, BufReader},
+};
+use tracing::warn;
 
 use crate::{
 	apps::utils::{
@@ -223,8 +227,8 @@ async fn run_compose_command(
 }
 
 /// one json object per line
-fn ndjson(
-	events: impl Stream<Item = CommandEvent> + Send + 'static,
+fn ndjson<T: Serialize>(
+	events: impl Stream<Item = T> + Send + 'static,
 ) -> Response {
 	let body = Body::from_stream(events.map(|event| {
 		let mut line = serde_json::to_vec(&event).unwrap();
@@ -235,17 +239,11 @@ fn ndjson(
 	([(CONTENT_TYPE, "application/x-ndjson")], body).into_response()
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct LogsQueryReq {
-	lines: Option<u32>,
-}
-
 async fn logs(
 	_auth: Authenticated,
 	Path(id): Path<AppId>,
-	Query(req): Query<LogsQueryReq>,
-) -> Result<String, Error> {
+	Query(req): Query<AppLogsReq>,
+) -> Result<Response, Error> {
 	let app_dir = hostdinghy_dir()?.join(id.as_ref());
 	if !is_dir(&app_dir).await {
 		return Err(Error::AppNotFound);
@@ -256,9 +254,31 @@ async fn logs(
 		return Err(Error::AppNotFound);
 	}
 
-	compose::logs(&compose_path, req.lines)
-		.await
-		.map_err(Into::into)
+	// the process is killed when the stream is dropped (connection closed)
+	let stdout = compose::logs(&compose_path, req.lines, req.follow)
+		.spawn_readable_stdout()
+		.await?;
+
+	let lines = BufReader::new(stdout).lines();
+	let stream = stream::unfold(lines, |mut lines| async move {
+		loop {
+			match lines.next_line().await {
+				Ok(Some(raw)) => {
+					// skip lines without the format, e.g. "Attaching to"
+					if let Some(line) = LogLine::parse_compose(&raw) {
+						return Some((line, lines));
+					}
+				}
+				Ok(None) => return None,
+				Err(e) => {
+					warn!("reading logs failed: {e}");
+					return None;
+				}
+			}
+		}
+	});
+
+	Ok(ndjson(stream))
 }
 
 pub fn routes() -> Router<AppState> {

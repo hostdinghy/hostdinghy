@@ -72,21 +72,33 @@ pub async fn restart(
 	.map(|_| ())
 }
 
-pub async fn logs(
+/// `docker compose logs` with a line per entry, see
+/// [`api::apps::LogLine::parse_compose`]
+pub fn logs(
 	file: impl AsRef<Path>,
 	lines: Option<u32>,
-) -> Result<String, CmdError> {
+	follow: bool,
+) -> CmdBuilder {
 	let file = file.as_ref().to_string_lossy();
-	let mut args = vec!["docker", "compose", "-f", &file, "logs"];
-
-	let lines_string;
-	if let Some(l) = lines {
-		args.push("-n");
-		lines_string = l.to_string();
-		args.push(&lines_string);
+	let lines = lines.map_or("all".to_string(), |l| l.to_string());
+	let mut args = vec![
+		"docker",
+		"compose",
+		"--ansi",
+		"never",
+		"-f",
+		&file,
+		"logs",
+		"--no-color",
+		"--timestamps",
+		"--tail",
+		&lines,
+	];
+	if follow {
+		args.push("--follow");
 	}
 
-	cmd(&args).run().await
+	cmd(&args)
 }
 
 pub async fn exec(

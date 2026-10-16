@@ -19,8 +19,8 @@ use futures::{
 };
 use internal_api::{
 	apps::{
-		AppId, AppInfoRes, CommandEvent, ComposeCommand, GetComposeRes,
-		SaveComposeReq,
+		AppId, AppInfoRes, AppLogsReq, CommandEvent, ComposeCommand,
+		GetComposeRes, LogLine, SaveComposeReq,
 	},
 	client::Result,
 	error::Error,
@@ -174,9 +174,35 @@ impl ApiServerAppsClientTrait for ApiServerClient {
 		Ok(stream::iter(lines).boxed())
 	}
 
-	async fn app_logs(&self, id: &AppId, lines: Option<u32>) -> Result<String> {
-		let server = self.server.lock().unwrap();
-		server.app_logs(id, lines)
+	async fn app_logs(
+		&self,
+		id: &AppId,
+		req: &AppLogsReq,
+	) -> Result<BoxStream<'static, Result<Bytes>>> {
+		let logs = {
+			let server = self.server.lock().unwrap();
+			server.app_logs(id, req.lines)?
+		};
+
+		// the mock logs have no time, make one up
+		let lines: Vec<_> = logs
+			.lines()
+			.enumerate()
+			.filter_map(|(i, raw)| {
+				let (container, line) = raw.split_once(" | ")?;
+				let line = LogLine {
+					container: container.trim().into(),
+					service: container.trim().into(),
+					time: format!("2025-01-01T00:00:00.{i:09}Z"),
+					line: line.into(),
+				};
+				let mut line = serde_json::to_vec(&line).unwrap();
+				line.push(b'\n');
+				Some(Ok(Bytes::from(line)))
+			})
+			.collect();
+
+		Ok(stream::iter(lines).boxed())
 	}
 }
 

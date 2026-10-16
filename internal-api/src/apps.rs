@@ -125,12 +125,68 @@ pub enum CommandEvent {
 
 /// A request to get the logs of a compose.
 ///
-/// URL: `/apps/:id/logs?lines=<lines>`
+/// URL: `/apps/:id/logs?lines=<lines>&follow=<bool>`
 /// Method: `GET`
-/// Return Body: `text/plain`
+/// Return Body: `application/x-ndjson`, one [`LogLine`] per line
 /// Authentication: Yes
+///
+/// Returns the last `lines` lines of each container (all if not set) and
+/// with follow the new ones as they come, until the connection closes.
+/// The lines of different containers are not in order, sort them by time.
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct AppLogsReq;
+#[serde(rename_all = "camelCase")]
+pub struct AppLogsReq {
+	pub lines: Option<u32>,
+	#[serde(default)]
+	pub follow: bool,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct LogLine {
+	/// e.g. `web-1`
+	pub container: String,
+	pub service: String,
+	/// RFC 3339 in UTC with nanoseconds, so the strings sort by time
+	pub time: String,
+	/// may contain ansi escape codes
+	pub line: String,
+}
+
+impl LogLine {
+	/// Parses a line of `docker compose logs --no-color --timestamps`:
+	/// `web-1  | 2025-01-01T00:00:00.123Z the line`
+	pub fn parse_compose(raw: &str) -> Option<Self> {
+		let (container, rest) = raw.split_once(" | ")?;
+		let container = container.trim().to_string();
+		let (time, line) = rest.split_once(' ').unwrap_or((rest, ""));
+		let time = pad_nanos(time)?;
+
+		let service = match container.rsplit_once('-') {
+			Some((service, idx)) if idx.parse::<u32>().is_ok() => service,
+			_ => &container,
+		}
+		.to_string();
+
+		Some(Self {
+			container,
+			service,
+			time,
+			line: line.to_string(),
+		})
+	}
+}
+
+/// docker drops trailing zeros of the fraction, pad it to 9 digits
+fn pad_nanos(time: &str) -> Option<String> {
+	let time = time.strip_suffix('Z')?;
+	let (secs, frac) = time.split_once('.').unwrap_or((time, ""));
+	if secs.len() != 19 || frac.len() > 9 {
+		return None;
+	}
+
+	Some(format!("{secs}.{frac:0<9}Z"))
+}
 
 // /// A request to delete an application.
 // ///

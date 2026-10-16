@@ -1,9 +1,13 @@
 use std::collections::HashMap;
 
-use axum::extract::{Path, State};
+use axum::body::Body;
+use axum::extract::{Path, Query, State};
+use axum::http::header::CONTENT_TYPE;
+use axum::response::{IntoResponse, Response};
 use axum::routing::get;
 use axum::{Json, Router};
-use internal_api::apps::{AppId, AppService, ServiceState};
+use futures::{StreamExt as _, stream};
+use internal_api::apps::{AppId, AppLogsReq, AppService, ServiceState};
 use internal_api::error::Error as ApiError;
 use pg::UniqueId;
 use pg::time::DateTime;
@@ -175,25 +179,47 @@ pub async fn create(
 	Ok(Json(app))
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct LogsReq {
+	/// the last lines per container, all if not set
+	lines: Option<u32>,
+	#[serde(default)]
+	follow: bool,
+}
+
+/// Streams the logs as json lines (see [`internal_api::apps::LogLine`])
 pub async fn logs(
 	user: AuthedUser<RightsAny>,
 	State(apps): State<Apps>,
 	State(servers): State<Servers>,
 	State(api_client): State<ApiClient>,
 	Path(id): Path<AppId>,
+	Query(req): Query<LogsReq>,
 	conn: ConnOwned,
-) -> Result<Json<String>> {
+) -> Result<Response> {
 	let apps = apps.with_conn(conn.conn());
 	let servers = servers.with_conn(conn.conn());
 
 	let AppWithServer { app, api, .. } =
 		app_with_server(&id, &user, &apps, &servers, &api_client).await?;
 
-	match api.apps().app_logs(&app.id, None).await {
-		Ok(logs) => Ok(Json(logs)),
-		Err(ApiError::AppNotFound) => Ok(Json("".into())),
-		Err(e) => Err(e.into()),
-	}
+	let req = AppLogsReq {
+		lines: req.lines,
+		follow: req.follow,
+	};
+	let stream = match api.apps().app_logs(&app.id, &req).await {
+		Ok(stream) => stream,
+		// no compose file yet
+		Err(ApiError::AppNotFound) => stream::empty().boxed(),
+		Err(e) => return Err(e.into()),
+	};
+
+	Ok((
+		[(CONTENT_TYPE, "application/x-ndjson")],
+		Body::from_stream(stream),
+	)
+		.into_response())
 }
 
 pub fn routes() -> Router<AppState> {

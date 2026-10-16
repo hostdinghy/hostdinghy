@@ -1,7 +1,10 @@
 use bytes::Bytes;
 use futures::stream::BoxStream;
 use internal_api::{
-	apps::{AppId, AppInfoRes, ComposeCommand, GetComposeRes, SaveComposeReq},
+	apps::{
+		AppId, AppInfoRes, AppLogsReq, ComposeCommand, GetComposeRes,
+		SaveComposeReq,
+	},
 	client::{self as int, Result},
 	postgres::{CreateDatabaseRes, DatabaseName, NewPasswordRes},
 	registry::{CreateUserRes, RegistryUsername},
@@ -90,8 +93,12 @@ impl ApiServerAppsClientTrait for ApiServerClient {
 			.await
 	}
 
-	async fn app_logs(&self, id: &AppId, lines: Option<u32>) -> Result<String> {
-		self.inner.apps().app_logs(id, lines).await
+	async fn app_logs(
+		&self,
+		id: &AppId,
+		req: &AppLogsReq,
+	) -> Result<BoxStream<'static, Result<Bytes>>> {
+		self.inner.apps().app_logs(id, req).await
 	}
 }
 

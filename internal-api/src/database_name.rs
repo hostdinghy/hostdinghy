@@ -6,7 +6,7 @@ use serde::de::Error;
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
 /// needs to be an an lowercase alphanumeric string with underscores
-/// at least 2 characters long
+/// 3 to 42 characters long, no dash or underscore at the start or end
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct DatabaseName(String);
 
@@ -61,9 +61,9 @@ impl FromStr for DatabaseName {
 
 #[derive(Debug, thiserror::Error)]
 #[error(
-	"Invalid database name - must be at least 2 characters long and contain \
-	only lowercase alphanumeric characters, and underscores (`create` is \
-	not allowed)"
+	"Invalid database name - must be 3 to 42 characters long, contain only \
+	lowercase letters, digits and underscores, start and end with a letter \
+	or digit and not be a reserved name like `postgres`"
 )]
 pub struct InvalidDatabaseName {}
 

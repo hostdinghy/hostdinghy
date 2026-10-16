@@ -124,7 +124,7 @@ impl CmdBuilder {
 
 		Ok(ChildWritableStdin {
 			display: self.display,
-			stdin: child.stdin.take().unwrap(),
+			stdin: child.stdin.take(),
 			stdout: StdioReader::new(child.stdout.take().unwrap()),
 			stderr: StdioReader::new(child.stderr.take().unwrap()),
 			child,
@@ -311,15 +311,22 @@ impl Drop for ChildReadableStdout {
 pub struct ChildWritableStdin {
 	display: String,
 	child: Child,
-	stdin: ChildStdin,
+	/// None after wait closed it
+	stdin: Option<ChildStdin>,
 	stdout: StdioReader<ChildStdout>,
 	stderr: StdioReader<ChildStderr>,
 }
 
 impl ChildWritableStdin {
+	/// Closes stdin and waits until the process exits
 	pub async fn wait(mut self) -> Result<(), CmdError> {
-		// read stderr to drive status progress
-		let stderr = self.stderr.read().await.unwrap_or_else(|e| e.to_string());
+		// the process might wait for the end of its input
+		drop(self.stdin.take());
+
+		// read stdout and stderr until they close, so the process
+		// does not block on a full pipe
+		let (_, stderr) = tokio::join!(self.stdout.read(), self.stderr.read());
+		let stderr = stderr.unwrap_or_else(|e| e.to_string());
 
 		let status = self
 			.child
@@ -366,21 +373,30 @@ impl AsyncWrite for ChildWritableStdin {
 		let _ = Pin::new(&mut self.stdout).poll_read(cx);
 		let _ = Pin::new(&mut self.stderr).poll_read(cx);
 
-		Pin::new(&mut self.stdin).poll_write(cx, buf)
+		match &mut self.stdin {
+			Some(stdin) => Pin::new(stdin).poll_write(cx, buf),
+			None => Poll::Ready(Err(io::ErrorKind::BrokenPipe.into())),
+		}
 	}
 
 	fn poll_flush(
 		mut self: Pin<&mut Self>,
 		cx: &mut task::Context<'_>,
 	) -> Poll<io::Result<()>> {
-		Pin::new(&mut self.stdin).poll_flush(cx)
+		match &mut self.stdin {
+			Some(stdin) => Pin::new(stdin).poll_flush(cx),
+			None => Poll::Ready(Ok(())),
+		}
 	}
 
 	fn poll_shutdown(
 		mut self: Pin<&mut Self>,
 		cx: &mut task::Context<'_>,
 	) -> Poll<io::Result<()>> {
-		Pin::new(&mut self.stdin).poll_shutdown(cx)
+		match &mut self.stdin {
+			Some(stdin) => Pin::new(stdin).poll_shutdown(cx),
+			None => Poll::Ready(Ok(())),
+		}
 	}
 }
 

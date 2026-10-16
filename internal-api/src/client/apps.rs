@@ -5,7 +5,8 @@ use crate::{
 	Error,
 	app_id::AppId,
 	apps::{
-		AppInfoRes, CommandEvent, ComposeCommand, GetComposeRes, SaveComposeReq,
+		AppInfoRes, AppLogsReq, CommandEvent, ComposeCommand, GetComposeRes,
+		SaveComposeReq,
 	},
 	client::{ApiServerClient, Result},
 	error::WithMessage,
@@ -93,23 +94,20 @@ impl<'a> ApiServerAppsClient<'a> {
 			})
 	}
 
+	/// Returns the log lines as json lines, see [`crate::apps::LogLine`]
 	pub async fn app_logs(
 		&self,
 		id: &AppId,
-		lines: Option<u32>,
-	) -> Result<String> {
-		let mut uri = format!("/apps/{id}/logs");
-		if let Some(lines) = lines {
-			// todo could this be a query type?
-			uri.push_str(&format!("?lines={lines}"));
-		}
-
-		let response = self.inner.send(self.inner.get(&uri)).await?;
-
-		response
-			.text()
+		req: &AppLogsReq,
+	) -> Result<BoxStream<'static, Result<Bytes>>> {
+		self.inner
+			.send(self.inner.get(&format!("/apps/{id}/logs")).query(req))
 			.await
-			.with_message("failed to parse logs response")
+			.map(|res| {
+				res.bytes_stream()
+					.map(|r| r.with_message("failed to read the logs"))
+					.boxed()
+			})
 	}
 }
 

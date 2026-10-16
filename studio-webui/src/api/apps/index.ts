@@ -1,4 +1,4 @@
-import { Api } from '../lib';
+import { Api, readJsonLines } from '../lib';
 import { loadServers, type Server } from '../servers/index';
 
 export const api = new Api('/apps');
@@ -110,6 +110,34 @@ export async function create(data: CreateAppRequest) {
 	return new AppShort(app);
 }
 
-export async function logs(id: string): Promise<string> {
-	return api.get(`/${id}/logs`);
+export type LogLine = {
+	/** e.g. web-1 */
+	container: string;
+	service: string;
+	/** RFC 3339 UTC with nanoseconds, sorts as a string */
+	time: string;
+	/** may contain ansi escape codes */
+	line: string;
+};
+
+/**
+ * Streams the last `lines` lines of each container (all if null) and with
+ * `follow` the new ones until `signal` aborts. The lines of different
+ * containers don't arrive in order.
+ */
+export async function logs(
+	id: string,
+	lines: number | null,
+	follow: boolean,
+	online: (line: LogLine) => void,
+	signal: AbortSignal,
+): Promise<void> {
+	const resp = await api.requestRaw(
+		'GET',
+		`/${id}/logs`,
+		{ lines, follow },
+		{},
+		{ signal },
+	);
+	await readJsonLines(resp, online);
 }

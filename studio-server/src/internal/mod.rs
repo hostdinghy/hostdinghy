@@ -10,7 +10,10 @@ use std::{
 use bytes::Bytes;
 use futures::stream::BoxStream;
 use internal_api::{
-	apps::{AppId, AppInfoRes, ComposeCommand, GetComposeRes, SaveComposeReq},
+	apps::{
+		AppId, AppInfoRes, AppLogsReq, ComposeCommand, GetComposeRes,
+		SaveComposeReq,
+	},
 	client::{self as int, Result},
 	postgres::{CreateDatabaseRes, DatabaseName, NewPasswordRes},
 	registry::{CreateUserRes, RegistryUsername},
@@ -142,8 +145,13 @@ pub trait ApiServerAppsClientTrait {
 		cmd: &ComposeCommand,
 	) -> Result<BoxStream<'static, Result<Bytes>>>;
 
-	/// How many lines to return, if None all lines are returned
-	async fn app_logs(&self, id: &AppId, lines: Option<u32>) -> Result<String>;
+	/// Streams the log lines as json lines
+	/// (see [`internal_api::apps::LogLine`])
+	async fn app_logs(
+		&self,
+		id: &AppId,
+		req: &AppLogsReq,
+	) -> Result<BoxStream<'static, Result<Bytes>>>;
 }
 
 #[async_trait::async_trait]

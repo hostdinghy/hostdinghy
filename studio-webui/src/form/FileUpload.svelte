@@ -53,12 +53,13 @@
 	}
 
 	function sendFiles(fileList: FileList) {
-		const files = Array.from(fileList).filter(file => {
-			// remove empty unknown files
-			return file.size > 0 && file.type.length > 0;
-		});
+		// the type is empty for extensions the browser doesn't know (.dump)
+		const files = Array.from(fileList);
 
 		if (files.length === 0) return alert('No file selected');
+
+		if (files.some(file => file.size === 0))
+			return alert('The file is empty');
 
 		if (files.length > 1) return alert('Only one file is allowed');
 

@@ -16,7 +16,10 @@ use axum::{
 };
 use chuchi_crypto::token::Token;
 use futures::TryStreamExt;
-use tokio::{io, time::sleep};
+use tokio::{
+	io::{self, AsyncReadExt as _, AsyncWriteExt as _},
+	time::sleep,
+};
 use tokio_util::io::{ReaderStream, StreamReader};
 
 use crate::{
@@ -29,11 +32,19 @@ async fn databases(
 ) -> Result<Json<PostgresDatabasesRes>, Error> {
 	let client = Client::new().await?;
 
-	client
+	let dbs = client
 		.list_databases()
 		.await
-		.map(|dbs| Json(PostgresDatabasesRes(dbs)))
-		.with_message("Failed to list Postgres databases")
+		.with_message("Failed to list Postgres databases")?;
+
+	// postgres and the studio's own database cannot be used through the api
+	// (see DatabaseName), so don't list them
+	let dbs = dbs
+		.into_iter()
+		.filter(|name| name.parse::<DatabaseName>().is_ok())
+		.collect();
+
+	Ok(Json(PostgresDatabasesRes(dbs)))
 }
 
 async fn create_database(
@@ -116,26 +127,41 @@ async fn restore_database(
 			.map_err(|err| io::Error::new(io::ErrorKind::Other, err)),
 	);
 
-	eprintln!("received restore req");
-
-	let mut child = utils::restore_database(name.as_ref())
+	// archives made with pg_dump -Fc start with PGDMP, anything else
+	// is treated as plain sql
+	let mut magic = Vec::with_capacity(5);
+	(&mut body)
+		.take(5)
+		.read_to_end(&mut magic)
 		.await
-		.with_message("Failed to start Postgres restore process")?;
+		.with_message("Failed to read the restore file")?;
 
-	eprintln!("restoring...");
+	let mut child = if magic == b"PGDMP" {
+		utils::restore_database(name.as_ref()).await
+	} else {
+		utils::restore_database_sql(name.as_ref()).await
+	}
+	.with_message("Failed to start Postgres restore process")?;
 
-	io::copy(&mut body, &mut child)
-		.await
-		.with_message("Failed to restore Postgres database")?;
+	let res = async {
+		child.write_all(&magic).await?;
+		io::copy(&mut body, &mut child).await
+	}
+	.await;
 
-	eprintln!("written");
+	// wait also closes stdin, the restore only finishes after that.
+	// If writing failed because the process exited, its error is better
+	let res = match child.wait().await {
+		Ok(()) => res.with_message("Failed to restore Postgres database"),
+		Err(e) => Err(e).with_message("Postgres restore failed"),
+	};
 
-	child
-		.wait()
-		.await
-		.with_message("Postgres restore process failed")?;
-
-	eprintln!("restored");
+	if res.is_err() {
+		// read the rest of the upload, a proxy in between (traefik, nginx)
+		// might turn an answer before the end of the request into a 502
+		let _ = io::copy(&mut body, &mut io::sink()).await;
+	}
+	res?;
 
 	Ok(())
 }

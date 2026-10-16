@@ -65,3 +65,33 @@ pub async fn restore_database(
 	.await
 	.map_err(Into::into)
 }
+
+/// Restores a plain sql file as the database's role, stops at the first error
+pub async fn restore_database_sql(
+	name: &str,
+) -> Result<ChildWritableStdin, CliError> {
+	let set_role = format!("SET ROLE \"{name}\"");
+	cmd(&[
+		"sudo",
+		"-u",
+		"postgres",
+		"psql",
+		"--quiet",
+		"--no-psqlrc",
+		"--single-transaction",
+		"--set",
+		"ON_ERROR_STOP=1",
+		"--output",
+		"/dev/null",
+		"-d",
+		name,
+		"-c",
+		&set_role,
+		"-f",
+		"-",
+	])
+	.as_root()
+	.spawn_writable_stdin()
+	.await
+	.map_err(Into::into)
+}

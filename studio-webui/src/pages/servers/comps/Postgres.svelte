@@ -88,9 +88,11 @@
 	let openRestoreModal: string | null = $state(null);
 	let restoreFile: File | null = $state(null);
 	let uploadProgress: number = $state(0);
+	let restoring = $state(false);
 
 	async function onRestoreSubmit(e: Event) {
 		e.preventDefault();
+		if (restoring) return;
 		resetErrors();
 		uploadProgress = 0;
 
@@ -106,16 +108,21 @@
 		)
 			return;
 
+		const name = openRestoreModal!;
+		restoring = true;
 		try {
 			await restoreDatabase(
 				server.id,
-				openRestoreModal!,
+				name,
 				restoreFile,
 				prog => (uploadProgress = prog),
 			);
 			resetRestoreModal();
+			toast.success(`Database "${name}" restored.`);
 		} catch (e) {
 			error = errorToStr(e);
+		} finally {
+			restoring = false;
 		}
 	}
 
@@ -127,6 +134,8 @@
 	}
 
 	async function onDumpDb(name: string) {
+		toast.info(`Preparing the dump of "${name}"...`);
+
 		let resp: Response;
 		try {
 			resp = await dumpDatabase(server.id, name);
@@ -135,7 +144,8 @@
 			return;
 		}
 
-		const filename = `${name}-${browserDateTimePathSafe(new Date())}.sql`;
+		// pg_dump custom format, restore it here or with pg_restore
+		const filename = `${name}-${browserDateTimePathSafe(new Date())}.dump`;
 
 		toast.info(`Downloading "${filename}"`);
 
@@ -282,10 +292,16 @@
 			<FileUpload
 				id="restore-file"
 				name="restore-file"
-				label="sql file"
+				label="dump file"
 				bx={false}
 				bind:file={restoreFile}
 			/>
+
+			<p class="help">
+				A dump downloaded here (pg_dump custom format) replaces the
+				database. A plain sql file is executed as the database's user in
+				one transaction.
+			</p>
 
 			{#if error}
 				<div class="error">{error}</div>
@@ -293,8 +309,14 @@
 
 			<ProgressBar progress={uploadProgress} mt />
 
+			{#if restoring && uploadProgress >= 99}
+				<p class="help">Uploaded, restoring...</p>
+			{/if}
+
 			<div class="btns">
-				<Button>submit</Button>
+				<Button disabled={restoring}>
+					{restoring ? 'restoring...' : 'submit'}
+				</Button>
 			</div>
 		</form>
 	</Modal>
@@ -315,5 +337,11 @@
 		display: flex;
 		margin-top: 1rem;
 		padding: 1rem;
+	}
+
+	.help {
+		margin-top: 1rem;
+		padding: 0 1rem;
+		color: rgb(from var(--c-text) r g b / 70%);
 	}
 </style>

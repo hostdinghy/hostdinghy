@@ -1,4 +1,8 @@
-use std::{collections::HashSet, sync::Arc};
+use std::{
+	collections::{HashMap, HashSet},
+	path::PathBuf,
+	sync::{Arc, Mutex},
+};
 
 use api::{
 	Error,
@@ -55,8 +59,53 @@ pub struct PushTarget {
 	tag: String,
 }
 
+/// Redeploys apps after a push, in the background.
+///
+/// The registry gives up on a webhook after about a second and retries it,
+/// a `compose up` takes longer. So the webhook only triggers a redeploy and
+/// answers right away. There is only one redeploy per app at a time, a push
+/// during a redeploy runs it once more afterwards.
+#[derive(Debug, Clone, Default)]
+pub struct Redeploys {
+	/// the apps being redeployed, true if another run is pending
+	running: Arc<Mutex<HashMap<AppId, bool>>>,
+}
+
+impl Redeploys {
+	pub fn trigger(&self, app: AppId, compose_file: PathBuf) {
+		{
+			let mut running = self.running.lock().unwrap();
+			if let Some(pending) = running.get_mut(&app) {
+				*pending = true;
+				return;
+			}
+			running.insert(app.clone(), false);
+		}
+
+		let this = self.clone();
+		tokio::spawn(async move {
+			loop {
+				info!("Redeploying app {app} after a push");
+				match compose::up(&compose_file, None).await {
+					Ok(()) => info!("Redeployed app {app}"),
+					Err(e) => error!("Failed to redeploy app {app}: {e}"),
+				}
+
+				let mut running = this.running.lock().unwrap();
+				if running.get(&app) == Some(&true) {
+					running.insert(app.clone(), false);
+					continue;
+				}
+				running.remove(&app);
+				break;
+			}
+		});
+	}
+}
+
 async fn webhook(
 	State(cfg): State<Arc<Config>>,
+	State(redeploys): State<Redeploys>,
 	headers: HeaderMap,
 	body: String,
 ) -> Result<(), Error> {
@@ -129,10 +178,7 @@ async fn webhook(
 			continue;
 		}
 
-		if let Err(e) = compose::up(compose_file, None).await {
-			error!("Failed to start app {app} after pull {e}");
-			continue;
-		}
+		redeploys.trigger(app, compose_file);
 	}
 
 	Ok(())

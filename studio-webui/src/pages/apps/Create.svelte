@@ -23,13 +23,41 @@
 
 	let name = $state('');
 	let id = $state('');
+	// the id follows the name until it is changed by hand
+	let idEdited = $state(false);
 	let serverId = $state(servers.first()?.id ?? '');
 	let error = $state('');
+	let creating = $state(false);
+
+	/** lowercase letters, digits and dashes, no dash at the ends */
+	function idFromName(name: string): string {
+		return (
+			name
+				.toLowerCase()
+				// ä -> a, é -> e
+				.normalize('NFKD')
+				.replace(/[\u0300-\u036f]/g, '')
+				.replace(/[^a-z0-9]+/g, '-')
+				.slice(0, 42)
+				.replace(/^-+|-+$/g, '')
+		);
+	}
+
+	function onNameInput() {
+		if (!idEdited) id = idFromName(name);
+	}
+
+	function onIdInput() {
+		// an emptied id follows the name again
+		idEdited = id !== '';
+	}
 
 	async function onsubmit(e: Event) {
 		e.preventDefault();
+		if (creating) return;
 
 		error = '';
+		creating = true;
 
 		try {
 			const app = await create({
@@ -41,6 +69,8 @@
 		} catch (e) {
 			console.error('Error creating app:', e);
 			error = errorToStr(e);
+		} finally {
+			creating = false;
 		}
 	}
 </script>
@@ -60,6 +90,7 @@
 				label="name"
 				placeholder="Enter App Name..."
 				bind:value={name}
+				oninput={onNameInput}
 				required
 			/>
 
@@ -70,6 +101,7 @@
 				label="id"
 				placeholder="Enter a unique id..."
 				bind:value={id}
+				oninput={onIdInput}
 				required
 			/>
 
@@ -85,7 +117,15 @@
 				<div class="error">{error}</div>
 			{/if}
 
-			<Button mt>submit</Button>
+			<p class="help">
+				The id can't be changed later. 3 to 42 lowercase letters,
+				digits, dashes or underscores, starting and ending with a letter
+				or digit.
+			</p>
+
+			<Button mt disabled={creating}>
+				{creating ? 'creating...' : 'submit'}
+			</Button>
 		</form>
 	</div>
 </div>
@@ -101,6 +141,12 @@
 	h1 {
 		font-size: 1.25rem;
 		margin-bottom: 2rem;
+	}
+
+	.help {
+		margin-top: 1rem;
+		color: rgb(from var(--c-text) r g b / 70%);
+		font-size: 0.875rem;
 	}
 
 	.error {

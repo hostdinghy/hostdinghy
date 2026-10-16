@@ -6,7 +6,7 @@ use serde::de::Error;
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
 /// needs to be an an alphanumeric string with dashes and underscores
-/// at least 2 characters long
+/// 3 to 42 characters long, no dash or underscore at the start or end
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct RegistryUsername(String);
 
@@ -60,9 +60,9 @@ impl FromStr for RegistryUsername {
 
 #[derive(Debug, thiserror::Error)]
 #[error(
-	"Invalid registry username - must be at least 2 characters long and contain \
-	only lowercase alphanumeric characters, dashes, and underscores (`create` is \
-	not allowed)"
+	"Invalid registry username - must be 3 to 42 characters long, contain \
+	only lowercase letters, digits, dashes and underscores, start and end \
+	with a letter or digit and not be a reserved name like `internal`"
 )]
 pub struct InvalidRegistryUsername {}
 

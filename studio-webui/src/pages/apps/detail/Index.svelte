@@ -14,7 +14,6 @@
 	import PlayArrow from '@/assets/icons/PlayArrow.svelte';
 	import Refresh from '@/assets/icons/Refresh.svelte';
 	import Stop from '@/assets/icons/Stop.svelte';
-	import Sync from '@/assets/icons/Sync.svelte';
 	import Button from '@/components/Button.svelte';
 	import ButtonGroup from '@/components/ButtonGroup.svelte';
 	import Header from '@/components/Header.svelte';
@@ -98,7 +97,7 @@
 			title="restart"
 			aria-label="restart"
 			disabled={running}
-			onclick={e => onComposeCommand(e, null, 'restart')}
+			onclick={(e: MouseEvent) => onComposeCommand(e, null, 'restart')}
 		>
 			<Refresh />
 		</Button>
@@ -107,7 +106,7 @@
 			title="pull"
 			aria-label="pull"
 			disabled={running}
-			onclick={e => onComposeCommand(e, null, 'up')}
+			onclick={(e: MouseEvent) => onComposeCommand(e, null, 'up')}
 		>
 			<Download />
 		</Button>
@@ -164,7 +163,7 @@
 							title="start"
 							aria-label="start"
 							disabled={running}
-							onclick={e =>
+							onclick={(e: MouseEvent) =>
 								onComposeCommand(e, service.name, 'start')}
 						>
 							<PlayArrow />
@@ -175,7 +174,7 @@
 							title="restart"
 							aria-label="restart"
 							disabled={running}
-							onclick={e =>
+							onclick={(e: MouseEvent) =>
 								onComposeCommand(e, service.name, 'restart')}
 						>
 							<Refresh />
@@ -186,7 +185,7 @@
 							title="stop"
 							aria-label="stop"
 							disabled={running}
-							onclick={e =>
+							onclick={(e: MouseEvent) =>
 								onComposeCommand(e, service.name, 'stop')}
 						>
 							<Stop />
@@ -196,7 +195,8 @@
 						title="pull"
 						aria-label="pull"
 						disabled={running}
-						onclick={e => onComposeCommand(e, service.name, 'up')}
+						onclick={(e: MouseEvent) =>
+							onComposeCommand(e, service.name, 'up')}
 					>
 						<Download />
 					</Button>

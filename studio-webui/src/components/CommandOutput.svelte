@@ -22,10 +22,11 @@
 	let outputEl: HTMLPreElement;
 
 	// keep the newest line visible
-	$effect(() => {
-		run.lines.length;
+	$effect(() => scrollToEnd(run.lines.length));
+
+	function scrollToEnd(_lines: number) {
 		outputEl.scrollTop = outputEl.scrollHeight;
-	});
+	}
 </script>
 
 <div class="command-output">

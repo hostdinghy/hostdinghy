@@ -96,6 +96,9 @@ async fn app_info(
 		});
 	}
 
+	// docker lists the containers in no fixed order
+	services.sort_by(|a, b| a.name.cmp(&b.name));
+
 	/*
 	 * So for each compose.yaml file there is a rule how to name routers
 	 * each router needs to start with <compose-project-name>-<service-name>

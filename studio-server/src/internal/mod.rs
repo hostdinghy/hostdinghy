@@ -14,7 +14,11 @@ use internal_api::{
 		AppId, AppInfoRes, AppLogsReq, ComposeCommand, GetComposeRes,
 		SaveComposeReq,
 	},
-	client::{self as int, Result},
+	client::{self as int, FsDownload, Result},
+	fs::{
+		FsExtractReq, FsInfoRes, FsMoveReq, FsPath, FsPermissionsReq,
+		FsWriteReq, FsZipReq,
+	},
 	postgres::{CreateDatabaseRes, DatabaseName, NewPasswordRes},
 	registry::{CreateUserRes, RegistryUsername},
 	requests::{InfoRes, PingRes},
@@ -117,6 +121,8 @@ pub trait ApiServerClientTrait {
 	fn registry(&self) -> &dyn ApiServerRegistryClientTrait;
 
 	fn postgres(&self) -> &dyn ApiServerPostgresClientTrait;
+
+	fn fs(&self) -> &dyn ApiServerFsClientTrait;
 }
 
 #[async_trait::async_trait]
@@ -188,4 +194,42 @@ pub trait ApiServerPostgresClientTrait {
 		&self,
 		name: &DatabaseName,
 	) -> Result<BoxStream<'static, Result<Bytes>>>;
+}
+
+#[async_trait::async_trait]
+pub trait ApiServerFsClientTrait {
+	async fn info(&self, id: &AppId, path: &FsPath) -> Result<FsInfoRes>;
+
+	async fn read(
+		&self,
+		id: &AppId,
+		path: &FsPath,
+	) -> Result<BoxStream<'static, Result<Bytes>>>;
+
+	async fn download(&self, id: &AppId, path: &FsPath) -> Result<FsDownload>;
+
+	async fn write(
+		&self,
+		id: &AppId,
+		req: &FsWriteReq,
+		stream: BoxStream<'static, Result<Bytes>>,
+	) -> Result<()>;
+
+	async fn mkdir(&self, id: &AppId, path: &FsPath) -> Result<()>;
+
+	async fn delete(&self, id: &AppId, path: &FsPath) -> Result<()>;
+
+	async fn rename(&self, id: &AppId, req: &FsMoveReq) -> Result<()>;
+
+	async fn copy(&self, id: &AppId, req: &FsMoveReq) -> Result<()>;
+
+	async fn permissions(
+		&self,
+		id: &AppId,
+		req: &FsPermissionsReq,
+	) -> Result<()>;
+
+	async fn zip(&self, id: &AppId, req: &FsZipReq) -> Result<()>;
+
+	async fn extract(&self, id: &AppId, req: &FsExtractReq) -> Result<()>;
 }

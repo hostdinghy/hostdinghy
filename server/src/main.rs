@@ -9,6 +9,7 @@ How to install this
 mod apps;
 mod config;
 mod docker;
+mod fs;
 mod postgres;
 mod registry;
 #[cfg(debug_assertions)]

@@ -24,6 +24,8 @@ pub enum Error {
 	InsufficientRights,
 	#[error("Resource not found")]
 	NotFound,
+	#[error("Already exists: {0}")]
+	AlreadyExists(String),
 	/// gets returned if the internal api server has some error
 	#[error("Internal API server error: {0}")]
 	InternalApiServer(String),
@@ -45,6 +47,7 @@ impl Error {
 			| Self::InsufficientRights => StatusCode::FORBIDDEN,
 
 			Self::NotFound => StatusCode::NOT_FOUND,
+			Self::AlreadyExists(_) => StatusCode::CONFLICT,
 			Self::InternalApiServer(_) | Self::Internal(_) => {
 				StatusCode::INTERNAL_SERVER_ERROR
 			}
@@ -90,7 +93,9 @@ impl From<ApiError> for Error {
 		// todo better error matching
 		match e {
 			ApiError::Compose(e) => Self::Compose(e),
-			ApiError::AppNotFound => Self::NotFound,
+			ApiError::AppNotFound | ApiError::FileNotFound => Self::NotFound,
+			ApiError::FileAlreadyExists => Self::AlreadyExists(e.to_string()),
+			ApiError::InvalidFileOperation(_) => Self::Request(e.to_string()),
 			ApiError::Any { .. } => Self::InternalApiServer(e.to_string()),
 			e => Self::Internal(e.to_string()),
 		}

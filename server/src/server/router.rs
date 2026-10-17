@@ -15,7 +15,7 @@ use tower_http::trace::TraceLayer;
 use crate::{
 	apps,
 	docker::Docker,
-	postgres,
+	fs, postgres,
 	registry::{self, routes::Redeploys},
 	server::{Config, utils::Authenticated},
 	traefik::client::Traefik,
@@ -65,6 +65,7 @@ pub async fn app(cfg: Config) -> Result<Router<()>, Error> {
 		.route("/ping", get(ping_req))
 		.route("/info", get(info_req))
 		.nest("/apps", apps::routes::routes())
+		.nest("/apps/{id}/fs", fs::routes::routes())
 		.nest("/registry", registry::routes::routes())
 		.nest("/postgres", postgres::routes::routes())
 		.layer(TraceLayer::new_for_http())

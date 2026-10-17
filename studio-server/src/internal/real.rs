@@ -5,7 +5,11 @@ use internal_api::{
 		AppId, AppInfoRes, AppLogsReq, ComposeCommand, GetComposeRes,
 		SaveComposeReq,
 	},
-	client::{self as int, Result},
+	client::{self as int, FsDownload, Result},
+	fs::{
+		FsExtractReq, FsInfoRes, FsMoveReq, FsPath, FsPermissionsReq,
+		FsWriteReq, FsZipReq,
+	},
 	postgres::{CreateDatabaseRes, DatabaseName, NewPasswordRes},
 	registry::{CreateUserRes, RegistryUsername},
 	requests::{InfoRes, PingRes},
@@ -13,7 +17,7 @@ use internal_api::{
 
 use crate::{
 	internal::{
-		ApiServerAppsClientTrait, ApiServerClientTrait,
+		ApiServerAppsClientTrait, ApiServerClientTrait, ApiServerFsClientTrait,
 		ApiServerPostgresClientTrait, ApiServerRegistryClientTrait,
 	},
 	servers::data::Server,
@@ -50,6 +54,10 @@ impl ApiServerClientTrait for ApiServerClient {
 	}
 
 	fn postgres(&self) -> &dyn ApiServerPostgresClientTrait {
+		self
+	}
+
+	fn fs(&self) -> &dyn ApiServerFsClientTrait {
 		self
 	}
 }
@@ -153,5 +161,65 @@ impl ApiServerPostgresClientTrait for ApiServerClient {
 		name: &DatabaseName,
 	) -> Result<BoxStream<'static, Result<Bytes>>> {
 		self.inner.postgres().dump_database(name).await
+	}
+}
+
+#[async_trait::async_trait]
+impl ApiServerFsClientTrait for ApiServerClient {
+	async fn info(&self, id: &AppId, path: &FsPath) -> Result<FsInfoRes> {
+		self.inner.fs().info(id, path).await
+	}
+
+	async fn read(
+		&self,
+		id: &AppId,
+		path: &FsPath,
+	) -> Result<BoxStream<'static, Result<Bytes>>> {
+		self.inner.fs().read(id, path).await
+	}
+
+	async fn download(&self, id: &AppId, path: &FsPath) -> Result<FsDownload> {
+		self.inner.fs().download(id, path).await
+	}
+
+	async fn write(
+		&self,
+		id: &AppId,
+		req: &FsWriteReq,
+		stream: BoxStream<'static, Result<Bytes>>,
+	) -> Result<()> {
+		self.inner.fs().write(id, req, stream).await
+	}
+
+	async fn mkdir(&self, id: &AppId, path: &FsPath) -> Result<()> {
+		self.inner.fs().mkdir(id, path).await
+	}
+
+	async fn delete(&self, id: &AppId, path: &FsPath) -> Result<()> {
+		self.inner.fs().delete(id, path).await
+	}
+
+	async fn rename(&self, id: &AppId, req: &FsMoveReq) -> Result<()> {
+		self.inner.fs().rename(id, req).await
+	}
+
+	async fn copy(&self, id: &AppId, req: &FsMoveReq) -> Result<()> {
+		self.inner.fs().copy(id, req).await
+	}
+
+	async fn permissions(
+		&self,
+		id: &AppId,
+		req: &FsPermissionsReq,
+	) -> Result<()> {
+		self.inner.fs().permissions(id, req).await
+	}
+
+	async fn zip(&self, id: &AppId, req: &FsZipReq) -> Result<()> {
+		self.inner.fs().zip(id, req).await
+	}
+
+	async fn extract(&self, id: &AppId, req: &FsExtractReq) -> Result<()> {
+		self.inner.fs().extract(id, req).await
 	}
 }

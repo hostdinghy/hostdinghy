@@ -1,3 +1,4 @@
+mod fs;
 mod storage;
 
 use std::sync::{Arc, Mutex};
@@ -5,7 +6,7 @@ use std::sync::{Arc, Mutex};
 use crate::{
 	AppState,
 	internal::{
-		ApiServerAppsClientTrait, ApiServerClientTrait,
+		ApiServerAppsClientTrait, ApiServerClientTrait, ApiServerFsClientTrait,
 		ApiServerPostgresClientTrait, ApiServerRegistryClientTrait,
 		mock::storage::{ServerMock, ServersMock},
 	},
@@ -22,8 +23,12 @@ use internal_api::{
 		AppId, AppInfoRes, AppLogsReq, CommandEvent, ComposeCommand,
 		GetComposeRes, LogLine, SaveComposeReq,
 	},
-	client::Result,
+	client::{FsDownload, Result},
 	error::Error,
+	fs::{
+		FsExtractReq, FsInfoRes, FsMoveReq, FsPath, FsPermissionsReq,
+		FsWriteReq, FsZipReq,
+	},
 	postgres::{CreateDatabaseRes, DatabaseName, NewPasswordRes},
 	registry::{CreateUserRes, RegistryUsername},
 	requests::{InfoRes, PingRes},
@@ -116,6 +121,10 @@ impl ApiServerClientTrait for ApiServerClient {
 	}
 
 	fn postgres(&self) -> &dyn ApiServerPostgresClientTrait {
+		self
+	}
+
+	fn fs(&self) -> &dyn ApiServerFsClientTrait {
 		self
 	}
 }
@@ -272,5 +281,90 @@ impl ApiServerPostgresClientTrait for ApiServerClient {
 		let bytes = server.postgres_dump_database(name.as_ref())?;
 
 		Ok(stream::once(async move { Ok(bytes) }).boxed())
+	}
+}
+
+impl ApiServerClient {
+	fn with_fs<T>(
+		&self,
+		id: &AppId,
+		f: impl FnOnce(&mut fs::MockFs) -> Result<T>,
+	) -> Result<T> {
+		let mut server = self.server.lock().unwrap();
+		f(server.fs(id))
+	}
+}
+
+#[async_trait::async_trait]
+impl ApiServerFsClientTrait for ApiServerClient {
+	async fn info(&self, id: &AppId, path: &FsPath) -> Result<FsInfoRes> {
+		self.with_fs(id, |fs| fs.info(path))
+	}
+
+	async fn read(
+		&self,
+		id: &AppId,
+		path: &FsPath,
+	) -> Result<BoxStream<'static, Result<Bytes>>> {
+		let bytes = self.with_fs(id, |fs| fs.read(path))?;
+		Ok(stream::once(async move { Ok(bytes) }).boxed())
+	}
+
+	async fn download(&self, id: &AppId, path: &FsPath) -> Result<FsDownload> {
+		let (filename, bytes) = self.with_fs(id, |fs| fs.download(path))?;
+		Ok(FsDownload {
+			filename,
+			content_type: "application/octet-stream".into(),
+			length: Some(bytes.len() as u64),
+			stream: stream::once(async move { Ok(bytes) }).boxed(),
+		})
+	}
+
+	async fn write(
+		&self,
+		id: &AppId,
+		req: &FsWriteReq,
+		mut stream: BoxStream<'static, Result<Bytes>>,
+	) -> Result<()> {
+		let mut content = BytesMut::new();
+		while let Some(chunk) = stream.next().await {
+			content.extend_from_slice(&chunk?);
+		}
+
+		self.with_fs(id, |fs| {
+			fs.write(&req.path, req.overwrite, content.freeze())
+		})
+	}
+
+	async fn mkdir(&self, id: &AppId, path: &FsPath) -> Result<()> {
+		self.with_fs(id, |fs| fs.mkdir(path))
+	}
+
+	async fn delete(&self, id: &AppId, path: &FsPath) -> Result<()> {
+		self.with_fs(id, |fs| fs.delete(path))
+	}
+
+	async fn rename(&self, id: &AppId, req: &FsMoveReq) -> Result<()> {
+		self.with_fs(id, |fs| fs.rename(&req.from, &req.to))
+	}
+
+	async fn copy(&self, id: &AppId, req: &FsMoveReq) -> Result<()> {
+		self.with_fs(id, |fs| fs.copy(&req.from, &req.to))
+	}
+
+	async fn permissions(
+		&self,
+		id: &AppId,
+		req: &FsPermissionsReq,
+	) -> Result<()> {
+		self.with_fs(id, |fs| fs.permissions(req))
+	}
+
+	async fn zip(&self, id: &AppId, req: &FsZipReq) -> Result<()> {
+		self.with_fs(id, |fs| fs.zip(&req.path, &req.to))
+	}
+
+	async fn extract(&self, id: &AppId, req: &FsExtractReq) -> Result<()> {
+		self.with_fs(id, |fs| fs.extract(&req.path, &req.to))
 	}
 }

@@ -1,4 +1,5 @@
 mod apps;
+mod fs;
 mod postgres;
 mod registry;
 
@@ -7,6 +8,7 @@ use reqwest::{Certificate, RequestBuilder, Response};
 use serde::de::DeserializeOwned;
 
 pub use apps::ApiServerAppsClient;
+pub use fs::{ApiServerFsClient, FsDownload};
 
 use crate::{
 	client::{
@@ -133,5 +135,9 @@ impl ApiServerClient {
 
 	pub fn postgres(&self) -> ApiServerPostgresClient<'_> {
 		ApiServerPostgresClient::new(&self)
+	}
+
+	pub fn fs(&self) -> ApiServerFsClient<'_> {
+		ApiServerFsClient::new(&self)
 	}
 }

@@ -30,11 +30,15 @@
 	let creating = $state(false);
 
 	/** lowercase letters, digits and dashes, no dash at the ends */
+	// written out like in german, browsers have no transliteration
+	const UMLAUTS: Record<string, string> = { ä: 'ae', ö: 'oe', ü: 'ue' };
+
 	function idFromName(name: string): string {
 		return (
 			name
 				.toLowerCase()
-				// ä -> a, é -> e
+				.replace(/[äöü]/g, c => UMLAUTS[c])
+				// é -> e
 				.normalize('NFKD')
 				.replace(/[\u0300-\u036f]/g, '')
 				.replace(/[^a-z0-9]+/g, '-')

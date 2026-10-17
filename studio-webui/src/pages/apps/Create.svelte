@@ -144,6 +144,9 @@
 	}
 
 	.help {
+		// wrap at the width of the fields instead of widening the form
+		width: 0;
+		min-width: 100%;
 		margin-top: 1rem;
 		color: rgb(from var(--c-text) r g b / 70%);
 		font-size: 0.875rem;

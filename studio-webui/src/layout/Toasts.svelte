@@ -22,7 +22,7 @@
 	}
 
 	export type ToastHandler = {
-		/** Shows a success toast message */
+		/** Shows a success toast message, it hides after a few seconds */
 		success: (message: string) => void;
 		/** Shows an info toast message */
 		info: (message: string) => void;
@@ -33,6 +33,9 @@
 		/** Removes the current toast message */
 		remove: () => void;
 	};
+
+	/** how long a success toast is shown, in ms */
+	const SUCCESS_TIMEOUT = 4000;
 
 	/** Creates a possible toast instance useful in svelte components */
 	export function createToastHandler(): ToastHandler {
@@ -47,10 +50,17 @@
 		const newToast = (message: string, status: ToastStatus) => {
 			toastRef?.remove();
 			toastRef = toast({ message, status });
+			return toastRef;
 		};
 
 		return {
-			success: (message: string) => newToast(message, 'success'),
+			success: (message: string) => {
+				// nothing to act on, so it goes away by itself
+				const ref = newToast(message, 'success');
+				setTimeout(() => {
+					if (toastRef === ref) destroy();
+				}, SUCCESS_TIMEOUT);
+			},
 			info: (message: string) => newToast(message, 'info'),
 			error: (message: string) => newToast(message, 'error'),
 			update: (message: string) => toastRef?.update({ message }),

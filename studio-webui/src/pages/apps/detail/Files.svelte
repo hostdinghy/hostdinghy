@@ -281,16 +281,27 @@
 		}
 	}
 
+	let download = $state<{
+		name: string;
+		received: number;
+		total: number | null;
+	} | null>(null);
+
 	async function downloadPath(p: string, entry: FsEntry) {
-		// packing a directory takes a moment, the browser shows the rest
-		if (entry.isDir()) toast.info(`Packing "${entry.name || app.id}"...`);
+		download = { name: entry.name || app.id, received: 0, total: null };
 		try {
 			const resp = await fs.download(app.id, p);
-			const name = dispositionFilename(resp) ?? (entry.name || app.id);
-			toast.remove();
-			await saveResponse(resp, name);
+			const name = dispositionFilename(resp) ?? download.name;
+			download.name = name;
+			await saveResponse(resp, name, (received, total) => {
+				if (!download) return;
+				download.received = received;
+				download.total = total;
+			});
 		} catch (e) {
 			toast.error(errorToStr(e));
+		} finally {
+			download = null;
 		}
 	}
 
@@ -548,6 +559,21 @@
 					upload.total) *
 					100}
 			/>
+		</div>
+	{/if}
+
+	{#if download}
+		<div class="upload">
+			<!-- a directory is packed while it is sent, so its size is unknown -->
+			<p>
+				Downloading {download.name}: {humanSize(download.received)}
+				{#if download.total}of {humanSize(download.total)}{/if}
+			</p>
+			{#if download.total}
+				<ProgressBar
+					progress={(download.received / download.total) * 100}
+				/>
+			{/if}
 		</div>
 	{/if}
 

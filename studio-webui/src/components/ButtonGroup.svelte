@@ -27,27 +27,35 @@
 		display: flex;
 	}
 
-	.button-group :global {
+	// only the direct buttons and the buttons of context menus, the open
+	// menu next to a context menu button must not change its borders
+	.button-group > :global {
 		.btn,
-		.btn svg {
+		.btn svg,
+		.context-menu {
 			flex-shrink: 0;
 		}
 
-		.btn:not(:last-child) {
+		.btn:not(:last-child),
+		.context-menu:not(:last-child) > .btn {
 			border-right: none;
 		}
 	}
 
-	.style-text :global {
+	.style-text {
 		border: 1px solid var(--c-border);
+	}
 
-		.btn {
+	.style-text > :global {
+		.btn,
+		.context-menu > .btn {
 			border: none;
 			color: var(--c-text);
+		}
 
-			&:not(:last-child) {
-				border-right: 1px solid var(--c-border);
-			}
+		.btn:not(:last-child),
+		.context-menu:not(:last-child) > .btn {
+			border-right: 1px solid var(--c-border);
 		}
 	}
 

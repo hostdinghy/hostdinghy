@@ -4,6 +4,7 @@ pub mod apps;
 pub mod client;
 mod database_name;
 pub mod error;
+pub mod fs;
 pub mod postgres;
 pub mod registry;
 mod registry_username;

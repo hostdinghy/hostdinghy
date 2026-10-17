@@ -22,6 +22,12 @@ pub enum Error {
 	/// Gets returned if the app folder or the compose file (if required) could not be found
 	#[error("Could not find app folder")]
 	AppNotFound,
+	#[error("File or directory not found")]
+	FileNotFound,
+	#[error("File or directory already exists")]
+	FileAlreadyExists,
+	#[error("Not possible on this path: {0}")]
+	InvalidFileOperation(String),
 	#[error("Missing bearer token in request")]
 	MissingApiToken,
 	#[error("Invalid bearer token in request")]
@@ -55,7 +61,11 @@ impl Error {
 			| Self::DatabaseAlreadyExists
 			| Self::Compose(_)
 			| Self::InvalidCertificate => StatusCode::BAD_REQUEST,
-			Self::DatabaseNotFound | Self::AppNotFound => StatusCode::NOT_FOUND,
+			Self::DatabaseNotFound | Self::AppNotFound | Self::FileNotFound => {
+				StatusCode::NOT_FOUND
+			}
+			Self::FileAlreadyExists => StatusCode::CONFLICT,
+			Self::InvalidFileOperation(_) => StatusCode::BAD_REQUEST,
 			Self::MissingApiToken => StatusCode::UNAUTHORIZED,
 			Self::InvalidApiToken => StatusCode::FORBIDDEN,
 			Self::Command { .. }

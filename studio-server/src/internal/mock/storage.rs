@@ -20,6 +20,7 @@ use pg::UniqueId;
 use rand::Rng;
 use semver::Version;
 
+use super::fs::MockFs;
 use crate::{apps::data::App, servers::data::Server};
 
 #[derive(Debug)]
@@ -74,6 +75,7 @@ pub struct ServerMock {
 	pub version: Version,
 	apps: HashMap<AppId, AppMock>,
 	registry_users: HashSet<String>,
+	fs: HashMap<AppId, MockFs>,
 	postgres_databases: HashMap<String, Bytes>,
 }
 
@@ -85,12 +87,18 @@ impl ServerMock {
 			version: "0.0.0-debug.0".parse().unwrap(),
 			apps: HashMap::new(),
 			registry_users: HashSet::new(),
+			fs: HashMap::new(),
 			postgres_databases: HashMap::new(),
 		}
 	}
 
 	fn insert_app(&mut self, app: App) {
 		self.apps.insert(app.id.clone(), AppMock::new(app.id));
+	}
+
+	/// The files of an app, created on first use
+	pub fn fs(&mut self, id: &AppId) -> &mut MockFs {
+		self.fs.entry(id.clone()).or_insert_with(MockFs::new)
 	}
 
 	pub fn app_info(&self, id: &AppId) -> Result<AppInfoRes> {
@@ -220,7 +228,7 @@ impl ServerMock {
 	}
 }
 
-const MOCK_COMPOSE: &str = include_str!("./mock_compose.yml");
+pub(super) const MOCK_COMPOSE: &str = include_str!("./mock_compose.yml");
 const MOCK_LOGS: &str = include_str!("./mock_logs.txt");
 
 #[derive(Debug, Clone)]

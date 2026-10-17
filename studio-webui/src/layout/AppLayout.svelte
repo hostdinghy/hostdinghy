@@ -41,6 +41,7 @@
 					label: 'Overview',
 					url: `/apps/${app.id}`,
 				},
+				{ label: 'Files', url: `/apps/${app.id}/files` },
 				{
 					label: 'Settings',
 					url: `/apps/${app.id}/settings`,

@@ -25,6 +25,8 @@
 <style lang="scss">
 	.button-group {
 		display: flex;
+		// actions must not be squeezed out by other content
+		flex-shrink: 0;
 	}
 
 	// only the direct buttons and the buttons of context menus, the open
@@ -60,7 +62,9 @@
 	}
 
 	.align-right {
-		width: fit-content;
+		// fit-content collapses to one button in a narrow table cell
+		// in firefox
+		width: max-content;
 		margin-left: auto;
 	}
 </style>

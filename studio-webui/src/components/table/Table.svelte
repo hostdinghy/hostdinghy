@@ -68,9 +68,12 @@
 				padding: 1rem;
 			}
 
-			// reduce padding for button groups
+			// reduce padding for button groups, and keep the column as
+			// wide as the buttons
 			td:has(.button-group) {
 				padding: 0.5rem 1rem;
+				width: 1%;
+				white-space: nowrap;
 			}
 		}
 	}

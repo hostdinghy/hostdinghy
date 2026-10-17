@@ -282,7 +282,8 @@ export type ErrorType =
 				| 'INVALID_SESSION_TOKEN'
 				| 'INVALID_USER'
 				| 'INSUFFICIENT_RIGHTS'
-				| 'NOT_FOUND';
+				| 'NOT_FOUND'
+				| 'ALREADY_EXISTS';
 	  }
 	| {
 			type: 'COMPOSE';

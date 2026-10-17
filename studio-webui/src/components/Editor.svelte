@@ -5,14 +5,27 @@
 
 	let editor: monaco.editor.IStandaloneCodeEditor;
 
-	let { value, onsave } = $props();
+	let {
+		value,
+		onsave,
+		language = 'yaml',
+	}: {
+		value: string;
+		onsave: (value: string) => void;
+		/** a monaco language id */
+		language?: string;
+	} = $props();
 
 	export function save() {
 		onsave(editor.getValue());
 	}
 
-	export function setValue(v) {
+	export function setValue(v: string) {
 		editor.setValue(v);
+	}
+
+	export function getValue(): string {
+		return editor.getValue();
 	}
 
 	const themes = {
@@ -27,7 +40,7 @@
 		monaco.languages.register({ id: 'yaml' });
 		editor = monaco.editor.create(monacoEl, {
 			value,
-			language: 'yaml',
+			language,
 			theme: themes[get(derivedMode)],
 		});
 

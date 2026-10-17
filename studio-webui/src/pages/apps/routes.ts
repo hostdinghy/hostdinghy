@@ -16,5 +16,9 @@ export function registerApps(router: Router) {
 		r.register('/registry', () => import('./detail/Registry.svelte'));
 		r.register('/postgres', () => import('./detail/Postgres.svelte'));
 		r.register('/logs', () => import('./detail/Logs.svelte'));
+		r.register(
+			/\/files(?:\/(?<path>.*))?$/,
+			() => import('./detail/Files.svelte'),
+		);
 	});
 }

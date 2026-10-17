@@ -35,6 +35,7 @@
 	import { createToastHandler } from '@/layout/Toasts.svelte';
 	import { browserDateTimePathSafe } from '@/lib/time';
 	import { saveResponse } from '@/lib/download';
+	import { humanSize } from '@/api/apps/fs';
 
 	let { server, dbs = $bindable() }: { server: Server; dbs: Databases } =
 		$props();
@@ -151,7 +152,12 @@
 		toast.info(`Downloading "${filename}"`);
 
 		try {
-			if (!(await saveResponse(resp, filename))) {
+			const saved = await saveResponse(resp, filename, received =>
+				toast.update(
+					`Downloading "${filename}": ${humanSize(received)}`,
+				),
+			);
+			if (!saved) {
 				toast.remove();
 				return;
 			}

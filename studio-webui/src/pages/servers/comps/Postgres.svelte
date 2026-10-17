@@ -34,6 +34,7 @@
 	import ProgressBar from '@/form/ProgressBar.svelte';
 	import { createToastHandler } from '@/layout/Toasts.svelte';
 	import { browserDateTimePathSafe } from '@/lib/time';
+	import { saveResponse } from '@/lib/download';
 
 	let { server, dbs = $bindable() }: { server: Server; dbs: Databases } =
 		$props();
@@ -150,55 +151,15 @@
 		toast.info(`Downloading "${filename}"`);
 
 		try {
-			// @ts-ignore
-			if (typeof window.showSaveFilePicker === 'function') {
-				const downloaded = await downloadStream(resp, filename);
-				if (!downloaded) {
-					toast.remove();
-					return;
-				}
-			} else {
-				await downloadBlob(resp, filename);
+			if (!(await saveResponse(resp, filename))) {
+				toast.remove();
+				return;
 			}
 
 			toast.success('Database dump downloaded.');
 		} catch (e) {
 			toast.error(errorToStr(e));
 		}
-	}
-
-	async function downloadStream(
-		resp: Response,
-		filename: string,
-	): Promise<boolean> {
-		let fileHandle;
-		try {
-			// @ts-ignore
-			fileHandle = await window.showSaveFilePicker({
-				suggestedName: filename,
-			});
-		} catch (e) {
-			if ((e as DOMException)?.name === 'AbortError') return false;
-			throw e;
-		}
-
-		const writable = await fileHandle.createWritable();
-		await resp.body!.pipeTo(writable);
-
-		return true;
-	}
-
-	async function downloadBlob(resp: Response, filename: string) {
-		const blob = await resp.blob();
-
-		const el = document.createElement('a');
-		const url = URL.createObjectURL(blob);
-		document.body.appendChild(el);
-		el.href = url;
-		el.download = filename;
-		el.click();
-		el.remove();
-		window.URL.revokeObjectURL(url);
 	}
 </script>
 

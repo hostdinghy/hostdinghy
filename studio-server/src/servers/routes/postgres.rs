@@ -1,5 +1,7 @@
 use axum::body::Body;
-use axum::extract::{Path, State};
+use axum::extract::{Path, Query, State};
+use axum::http::header::{CONTENT_DISPOSITION, CONTENT_TYPE};
+use axum::response::{IntoResponse, Response};
 use axum::routing::{get, post, put};
 use axum::{Json, Router};
 use futures::StreamExt;
@@ -8,6 +10,7 @@ use internal_api::postgres::{
 	CreateDatabaseReq, CreateDatabaseRes, DatabaseName, NewPasswordRes,
 };
 use pg::UniqueId;
+use serde::Deserialize;
 
 use crate::AppState;
 use crate::error::Result;
@@ -105,13 +108,20 @@ pub async fn restore_database(
 		.map_err(Into::into)
 }
 
+#[derive(Debug, Deserialize)]
+pub struct DumpDatabaseReq {
+	/// the name the browser saves the dump as
+	filename: Option<String>,
+}
+
 pub async fn dump_database(
 	user: AuthedUser<RightsAny>,
 	State(servers): State<Servers>,
 	State(api_client): State<ApiClient>,
 	conn: ConnOwned,
 	Path((id, name)): Path<(UniqueId, DatabaseName)>,
-) -> Result<Body> {
+	Query(req): Query<DumpDatabaseReq>,
+) -> Result<Response> {
 	let servers = servers.with_conn(conn.conn());
 
 	let LoadServer { api, .. } =
@@ -123,7 +133,28 @@ pub async fn dump_database(
 		.await?
 		.map(|r| r.with_message("failed to dump database"));
 
-	Ok(Body::from_stream(stream))
+	// keep the header simple
+	let filename: String = req
+		.filename
+		.unwrap_or_else(|| format!("{name}.dump"))
+		.chars()
+		.map(|c| match c.is_ascii_graphic() && c != '"' && c != '\\' {
+			true => c,
+			false => '_',
+		})
+		.collect();
+
+	Ok((
+		[
+			(CONTENT_TYPE, "application/octet-stream".to_string()),
+			(
+				CONTENT_DISPOSITION,
+				format!("attachment; filename=\"{filename}\""),
+			),
+		],
+		Body::from_stream(stream),
+	)
+		.into_response())
 }
 
 pub fn routes() -> Router<AppState> {

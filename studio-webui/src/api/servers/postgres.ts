@@ -38,14 +38,15 @@ export async function restoreDatabase(
 	);
 }
 
+/** downloads a dump of the database in the browser */
 export async function dumpDatabase(
 	serverId: string,
 	database: string,
-): Promise<Response> {
-	return await api.requestRaw(
-		'GET',
-		`/${serverId}/postgres/databases/${database}/dump`,
-	);
+	filename: string,
+): Promise<void> {
+	await api.download(`/${serverId}/postgres/databases/${database}/dump`, {
+		filename,
+	});
 }
 
 // export async function deleteRegistryUser(

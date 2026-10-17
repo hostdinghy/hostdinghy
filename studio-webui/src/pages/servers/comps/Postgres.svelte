@@ -34,7 +34,6 @@
 	import ProgressBar from '@/form/ProgressBar.svelte';
 	import { createToastHandler } from '@/layout/Toasts.svelte';
 	import { browserDateTimePathSafe } from '@/lib/time';
-	import { saveResponse } from '@/lib/download';
 
 	let { server, dbs = $bindable() }: { server: Server; dbs: Databases } =
 		$props();
@@ -135,28 +134,12 @@
 	}
 
 	async function onDumpDb(name: string) {
-		toast.info(`Preparing the dump of "${name}"...`);
-
-		let resp: Response;
-		try {
-			resp = await dumpDatabase(server.id, name);
-		} catch (e) {
-			toast.error(errorToStr(e));
-			return;
-		}
-
 		// pg_dump custom format, restore it here or with pg_restore
 		const filename = `${name}-${browserDateTimePathSafe(new Date())}.dump`;
 
-		toast.info(`Downloading "${filename}"`);
-
+		// the browser shows the progress
 		try {
-			if (!(await saveResponse(resp, filename))) {
-				toast.remove();
-				return;
-			}
-
-			toast.success('Database dump downloaded.');
+			await dumpDatabase(server.id, name, filename);
 		} catch (e) {
 			toast.error(errorToStr(e));
 		}

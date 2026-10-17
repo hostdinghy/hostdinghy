@@ -101,6 +101,7 @@ pub struct AppState {
 	db: Db,
 	dist_dir: DistDir,
 	cfg: Arc<Config>,
+	download_tickets: users::download::DownloadTickets,
 }
 
 impl FromRef<AppState> for ApiClient {
@@ -194,6 +195,7 @@ async fn main() {
 		db,
 		dist_dir: DistDir(args.dist_dir),
 		cfg: Arc::new(cfg),
+		download_tickets: users::download::DownloadTickets::new(),
 	};
 
 	api_client.populate_mock_data(&mut conn, &state).await;

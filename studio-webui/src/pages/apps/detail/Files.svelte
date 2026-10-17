@@ -69,7 +69,6 @@
 	import ProgressBar from '@/form/ProgressBar.svelte';
 	import type { AppLayoutProps } from '@/layout/AppLayout.svelte';
 	import { createToastHandler } from '@/layout/Toasts.svelte';
-	import { dispositionFilename, saveResponse } from '@/lib/download';
 	import { getRouter } from '@/main';
 
 	let { app, path, fsInfo, text }: AppLayoutProps<typeof loadProps> =
@@ -281,14 +280,10 @@
 		}
 	}
 
-	async function downloadPath(p: string, entry: FsEntry) {
-		// packing a directory takes a moment, the browser shows the rest
-		if (entry.isDir()) toast.info(`Packing "${entry.name || app.id}"...`);
+	async function downloadPath(p: string) {
+		// the browser shows the progress
 		try {
-			const resp = await fs.download(app.id, p);
-			const name = dispositionFilename(resp) ?? (entry.name || app.id);
-			toast.remove();
-			await saveResponse(resp, name);
+			await fs.download(app.id, p);
 		} catch (e) {
 			toast.error(errorToStr(e));
 		}
@@ -511,7 +506,7 @@
 			<Button
 				title={isDir ? 'download as .tar.gz' : 'download'}
 				aria-label="download"
-				onclick={() => downloadPath(path, cur.entry)}
+				onclick={() => downloadPath(path)}
 			>
 				<Download />
 			</Button>
@@ -558,7 +553,7 @@
 			{urlFor}
 			actionsFor={e =>
 				actionsFor({ entry: e, path: joinPath(path, e.name) })}
-			ondownload={e => downloadPath(joinPath(path, e.name), e)}
+			ondownload={e => downloadPath(joinPath(path, e.name))}
 		/>
 		<p class="hint">Drop files or folders here to upload them.</p>
 	{:else}

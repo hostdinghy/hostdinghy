@@ -3,13 +3,15 @@ use std::marker::PhantomData;
 use super::{
 	Users,
 	data::{Session, Token, User, UsersWithConn},
+	download::DownloadTickets,
 };
 use crate::{error::Error, users::data::Rights};
 
-use axum::extract::{FromRef, FromRequestParts};
-use axum::http::HeaderMap;
+use axum::extract::{FromRef, FromRequestParts, OriginalUri, Query};
 use axum::http::request::Parts;
+use axum::http::{HeaderMap, Method};
 use pg::{UniqueId, db::Db};
+use serde::Deserialize;
 
 pub struct AuthedUser<RightsCheck> {
 	pub session: Session,
@@ -36,6 +38,7 @@ where
 	S: Send + Sync,
 	Users: FromRef<S>,
 	Db: FromRef<S>,
+	DownloadTickets: FromRef<S>,
 	RC: RightsCheck + Send + Sync + 'static,
 {
 	type Rejection = Error;
@@ -50,7 +53,24 @@ where
 		let conn = db.get().await?;
 		let users = users.with_conn(conn.conn());
 
-		let session = session_from_headers(&parts.headers, &users).await?;
+		let session = match download_ticket(parts) {
+			Some(ticket) => {
+				// nested routers only see their part of the path
+				let path = parts
+					.extensions
+					.get::<OriginalUri>()
+					.map(|u| u.0.path())
+					.unwrap_or(parts.uri.path());
+				let token = DownloadTickets::from_ref(state)
+					.take(&ticket, path)
+					.ok_or(Error::InvalidSessionToken)?;
+				users
+					.session_by_token(&token)
+					.await?
+					.ok_or(Error::InvalidSessionToken)?
+			}
+			None => session_from_headers(&parts.headers, &users).await?,
+		};
 
 		let user = authenticated_user(&session, &users, RC::check).await?;
 
@@ -88,6 +108,26 @@ impl RightsCheck for RightsRoot {
 	fn check(rights: &Rights) -> bool {
 		rights.root
 	}
+}
+
+/// the ticket of a download without the session-token header
+/// (see [`DownloadTickets`])
+fn download_ticket(parts: &Parts) -> Option<String> {
+	#[derive(Deserialize)]
+	struct TicketQuery {
+		#[serde(rename = "download-ticket")]
+		ticket: String,
+	}
+
+	// downloads are GET requests, tickets are not for anything else
+	if parts.method != Method::GET
+		|| parts.headers.contains_key("session-token")
+	{
+		return None;
+	}
+	Query::<TicketQuery>::try_from_uri(&parts.uri)
+		.ok()
+		.map(|q| q.0.ticket)
 }
 
 pub async fn session_from_headers(

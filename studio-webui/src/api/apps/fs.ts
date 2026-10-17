@@ -56,9 +56,9 @@ export async function read(appId: string, path: string): Promise<Response> {
 	return await api.requestRaw('GET', `/${appId}/fs/read`, { path });
 }
 
-/** a file, or a directory as .tar.gz */
-export async function download(appId: string, path: string): Promise<Response> {
-	return await api.requestRaw('GET', `/${appId}/fs/download`, { path });
+/** downloads a file, or a directory as .tar.gz, in the browser */
+export async function download(appId: string, path: string): Promise<void> {
+	await api.download(`/${appId}/fs/download`, { path });
 }
 
 export async function write(

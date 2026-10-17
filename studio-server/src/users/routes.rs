@@ -7,6 +7,7 @@ use crate::AppState;
 use crate::error::{Error, Result};
 use crate::users::Users;
 use crate::users::data::{Session, UpdateUser, User};
+use crate::users::download::DownloadTickets;
 use crate::users::utils::RightsAny;
 use crate::utils::ConnOwned;
 
@@ -111,10 +112,34 @@ async fn logout(
 	Ok(())
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct DownloadTicketReq {
+	/// the full path of the download, like `/api/apps/{id}/fs/download`
+	pub path: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct DownloadTicketRes {
+	pub ticket: String,
+}
+
+/// see [`DownloadTickets`]
+async fn download_ticket(
+	user: AuthedUser<RightsAny>,
+	State(tickets): State<DownloadTickets>,
+	Json(req): Json<DownloadTicketReq>,
+) -> Json<DownloadTicketRes> {
+	let ticket = tickets.create(user.session.token, req.path);
+	Json(DownloadTicketRes { ticket })
+}
+
 pub fn routes() -> Router<AppState> {
 	Router::new()
 		.route("/login", post(login))
 		.route("/tokenauth", post(token_auth))
 		.route("/save", post(save))
 		.route("/logout", post(logout))
+		.route("/download-ticket", post(download_ticket))
 }

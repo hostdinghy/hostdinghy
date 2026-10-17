@@ -165,6 +165,45 @@ export class Api {
 	}
 
 	/**
+	 * Lets the browser download a GET route itself, so it shows its own
+	 * progress and saves the file while it arrives.
+	 *
+	 * The browser can't send the session-token header for that, so the url
+	 * gets a one-time ticket instead (valid for a minute and this path).
+	 *
+	 * @param data - sent as query params
+	 *
+	 * @throws {ApiError} - If the ticket can't be created
+	 */
+	async download(path: string, data: object = {}): Promise<void> {
+		assertValidPath(path);
+
+		const url = new URL(this.addr + path, DEF_ORIGIN);
+		for (const [key, value] of Object.entries(data)) {
+			if (value !== undefined && value !== null)
+				url.searchParams.set(key, value);
+		}
+
+		const { ticket } = await new Api('/users').post('/download-ticket', {
+			path: url.pathname,
+		});
+		url.searchParams.set('download-ticket', ticket);
+
+		let urlStr = url.toString();
+		if (urlStr.startsWith(DEF_ORIGIN))
+			urlStr = urlStr.substring(DEF_ORIGIN.length);
+
+		const el = document.createElement('a');
+		el.href = urlStr;
+		el.download = '';
+		// keep the router from opening the link as a page
+		el.addEventListener('click', e => e.stopPropagation());
+		document.body.appendChild(el);
+		el.click();
+		el.remove();
+	}
+
+	/**
 	 * Send a request to the server with a file
 	 *
 	 * @param method - The method of the request

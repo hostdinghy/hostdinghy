@@ -1,6 +1,7 @@
 pub mod cli;
 pub mod data;
 pub mod database;
+pub mod download;
 #[cfg(test)]
 pub mod mock;
 pub mod routes;

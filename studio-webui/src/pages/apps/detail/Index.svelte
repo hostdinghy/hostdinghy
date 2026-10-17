@@ -140,17 +140,15 @@
 		{/snippet}
 
 		{#snippet domains(row)}
-			<td>
-				{#each row.routes as route (route.rule)}
-					{#each route.domains as domain (domain)}
-						<a
-							target="_blank"
-							class="underline"
-							href="https://{domain}"
-						>
-							{domain}
-						</a>
-					{/each}
+			<td class="domains">
+				{#each row.routes.flatMap(r => r.domains) as domain (domain)}
+					<a
+						target="_blank"
+						class="underline"
+						href="https://{domain}"
+					>
+						{domain}
+					</a>
 				{/each}
 			</td>
 		{/snippet}
@@ -223,6 +221,16 @@
 
 		.underline {
 			color: var(--c-text);
+		}
+	}
+
+	.domains {
+		overflow-wrap: break-word;
+
+		// inline-block so the comma isn't underlined
+		a:not(:last-of-type)::after {
+			content: ',';
+			display: inline-block;
 		}
 	}
 

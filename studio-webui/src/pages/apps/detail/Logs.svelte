@@ -188,14 +188,15 @@
 		margin-left: 0.5rem;
 	}
 
+	// stretch, so the selects are as high as the button in every browser
 	.controls {
 		display: flex;
 		gap: 1rem;
-		align-items: center;
+		align-items: stretch;
 	}
 
 	select {
-		padding: 0.2rem 0.4rem;
+		padding: 0.3rem 0.5rem;
 		border: 1px solid var(--c-border);
 		background-color: transparent;
 		color: var(--c-text);
